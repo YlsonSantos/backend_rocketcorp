@@ -9,7 +9,196 @@ generator client {
   output   = "../generated/prisma"
 }
 
+generator seed {
+  provider = "ts-node"
+  output   = "../generated/prisma"
+}
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model EvaluationAnswer {
+  id            String    @id @default(uuid())
+  evaluationId  String
+  criterionId   String
+  score         Int
+  justification String
+
+  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id])
+  criterion     EvaluationCriterion @relation(fields: [criterionId], references: [id])
+}
+
+model CriteriaAssignment {
+  id          String   @id @default(uuid())
+  criterionId String
+  teamId      String
+  positionId  String
+
+  criterion   EvaluationCriterion @relation(fields: [criterionId], references: [id])
+  team        Team      @relation(fields: [teamId], references: [id])
+  position    Position  @relation(fields: [positionId], references: [id])
+}
+
+model EvaluationCriterion {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  type        CriterionType
+
+  assignments CriteriaAssignment[]
+  answers     EvaluationAnswer[]
+}
+
+model TeamMember {
+  id      String @id @default(uuid())
+  userId  String
+  teamId  String
+
+  user    User  @relation(fields: [userId], references: [id])
+  team    Team  @relation(fields: [teamId], references: [id])
+}
+
+model Team {
+  id           String            @id @default(uuid())
+  name         String
+  members      TeamMember[]
+  evaluations  Evaluation[]
+  criteriaAssignments CriteriaAssignment[]
+}
+
+model Position {
+  id           String   @id @default(uuid())
+  name         String
+  track        TrackType
+
+  users        User[]
+  criteriaAssignments CriteriaAssignment[]
+}
+
+model Evaluation {
+  id           String   @id @default(uuid())
+  type         EvaluationType
+  cycleId      String
+  evaluatorId  String
+  evaluatedId  String
+  teamId       String
+  createdAt    DateTime @default(now())
+  completed    Boolean
+
+  cycle        EvaluationCycle @relation(fields: [cycleId], references: [id])
+  evaluator    User            @relation("Evaluator", fields: [evaluatorId], references: [id])
+  evaluated    User            @relation("Evaluated", fields: [evaluatedId], references: [id])
+  team         Team            @relation(fields: [teamId], references: [id])
+  answers      EvaluationAnswer[]
+}
+
+model Reference {
+  id             String @id @default(uuid())
+  evaluatorId    String
+  referencedId   String
+  theme          String
+  justification  String
+
+  evaluator      User @relation("RefEvaluator", fields: [evaluatorId], references: [id])
+  referenced     User @relation("RefReferenced", fields: [referencedId], references: [id])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         Role
+  positionId   String
+  managerId    String?
+
+  position     Position @relation(fields: [positionId], references: [id])
+  manager      User?    @relation("Manager", fields: [managerId], references: [id])
+  subordinates User[]   @relation("Manager")
+
+  evaluationsGiven    Evaluation[] @relation("Evaluator")
+  evaluationsReceived Evaluation[] @relation("Evaluated")
+  teamMemberships     TeamMember[]
+  auditLogs           AuditLog[]
+  referencesGiven     Reference[] @relation("RefEvaluator")
+  referencesReceived  Reference[] @relation("RefReferenced")
+  scorePerCycle       ScorePerCycle[]
+  genaiInsights       GenaiInsight[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  table     String
+  timestamp DateTime @default(now())
+  metadata  Json
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model GenaiInsight {
+  id            String   @id @default(uuid())
+  cycleId       String
+  evaluatedId   String
+  summary       String
+  discrepancies String
+  brutalFacts   String
+
+  cycle         EvaluationCycle @relation(fields: [cycleId], references: [id])
+  evaluated     User            @relation(fields: [evaluatedId], references: [id])
+}
+
+model EvaluationCycle {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+
+  evaluations   Evaluation[]
+  insights      GenaiInsight[]
+  scores        ScorePerCycle[]
+}
+
+model ScorePerCycle {
+  id         String   @id @default(uuid())
+  userId     String
+  cycleId    String
+  score      Float
+  feedback   String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  cycle      EvaluationCycle @relation(fields: [cycleId], references: [id])
+}
+
+enum CriterionType {
+  HABILIDADES
+  VALORES
+  METAS
+}
+
+enum EvaluationType {
+  AUTO
+  LIDER
+  PAR
+}
+
+enum Role {
+  COLABORADOR
+  LIDER
+  COMITE
+  RH
+}
+
+enum TrackType {
+  DESENVOLVIMENTO
+  DESIGN
+  FINANCEIRO
+}
+
+// add this block only if using Prisma 4.0+ and seeding in TypeScript
+// if your Prisma is >= v4.7.0+, this is supported
+
+// (skip this if already configured in a `prisma/seed.ts`)
