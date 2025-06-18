@@ -82,6 +82,7 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "positionId" TEXT NOT NULL,
     "managerId" TEXT,
@@ -125,8 +126,11 @@ CREATE TABLE "ScorePerCycle" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "cycleId" TEXT NOT NULL,
-    "score" REAL NOT NULL,
-    "feedback" TEXT NOT NULL,
+    "selfScore" REAL NOT NULL,
+    "leaderScore" REAL,
+    "peerScore" REAL,
+    "finalScore" REAL,
+    "feedback" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "ScorePerCycle_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "ScorePerCycle_cycleId_fkey" FOREIGN KEY ("cycleId") REFERENCES "EvaluationCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -134,3 +138,6 @@ CREATE TABLE "ScorePerCycle" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ScorePerCycle_userId_cycleId_key" ON "ScorePerCycle"("userId", "cycleId");
