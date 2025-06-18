@@ -55,11 +55,7 @@ export class EvaluationService {
         avaliador,
       );
 
-     
-      await this.validateTeamMembership(
-        criarAvaliacaoDto.evaluatedId,
-        equipe,
-      );
+      await this.validateTeamMembership(criarAvaliacaoDto.evaluatedId, equipe);
 
       // Verificar se já existe uma avaliação para esta combinação
       const avaliacaoExistente = await this.prisma.evaluation.findFirst({
@@ -279,7 +275,6 @@ export class EvaluationService {
 
       await Promise.all(validacoes);
 
-    
       if (atualizarAvaliacaoDto.completed === true) {
         const avaliado = await this.prisma.user.findUnique({
           where: { id: avaliacaoExistente.evaluatedId },
@@ -363,7 +358,6 @@ export class EvaluationService {
     }
   }
 
-  
   private async validateHierarchy(
     evaluatorId: string,
     evaluatedId: string,
@@ -402,11 +396,11 @@ export class EvaluationService {
           'Avaliação de líder não pode ser uma auto-avaliação',
         );
       }
-      
+
       const isSubordinate = avaliador.subordinates?.some(
         (sub: any) => sub.id === evaluatedId,
       );
-      
+
       if (!isSubordinate) {
         throw new BadRequestException(
           'Líder só pode avaliar seus subordinados diretos',
@@ -423,7 +417,7 @@ export class EvaluationService {
     const isMember = equipe.members?.some(
       (member: any) => member.userId === evaluatedId,
     );
-    
+
     if (!isMember) {
       throw new BadRequestException(
         'Usuário avaliado deve ser membro da equipe especificada',
@@ -431,31 +425,34 @@ export class EvaluationService {
     }
   }
 
-
   private async validateCompleteness(
     evaluationId: string,
     teamId: string,
     positionId: string,
   ): Promise<boolean> {
-    const criteriosObrigatorios = await this.prisma.criteriaAssignment.findMany({
-      where: {
-        teamId,
-        positionId,
+    const criteriosObrigatorios = await this.prisma.criteriaAssignment.findMany(
+      {
+        where: {
+          teamId,
+          positionId,
+        },
+        include: {
+          criterion: true,
+        },
       },
-      include: {
-        criterion: true,
-      },
-    });
+    );
 
     const respostasExistentes = await this.prisma.evaluationAnswer.findMany({
       where: { evaluationId },
     });
 
-    const criteriosRespondidos = respostasExistentes.map(r => r.criterionId);
-    const criteriosObrigatoriosIds = criteriosObrigatorios.map(c => c.criterionId);
-    
+    const criteriosRespondidos = respostasExistentes.map((r) => r.criterionId);
+    const criteriosObrigatoriosIds = criteriosObrigatorios.map(
+      (c) => c.criterionId,
+    );
+
     const criteriosFaltantes = criteriosObrigatoriosIds.filter(
-      id => !criteriosRespondidos.includes(id),
+      (id) => !criteriosRespondidos.includes(id),
     );
 
     return criteriosFaltantes.length === 0;
