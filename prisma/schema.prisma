@@ -157,15 +157,22 @@ model EvaluationCycle {
 }
 
 model ScorePerCycle {
-  id         String   @id @default(uuid())
-  userId     String
-  cycleId    String
-  score      Float
-  feedback   String
-  createdAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  userId       String
+  cycleId      String
 
-  user       User     @relation(fields: [userId], references: [id])
-  cycle      EvaluationCycle @relation(fields: [cycleId], references: [id])
+  selfScore    Float    // Nota da autoavaliação (AUTO)
+  leaderScore  Float?   // Nota do líder (LIDER)
+  peerScore    Float?   // Nota dos colegas (PAR)
+  finalScore  Float?   // Nota do comitê (COMITE)
+
+  feedback     String?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+  cycle        EvaluationCycle @relation(fields: [cycleId], references: [id])
+
+  @@unique([userId, cycleId])
 }
 
 enum CriterionType {
