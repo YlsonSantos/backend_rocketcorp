@@ -57,7 +57,7 @@ export class UsersService {
       select: {
         cycleId: true,
         selfScore: true,
-        peerScore: true,
+        peerScores: true,
         leaderScore: true,
         finalScore: true,
         feedback: true,

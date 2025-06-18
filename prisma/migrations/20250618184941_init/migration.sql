@@ -128,7 +128,6 @@ CREATE TABLE "ScorePerCycle" (
     "cycleId" TEXT NOT NULL,
     "selfScore" REAL NOT NULL,
     "leaderScore" REAL,
-    "peerScore" REAL,
     "finalScore" REAL,
     "feedback" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -136,8 +135,19 @@ CREATE TABLE "ScorePerCycle" (
     CONSTRAINT "ScorePerCycle_cycleId_fkey" FOREIGN KEY ("cycleId") REFERENCES "EvaluationCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
+-- CreateTable
+CREATE TABLE "PeerScore" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "scorePerCycleId" TEXT NOT NULL,
+    "value" REAL NOT NULL,
+    CONSTRAINT "PeerScore_scorePerCycleId_fkey" FOREIGN KEY ("scorePerCycleId") REFERENCES "ScorePerCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ScorePerCycle_userId_cycleId_key" ON "ScorePerCycle"("userId", "cycleId");
+
+-- CreateIndex
+CREATE INDEX "PeerScore_scorePerCycleId_idx" ON "PeerScore"("scorePerCycleId");
