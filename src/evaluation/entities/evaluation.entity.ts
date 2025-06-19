@@ -42,11 +42,16 @@ export class Evaluation {
 
   @ApiProperty({ required: false, description: 'Dados da equipe' })
   team?: any;
-
   @ApiProperty({
     required: false,
     isArray: true,
     description: 'Respostas da avaliação',
   })
   answers?: any[];
+
+  @ApiProperty({
+    required: false,
+    description: 'Score do ciclo para o usuário avaliado',
+  })
+  scorePerCycle?: any;
 }

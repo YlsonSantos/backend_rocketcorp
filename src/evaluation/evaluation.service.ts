@@ -66,23 +66,70 @@ export class EvaluationService {
           type: criarAvaliacaoDto.type,
         },
       });
-
       if (avaliacaoExistente) {
         throw new BadRequestException(
           'Já existe uma avaliação para esta combinação',
         );
       }
 
-      return await this.prisma.evaluation.create({
-        data: {
-          type: criarAvaliacaoDto.type,
-          cycleId: criarAvaliacaoDto.cycleId,
-          evaluatorId: criarAvaliacaoDto.evaluatorId,
-          evaluatedId: criarAvaliacaoDto.evaluatedId,
-          teamId: criarAvaliacaoDto.teamId,
-          completed: criarAvaliacaoDto.completed ?? false,
-        },
+      // Criar a avaliação e ScorePerCycle em uma transação
+      const novaAvaliacao = await this.prisma.$transaction(async (prisma) => {
+        // Criar a avaliação
+        const avaliacao = await prisma.evaluation.create({
+          data: {
+            type: criarAvaliacaoDto.type,
+            cycleId: criarAvaliacaoDto.cycleId,
+            evaluatorId: criarAvaliacaoDto.evaluatorId,
+            evaluatedId: criarAvaliacaoDto.evaluatedId,
+            teamId: criarAvaliacaoDto.teamId,
+            completed: criarAvaliacaoDto.completed ?? false,
+          },
+          include: {
+            cycle: {
+              select: {
+                id: true,
+                name: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
+            evaluator: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+            evaluated: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+            team: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        // Criar ScorePerCycle para o usuário avaliado
+        await this.criarScorePerCycleParaAvaliacao(
+          prisma,
+          avaliacao.id,
+          criarAvaliacaoDto.evaluatedId,
+          criarAvaliacaoDto.cycleId,
+        );
+
+        return avaliacao;
       });
+
+      return novaAvaliacao;
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -189,7 +236,16 @@ export class EvaluationService {
         throw new NotFoundException('Avaliação não encontrada');
       }
 
-      return avaliacao;
+      const scorePerCycle = await this.prisma.scorePerCycle.findFirst({
+        where: {
+          userId: avaliacao.evaluatedId,
+          cycleId: avaliacao.cycleId,
+        },
+      });
+      return {
+        ...avaliacao,
+        scorePerCycle,
+      } as any;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -203,7 +259,6 @@ export class EvaluationService {
     atualizarAvaliacaoDto: UpdateEvaluationDto,
   ): Promise<Evaluation> {
     try {
-      // Verificar se a avaliação existe
       const avaliacaoExistente = await this.prisma.evaluation.findUnique({
         where: { id },
       });
@@ -212,7 +267,6 @@ export class EvaluationService {
         throw new NotFoundException('Avaliação não encontrada');
       }
 
-      // Validar entidades referenciadas se estão sendo atualizadas
       const validacoes = [];
 
       if (atualizarAvaliacaoDto.cycleId) {
@@ -329,14 +383,11 @@ export class EvaluationService {
         throw new NotFoundException('Avaliação não encontrada');
       }
 
-      // Usar transação para garantir consistência dos dados
       await this.prisma.$transaction(async (prisma) => {
-        // Deletar respostas de avaliação primeiro
         await prisma.evaluationAnswer.deleteMany({
           where: { evaluationId: id },
         });
 
-        // Depois deletar a avaliação
         await prisma.evaluation.delete({
           where: { id },
         });
@@ -346,6 +397,75 @@ export class EvaluationService {
         throw error;
       }
       throw new InternalServerErrorException('Falha ao deletar avaliação');
+    }
+  }
+
+  async buscarCriteriosPorEquipe(teamId: string) {
+    try {
+      const equipe = await this.prisma.team.findUnique({
+        where: { id: teamId },
+      });
+
+      if (!equipe) {
+        throw new NotFoundException('Equipe não encontrada');
+      }
+
+      const criterios = await this.prisma.criteriaAssignment.findMany({
+        where: { teamId: teamId },
+        include: {
+          criterion: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              type: true,
+            },
+          },
+        },
+        orderBy: {
+          criterion: {
+            type: 'asc',
+          },
+        },
+      });
+
+      return {
+        team: {
+          id: equipe.id,
+          name: equipe.name,
+        },
+        criteria: criterios.map((item) => item.criterion),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao buscar critérios da equipe');
+    }
+  }
+  private async criarScorePerCycleParaAvaliacao(
+    prisma: any,
+    evaluationId: string,
+    userId: string,
+    cycleId: string,
+  ): Promise<void> {
+    const scoreExistente = await prisma.scorePerCycle.findFirst({
+      where: {
+        userId: userId,
+        cycleId: cycleId,
+      },
+    });
+    if (!scoreExistente) {
+      await prisma.scorePerCycle.create({
+        data: {
+          userId: userId,
+          cycleId: cycleId,
+          selfScore: 0.0,
+          leaderScore: null,
+          finalScore: null,
+          feedback: 'Avaliação em andamento...',
+        },
+      });
     }
   }
 
@@ -456,5 +576,191 @@ export class EvaluationService {
     );
 
     return criteriosFaltantes.length === 0;
+  }
+
+  async atualizarLeaderScore(
+    userId: string,
+    cycleId: string,
+    leaderScore: number,
+    feedback?: string,
+  ): Promise<any> {
+    try {
+      const scorePerCycle = await this.prisma.scorePerCycle.findFirst({
+        where: { userId, cycleId },
+      });
+
+      if (!scorePerCycle) {
+        throw new NotFoundException('ScorePerCycle não encontrado');
+      }
+      return await (this.prisma.scorePerCycle as any).update({
+        where: { id: scorePerCycle.id },
+        data: {
+          leaderScore,
+          feedback: feedback || scorePerCycle.feedback,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          cycle: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          peerScores: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Falha ao atualizar leader score');
+    }
+  }
+
+  async atualizarFinalScore(
+    userId: string,
+    cycleId: string,
+    finalScore: number,
+    feedback?: string,
+  ): Promise<any> {
+    try {
+      const scorePerCycle = await this.prisma.scorePerCycle.findFirst({
+        where: { userId, cycleId },
+      });
+
+      if (!scorePerCycle) {
+        throw new NotFoundException('ScorePerCycle não encontrado');
+      }
+      return await (this.prisma.scorePerCycle as any).update({
+        where: { id: scorePerCycle.id },
+        data: {
+          finalScore,
+          feedback: feedback || scorePerCycle.feedback,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          cycle: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          peerScores: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Falha ao atualizar final score');
+    }
+  }
+
+  async adicionarPeerScore(
+    userId: string,
+    cycleId: string,
+    peerScore: number,
+  ): Promise<any> {
+    try {
+      const scorePerCycle = await this.prisma.scorePerCycle.findFirst({
+        where: { userId, cycleId },
+      });
+
+      if (!scorePerCycle) {
+        throw new NotFoundException('ScorePerCycle não encontrado');
+      }
+      await (this.prisma as any).peerScore.create({
+        data: {
+          scorePerCycleId: scorePerCycle.id,
+          value: peerScore,
+        },
+      });
+
+      return await (this.prisma.scorePerCycle as any).findUnique({
+        where: { id: scorePerCycle.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          cycle: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          peerScores: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Falha ao adicionar peer score');
+    }
+  }
+
+  async atualizarSelfScore(
+    userId: string,
+    cycleId: string,
+    selfScore: number,
+  ): Promise<any> {
+    try {
+      const scorePerCycle = await this.prisma.scorePerCycle.findFirst({
+        where: { userId, cycleId },
+      });
+
+      if (!scorePerCycle) {
+        throw new NotFoundException('ScorePerCycle não encontrado');
+      }
+      return await (this.prisma.scorePerCycle as any).update({
+        where: { id: scorePerCycle.id },
+        data: { selfScore },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          cycle: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          peerScores: true,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Falha ao atualizar self score');
+    }
   }
 }
