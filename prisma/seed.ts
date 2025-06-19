@@ -32,6 +32,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos2',
         managerId: 'user3',
+        mentorId: 'user1', // 👈 Alice é mentora
       },
       {
         id: 'user3',
@@ -59,6 +60,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos1',
         managerId: 'user3',
+        mentorId: 'user4',
       },
 
       // Team Beta
@@ -79,6 +81,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos5',
         managerId: 'user8',
+        mentorId: 'user6',
       },
       {
         id: 'user8',
@@ -106,6 +109,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos2',
         managerId: 'user8',
+        mentorId: 'user9',
       },
     ],
   });
@@ -427,6 +431,43 @@ async function main() {
         summary: 'Fabiana é muito engajada',
         discrepancies: 'Pequenas divergências em prazos',
         brutalFacts: 'Excelente comunicação',
+      },
+    ],
+  });
+  await prisma.mentorshipEvaluation.createMany({
+    data: [
+      {
+        id: 'eval1',
+        mentorId: 'user1',
+        menteeId: 'user2',
+        cycleId: 'cycle1',
+        score: 8.0,
+        feedback: 'Bruno tem se mostrado bem dedicado.',
+      },
+      {
+        id: 'eval2',
+        mentorId: 'user4',
+        menteeId: 'user5',
+        cycleId: 'cycle1',
+        score: 7.5,
+        feedback:
+          'Eduardo está evoluindo bem, mas pode melhorar na comunicação.',
+      },
+      {
+        id: 'eval3',
+        mentorId: 'user6',
+        menteeId: 'user7',
+        cycleId: 'cycle1',
+        score: 9.0,
+        feedback: 'Gabriel tem excelente iniciativa.',
+      },
+      {
+        id: 'eval4',
+        mentorId: 'user9',
+        menteeId: 'user10',
+        cycleId: 'cycle1',
+        score: 8.5,
+        feedback: 'Julia é muito comprometida com as entregas.',
       },
     ],
   });

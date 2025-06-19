@@ -13,6 +13,9 @@ export class AuthService {
   async validateUser(loginUserDto: LoginUserDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: loginUserDto.email },
+      include: {
+        mentorado: { select: { id: true } },
+      },
     });
     if (user && user.password === loginUserDto.password) {
       return user;
@@ -31,6 +34,7 @@ export class AuthService {
       role: user.role,
       name: user.name,
       userId: user.id,
+      mentorOf: user.mentorado?.id ?? null,
     };
   }
 }

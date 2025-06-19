@@ -5,6 +5,7 @@ import { EvaluationModule } from './evaluation/evaluation.module';
 import { ReferencesModule } from './references/references.module';
 import { UsersModule } from './users/users.module';
 import { ScoreCycleModule } from './score-cycle/score-cycle.module';
+import { MentoringModule } from './mentoring/mentoring.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ScoreCycleModule } from './score-cycle/score-cycle.module';
     ReferencesModule,
     UsersModule,
     ScoreCycleModule,
+    MentoringModule,
   ],
 })
 export class AppModule {}
