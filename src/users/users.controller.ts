@@ -66,4 +66,14 @@ export class UsersController {
   findCompletedEvaluations(@Param('id') id: string) {
     return this.usersService.findCompletedEvaluationsByCycle(id);
   }
+
+  @Get(':id/evolutions')
+  @ApiOperation({ summary: 'Lista as evoluções do usuário' })
+  @ApiResponse({
+    status: 200,
+    description: 'Evoluções do usuário retornadas com sucesso',
+  })
+  findEvolutions(@Param('id') id: string) {
+    return this.usersService.findEvolutionsByUserId(id);
+  }
 }

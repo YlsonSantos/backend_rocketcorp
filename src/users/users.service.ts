@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-//import { CycleGroup, EvaluationOutput } from './typesPrisma';
+import { CycleGroup, EvaluationOutput } from './typesPrisma';
 
 @Injectable()
 export class UsersService {
@@ -67,12 +67,12 @@ export class UsersService {
     return scores;
   }
 
-  /*
-  async findCompletedEvaluationsByCycle(userId: string): Promise<CycleGroup[]> {
+  async findEvolutionsByUserId(userId: string): Promise<CycleGroup[]> {
     const evaluations = await this.prisma.evaluation.findMany({
       where: {
         evaluatedId: userId,
         completed: true,
+        type: 'AUTO',
       },
       include: {
         cycle: true,
@@ -137,7 +137,6 @@ export class UsersService {
             scorePerCycle: score
               ? {
                   selfScore: score.selfScore,
-                  peerScore: score.peerScore,
                   leaderScore: score.leaderScore,
                   finalScore: score.finalScore,
                   feedback: score.feedback,
@@ -173,5 +172,4 @@ export class UsersService {
 
     return groupedByCycle;
   }
-    */
 }
