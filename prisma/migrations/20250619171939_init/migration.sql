@@ -86,6 +86,8 @@ CREATE TABLE "User" (
     "role" TEXT NOT NULL,
     "positionId" TEXT NOT NULL,
     "managerId" TEXT,
+    "mentorId" TEXT,
+    CONSTRAINT "User_mentorId_fkey" FOREIGN KEY ("mentorId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "User_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "Position" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "User_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -143,11 +145,31 @@ CREATE TABLE "PeerScore" (
     CONSTRAINT "PeerScore_scorePerCycleId_fkey" FOREIGN KEY ("scorePerCycleId") REFERENCES "ScorePerCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
+-- CreateTable
+CREATE TABLE "MentorshipEvaluation" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "mentorId" TEXT NOT NULL,
+    "menteeId" TEXT NOT NULL,
+    "cycleId" TEXT NOT NULL,
+    "score" REAL NOT NULL,
+    "feedback" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "MentorshipEvaluation_mentorId_fkey" FOREIGN KEY ("mentorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "MentorshipEvaluation_menteeId_fkey" FOREIGN KEY ("menteeId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "MentorshipEvaluation_cycleId_fkey" FOREIGN KEY ("cycleId") REFERENCES "EvaluationCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_mentorId_key" ON "User"("mentorId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ScorePerCycle_userId_cycleId_key" ON "ScorePerCycle"("userId", "cycleId");
 
 -- CreateIndex
 CREATE INDEX "PeerScore_scorePerCycleId_idx" ON "PeerScore"("scorePerCycleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "MentorshipEvaluation_mentorId_menteeId_cycleId_key" ON "MentorshipEvaluation"("mentorId", "menteeId", "cycleId");
