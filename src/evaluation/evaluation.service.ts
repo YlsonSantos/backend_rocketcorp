@@ -400,6 +400,133 @@ export class EvaluationService {
     }
   }
 
+  async buscarMembrosEquipe(userId: string) {
+    try {
+      // Buscar o usuário atual
+      const usuarioAtual = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          role: true,
+        },
+      });
+
+      if (!usuarioAtual) {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+
+      // Buscar a equipe do usuário
+      const teamMember = await this.prisma.teamMember.findFirst({
+        where: { userId: userId },
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!teamMember) {
+        throw new NotFoundException('Usuário não pertence a nenhuma equipe');
+      }
+
+      // Buscar todos os membros da equipe
+      const membrosEquipe = await this.prisma.teamMember.findMany({
+        where: {
+          teamId: teamMember.team.id,
+          userId: { not: userId }, // Excluir o próprio usuário da lista
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              position: {
+                select: {
+                  id: true,
+                  name: true,
+                  track: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          user: {
+            name: 'asc',
+          },
+        },
+      });
+
+      // Verificar se o usuário já avaliou cada membro no ciclo atual
+      const cicloAtual = await this.prisma.evaluationCycle.findFirst({
+        where: {
+          startDate: { lte: new Date() },
+          endDate: { gte: new Date() },
+        },
+      });
+
+      const membrosComStatus = await Promise.all(
+        membrosEquipe.map(async (membro) => {
+          let hasEvaluated = false;
+
+          if (cicloAtual) {
+            const avaliacaoExistente = await this.prisma.evaluation.findFirst({
+              where: {
+                evaluatorId: userId,
+                evaluatedId: membro.user.id,
+                cycleId: cicloAtual.id,
+                teamId: teamMember.team.id,
+              },
+            });
+            hasEvaluated = !!avaliacaoExistente;
+          }
+
+          return {
+            id: membro.user.id,
+            name: membro.user.name,
+            email: membro.user.email,
+            role: membro.user.role,
+            position: membro.user.position,
+            canEvaluate: true, // Pode ser customizado com regras de negócio
+            hasEvaluated,
+          };
+        }),
+      );
+
+      return {
+        currentUser: {
+          id: usuarioAtual.id,
+          name: usuarioAtual.name,
+          role: usuarioAtual.role,
+        },
+        team: {
+          id: teamMember.team.id,
+          name: teamMember.team.name,
+        },
+        members: membrosComStatus,
+        currentCycle: cicloAtual
+          ? {
+              id: cicloAtual.id,
+              name: cicloAtual.name,
+              startDate: cicloAtual.startDate,
+              endDate: cicloAtual.endDate,
+            }
+          : null,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao buscar membros da equipe');
+    }
+  }
+
   async buscarCriteriosPorUsuario(userId: string) {
     try {
       // Buscar o usuário
