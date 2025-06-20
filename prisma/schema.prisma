@@ -29,6 +29,7 @@ model CriteriaAssignment {
   criterionId String
   teamId      String
   positionId  String
+  isRequired  Boolean  @default(false)
 
   criterion   EvaluationCriterion @relation(fields: [criterionId], references: [id])
   team        Team      @relation(fields: [teamId], references: [id])
@@ -108,6 +109,10 @@ model User {
   positionId   String
   managerId    String?
 
+  mentorId     String?  @unique
+  mentor       User?    @relation("Mentoria", fields: [mentorId], references: [id])
+  mentorado    User?    @relation("Mentoria")
+
   position     Position @relation(fields: [positionId], references: [id])
   manager      User?    @relation("Manager", fields: [managerId], references: [id])
   subordinates User[]   @relation("Manager")
@@ -120,6 +125,9 @@ model User {
   referencesReceived  Reference[] @relation("RefReferenced")
   scorePerCycle       ScorePerCycle[]
   genaiInsights       GenaiInsight[]
+
+  mentorEvaluations   MentorshipEvaluation[] @relation("MentorEvaluation")
+  menteeEvaluations   MentorshipEvaluation[] @relation("MenteeEvaluation")
 }
 
 model AuditLog {
@@ -154,6 +162,9 @@ model EvaluationCycle {
   evaluations   Evaluation[]
   insights      GenaiInsight[]
   scores        ScorePerCycle[]
+
+  mentorshipEvaluations MentorshipEvaluation[]
+
 }
 
 model ScorePerCycle {
@@ -161,9 +172,9 @@ model ScorePerCycle {
   userId       String
   cycleId      String
 
-  selfScore    Float    // Nota da autoavaliação (AUTO)
-  leaderScore  Float?   // Nota do líder (LIDER)
-  finalScore  Float?   // Nota do comitê (COMITE)
+  selfScore    Float   
+  leaderScore  Float?  
+  finalScore  Float?   
 
   feedback     String?
   createdAt    DateTime @default(now())
@@ -184,6 +195,22 @@ model PeerScore {
   scorePerCycle  ScorePerCycle @relation(fields: [scorePerCycleId], references: [id])
 
   @@index([scorePerCycleId])
+}
+
+model MentorshipEvaluation {
+  id          String   @id @default(uuid())
+  mentorId    String
+  menteeId    String
+  cycleId     String
+  score       Float
+  feedback    String
+  createdAt   DateTime @default(now())
+
+  mentor      User            @relation("MentorEvaluation", fields: [mentorId], references: [id])
+  mentee      User            @relation("MenteeEvaluation", fields: [menteeId], references: [id])
+  cycle       EvaluationCycle @relation(fields: [cycleId], references: [id])
+
+  @@unique([mentorId, menteeId, cycleId])
 }
 
 enum CriterionType {

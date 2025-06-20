@@ -57,13 +57,23 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Get(':id/completed-evaluations')
+  @Get(':id/evaluationsPerCycle')
   @ApiOperation({ summary: 'Lista os ciclos completados pelo usuário' })
   @ApiResponse({
     status: 200,
     description: 'Avaliações completadas retornadas com sucesso',
   })
   findCompletedEvaluations(@Param('id') id: string) {
-    return this.usersService.findCompletedEvaluationsByCycle(id);
+    return this.usersService.findEvaluationsByCycle(id);
+  }
+
+  @Get(':id/evolutions')
+  @ApiOperation({ summary: 'Lista as notas do usuário por ciclo' })
+  @ApiResponse({
+    status: 200,
+    description: 'Informações necessárias para página de evoluções',
+  })
+  findEvolutions(@Param('id') id: string) {
+    return this.usersService.findEvolutionsByUserId(id);
   }
 }

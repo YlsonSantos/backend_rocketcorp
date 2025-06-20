@@ -32,6 +32,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos2',
         managerId: 'user3',
+        mentorId: 'user1', // 👈 Alice é mentora
       },
       {
         id: 'user3',
@@ -59,6 +60,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos1',
         managerId: 'user3',
+        mentorId: 'user4',
       },
 
       // Team Beta
@@ -79,6 +81,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos5',
         managerId: 'user8',
+        mentorId: 'user6',
       },
       {
         id: 'user8',
@@ -106,6 +109,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos2',
         managerId: 'user8',
+        mentorId: 'user9',
       },
     ],
   });
@@ -152,6 +156,12 @@ async function main() {
         name: 'Cycle Q3 2025',
         startDate: new Date('2025-07-01'),
         endDate: new Date('2025-09-30'),
+      },
+      {
+        id: 'cycle4',
+        name: 'Cycle Q4 2025',
+        startDate: new Date('2025-05-01'),
+        endDate: new Date('2025-10-30'),
       },
     ],
   });
@@ -204,11 +214,41 @@ async function main() {
         createdAt: new Date(),
         completed: true,
       },
+      {
+        id: 'eval11',
+        type: 'LIDER',
+        cycleId: 'cycle2',
+        evaluatorId: 'user3',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
       // Autoavaliação Alice
       {
         id: 'eval2',
         type: 'AUTO',
         cycleId: 'cycle1',
+        evaluatorId: 'user1',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
+      {
+        id: 'eval22',
+        type: 'AUTO',
+        cycleId: 'cycle2',
+        evaluatorId: 'user1',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
+      {
+        id: 'eval223',
+        type: 'AUTO',
+        cycleId: 'cycle3',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -280,6 +320,20 @@ async function main() {
         score: 5,
         justification: 'Sempre proativa e com iniciativa.',
       },
+      {
+        id: 'ans111',
+        evaluationId: 'eval11',
+        criterionId: 'crit1',
+        score: 4,
+        justification: 'Colaborou muito bem com o time.',
+      },
+      {
+        id: 'ans21',
+        evaluationId: 'eval11',
+        criterionId: 'crit2',
+        score: 5,
+        justification: 'Sempre proativa e com iniciativa.',
+      },
 
       // Avaliação eval2 (Alice autoavaliação)
       {
@@ -292,6 +346,36 @@ async function main() {
       {
         id: 'ans4',
         evaluationId: 'eval2',
+        criterionId: 'crit2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo2 (Alice autoavaliação)
+      {
+        id: 'ans33',
+        evaluationId: 'eval22',
+        criterionId: 'crit1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans44',
+        evaluationId: 'eval22',
+        criterionId: 'crit2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo3 (Alice autoavaliação)
+      {
+        id: 'ans35',
+        evaluationId: 'eval223',
+        criterionId: 'crit1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans45',
+        evaluationId: 'eval223',
         criterionId: 'crit2',
         score: 4,
         justification: 'Costumo tomar iniciativa em projetos.',
@@ -427,6 +511,43 @@ async function main() {
         summary: 'Fabiana é muito engajada',
         discrepancies: 'Pequenas divergências em prazos',
         brutalFacts: 'Excelente comunicação',
+      },
+    ],
+  });
+  await prisma.mentorshipEvaluation.createMany({
+    data: [
+      {
+        id: 'eval1',
+        mentorId: 'user1',
+        menteeId: 'user2',
+        cycleId: 'cycle1',
+        score: 8.0,
+        feedback: 'Bruno tem se mostrado bem dedicado.',
+      },
+      {
+        id: 'eval2',
+        mentorId: 'user4',
+        menteeId: 'user5',
+        cycleId: 'cycle1',
+        score: 7.5,
+        feedback:
+          'Eduardo está evoluindo bem, mas pode melhorar na comunicação.',
+      },
+      {
+        id: 'eval3',
+        mentorId: 'user6',
+        menteeId: 'user7',
+        cycleId: 'cycle1',
+        score: 9.0,
+        feedback: 'Gabriel tem excelente iniciativa.',
+      },
+      {
+        id: 'eval4',
+        mentorId: 'user9',
+        menteeId: 'user10',
+        cycleId: 'cycle1',
+        score: 8.5,
+        feedback: 'Julia é muito comprometida com as entregas.',
       },
     ],
   });
