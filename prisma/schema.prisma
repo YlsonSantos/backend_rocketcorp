@@ -29,6 +29,7 @@ model CriteriaAssignment {
   criterionId String
   teamId      String
   positionId  String
+  isRequired  Boolean  @default(false)
 
   criterion   EvaluationCriterion @relation(fields: [criterionId], references: [id])
   team        Team      @relation(fields: [teamId], references: [id])
