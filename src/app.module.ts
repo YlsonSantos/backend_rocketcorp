@@ -6,6 +6,7 @@ import { ReferencesModule } from './references/references.module';
 import { UsersModule } from './users/users.module';
 import { ScoreCycleModule } from './score-cycle/score-cycle.module';
 import { MentoringModule } from './mentoring/mentoring.module';
+import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { MentoringModule } from './mentoring/mentoring.module';
     UsersModule,
     ScoreCycleModule,
     MentoringModule,
+    EvaluationCriteriaModule,
   ],
 })
 export class AppModule {}
