@@ -1,13 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateEvaluationDto } from './create-evaluation.dto';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsEnum,
-  IsUUID,
-  IsBoolean,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsEnum, IsBoolean, IsOptional } from 'class-validator';
 import { EvaluationType } from '@prisma/client';
 
 export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
@@ -28,8 +22,7 @@ export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
     example: 'cycle1',
     required: false,
   })
-  @IsString({ message: 'ID do ciclo deve ser uma string' })
-  @IsUUID('4', { message: 'ID do ciclo deve ser um UUID válido' })
+  @IsString({ message: 'ID do ciclo deve ser uma string válida' })
   @IsOptional()
   cycleId?: string;
 
@@ -38,8 +31,7 @@ export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
     example: 'user1',
     required: false,
   })
-  @IsString({ message: 'ID do avaliador deve ser uma string' })
-  @IsUUID('4', { message: 'ID do avaliador deve ser um UUID válido' })
+  @IsString({ message: 'ID do avaliador deve ser uma string válida' })
   @IsOptional()
   evaluatorId?: string;
 
@@ -48,8 +40,7 @@ export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
     example: 'user2',
     required: false,
   })
-  @IsString({ message: 'ID do avaliado deve ser uma string' })
-  @IsUUID('4', { message: 'ID do avaliado deve ser um UUID válido' })
+  @IsString({ message: 'ID do avaliado deve ser uma string válida' })
   @IsOptional()
   evaluatedId?: string;
 
@@ -58,8 +49,7 @@ export class UpdateEvaluationDto extends PartialType(CreateEvaluationDto) {
     example: 'team1',
     required: false,
   })
-  @IsString({ message: 'ID da equipe deve ser uma string' })
-  @IsUUID('4', { message: 'ID da equipe deve ser um UUID válido' })
+  @IsString({ message: 'ID da equipe deve ser uma string válida' })
   @IsOptional()
   teamId?: string;
 

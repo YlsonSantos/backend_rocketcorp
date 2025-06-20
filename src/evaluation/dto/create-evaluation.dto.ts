@@ -2,7 +2,6 @@ import {
   IsString,
   IsNotEmpty,
   IsEnum,
-  IsUUID,
   IsBoolean,
   IsOptional,
 } from 'class-validator';
@@ -25,36 +24,32 @@ export class CreateEvaluationDto {
     description: 'ID do ciclo de avaliação',
     example: 'cycle1',
   })
-  @IsString({ message: 'ID do ciclo deve ser uma string' })
+  @IsString({ message: 'ID do ciclo deve ser uma string válida' })
   @IsNotEmpty({ message: 'ID do ciclo é obrigatório' })
-  @IsUUID('4', { message: 'ID do ciclo deve ser um UUID válido' })
   cycleId: string;
 
   @ApiProperty({
     description: 'ID do usuário avaliador',
     example: 'user1',
   })
-  @IsString({ message: 'ID do avaliador deve ser uma string' })
+  @IsString({ message: 'ID do avaliador deve ser uma string válida' })
   @IsNotEmpty({ message: 'ID do avaliador é obrigatório' })
-  @IsUUID('4', { message: 'ID do avaliador deve ser um UUID válido' })
   evaluatorId: string;
 
   @ApiProperty({
     description: 'ID do usuário avaliado',
     example: 'user2',
   })
-  @IsString({ message: 'ID do avaliado deve ser uma string' })
+  @IsString({ message: 'ID do avaliado deve ser uma string válida' })
   @IsNotEmpty({ message: 'ID do avaliado é obrigatório' })
-  @IsUUID('4', { message: 'ID do avaliado deve ser um UUID válido' })
   evaluatedId: string;
 
   @ApiProperty({
     description: 'ID da equipe',
     example: 'team1',
   })
-  @IsString({ message: 'ID da equipe deve ser uma string' })
+  @IsString({ message: 'ID da equipe deve ser uma string válida' })
   @IsNotEmpty({ message: 'ID da equipe é obrigatório' })
-  @IsUUID('4', { message: 'ID da equipe deve ser um UUID válido' })
   teamId: string;
 
   @ApiProperty({

@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  ParseUUIDPipe,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -23,6 +22,12 @@ import {
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
+import {
+  UpdateLeaderScoreDto,
+  UpdateFinalScoreDto,
+  AddPeerScoreDto,
+  UpdateSelfScoreDto,
+} from './dto/update-score.dto';
 import { Evaluation } from './entities/evaluation.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -77,6 +82,101 @@ export class EvaluationController {
     return await this.evaluationService.buscarTodas();
   }
 
+  @Get('criterios/usuario/:userId')
+  @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
+  @ApiOperation({
+    summary:
+      'Buscar critérios de avaliação por usuário (busca a equipe automaticamente)',
+  })
+  @ApiParam({ name: 'userId', description: 'ID do usuário', type: 'string' })
+  @ApiResponse({
+    status: 200,
+    description: 'Critérios da equipe do usuário recuperados com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        team: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        criteria: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              type: {
+                type: 'string',
+                enum: ['HABILIDADES', 'VALORES', 'METAS'],
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuário não encontrado ou não pertence a nenhuma equipe',
+  })
+  async buscarCriteriosPorUsuario(@Param('userId') userId: string) {
+    return await this.evaluationService.buscarCriteriosPorUsuario(userId);
+  }
+
+  @Get('criterios/time/:teamId')
+  @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
+  @ApiOperation({ summary: 'Buscar critérios de avaliação por equipe' })
+  @ApiParam({ name: 'teamId', description: 'ID da equipe', type: 'string' })
+  @ApiResponse({
+    status: 200,
+    description: 'Critérios da equipe recuperados com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        team: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        criteria: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              type: {
+                type: 'string',
+                enum: ['HABILIDADES', 'VALORES', 'METAS'],
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Equipe não encontrada' })
+  async buscarCriteriosPorEquipe(@Param('teamId') teamId: string) {
+    return await this.evaluationService.buscarCriteriosPorEquipe(teamId);
+  }
+  // pegar por id do usuário e fazer subconsulta por id do time
   @Get(':id')
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({ summary: 'Buscar avaliação por ID' })
@@ -92,9 +192,7 @@ export class EvaluationController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 404, description: 'Avaliação não encontrada' })
-  async buscarPorId(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<Evaluation> {
+  async buscarPorId(@Param('id') id: string): Promise<Evaluation> {
     return await this.evaluationService.buscarPorId(id);
   }
 
@@ -118,7 +216,7 @@ export class EvaluationController {
   })
   @ApiResponse({ status: 404, description: 'Avaliação não encontrada' })
   async atualizar(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() atualizarAvaliacaoDto: UpdateEvaluationDto,
   ): Promise<Evaluation> {
     return await this.evaluationService.atualizar(id, atualizarAvaliacaoDto);
@@ -140,7 +238,79 @@ export class EvaluationController {
   })
   @ApiResponse({ status: 404, description: 'Avaliação não encontrada' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remover(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async remover(@Param('id') id: string): Promise<void> {
     return await this.evaluationService.remover(id);
+  }
+
+  @Patch('score/leader')
+  @Roles('LIDER', 'ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Atualizar score do líder' })
+  @ApiResponse({
+    status: 200,
+    description: 'Score do líder atualizado com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
+  async atualizarLeaderScore(
+    @Body() updateLeaderScoreDto: UpdateLeaderScoreDto,
+  ) {
+    return this.evaluationService.atualizarLeaderScore(
+      updateLeaderScoreDto.userId,
+      updateLeaderScoreDto.cycleId,
+      updateLeaderScoreDto.leaderScore,
+      updateLeaderScoreDto.feedback,
+    );
+  }
+
+  @Patch('score/final')
+  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Atualizar score final (comitê)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Score final atualizado com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
+  async atualizarFinalScore(@Body() updateFinalScoreDto: UpdateFinalScoreDto) {
+    return this.evaluationService.atualizarFinalScore(
+      updateFinalScoreDto.userId,
+      updateFinalScoreDto.cycleId,
+      updateFinalScoreDto.finalScore,
+      updateFinalScoreDto.feedback,
+    );
+  }
+
+  @Post('score/peer')
+  @Roles('COLABORADOR', 'LIDER', 'ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Adicionar peer score' })
+  @ApiResponse({
+    status: 201,
+    description: 'Peer score adicionado com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
+  async adicionarPeerScore(@Body() addPeerScoreDto: AddPeerScoreDto) {
+    return this.evaluationService.adicionarPeerScore(
+      addPeerScoreDto.userId,
+      addPeerScoreDto.cycleId,
+      addPeerScoreDto.peerScore,
+    );
+  }
+
+  @Patch('score/self')
+  @Roles('COLABORADOR', 'LIDER', 'ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiOperation({ summary: 'Atualizar self score' })
+  @ApiResponse({
+    status: 200,
+    description: 'Self score atualizado com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
+  async atualizarSelfScore(@Body() updateSelfScoreDto: UpdateSelfScoreDto) {
+    return this.evaluationService.atualizarSelfScore(
+      updateSelfScoreDto.userId,
+      updateSelfScoreDto.cycleId,
+      updateSelfScoreDto.selfScore,
+    );
   }
 }
