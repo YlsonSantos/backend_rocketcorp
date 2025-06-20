@@ -302,4 +302,4 @@ export class EvaluationCriteriaService {
       await this.createAssignment(criterionId, assignment);
     }
   }
-} 
+}

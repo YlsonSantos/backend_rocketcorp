@@ -49,22 +49,70 @@ export class UsersService {
     });
   }
 
-  async findCompletedEvaluationsByCycle(userId: string) {
-    const scores = await this.prisma.scorePerCycle.findMany({
-      where: {
-        userId: userId,
-      },
+  async findEvaluationsByCycle(userId: string) {
+    // 1. Pega todos os ciclos
+    const allCycles = await this.prisma.evaluationCycle.findMany({
       select: {
-        cycleId: true,
-        selfScore: true,
-        peerScores: true,
-        leaderScore: true,
-        finalScore: true,
-        feedback: true,
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
       },
     });
 
-    return scores;
+    // 2. Pega todos os scores desse usuário
+    const userScores = await this.prisma.scorePerCycle.findMany({
+      where: { userId },
+      select: {
+        cycleId: true,
+        selfScore: true,
+        leaderScore: true,
+        finalScore: true,
+        feedback: true,
+        peerScores: {
+          select: {
+            value: true,
+          },
+        },
+      },
+    });
+
+    // 3. Transforma os scores em um map para acesso rápido
+    const scoreMap = new Map(userScores.map((score) => [score.cycleId, score]));
+
+    // 4. Mescla os dados
+    const merged = allCycles.map((cycle) => {
+      const score = scoreMap.get(cycle.id);
+
+      if (score) {
+        return {
+          cycleId: cycle.id,
+          name: cycle.name,
+          startDate: cycle.startDate,
+          endDate: cycle.endDate,
+          selfScore: score.selfScore,
+          leaderScore: score.leaderScore,
+          finalScore: score.finalScore,
+          feedback: score.feedback,
+          peerScores: score.peerScores.map((p) => p.value),
+        };
+      }
+
+      // Caso não tenha score ainda
+      return {
+        cycleId: cycle.id,
+        name: cycle.name,
+        startDate: cycle.startDate,
+        endDate: cycle.endDate,
+        selfScore: null,
+        leaderScore: null,
+        finalScore: null,
+        feedback: null,
+        peerScores: [],
+      };
+    });
+
+    return merged;
   }
 
   async findEvolutionsByUserId(userId: string): Promise<CycleGroup[]> {
