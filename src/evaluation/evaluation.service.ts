@@ -400,6 +400,77 @@ export class EvaluationService {
     }
   }
 
+  async buscarCriteriosPorUsuario(userId: string) {
+    try {
+      // Buscar o usuário
+      const usuario = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      if (!usuario) {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+
+      // Buscar a equipe do usuário
+      const teamMember = await this.prisma.teamMember.findFirst({
+        where: { userId: userId },
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      if (!teamMember) {
+        throw new NotFoundException('Usuário não pertence a nenhuma equipe');
+      }
+
+      // Buscar critérios da equipe
+      const criterios = await this.prisma.criteriaAssignment.findMany({
+        where: { teamId: teamMember.team.id },
+        include: {
+          criterion: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              type: true,
+            },
+          },
+        },
+        orderBy: {
+          criterion: {
+            type: 'asc',
+          },
+        },
+      });
+
+      return {
+        user: {
+          id: usuario.id,
+          name: usuario.name,
+        },
+        team: {
+          id: teamMember.team.id,
+          name: teamMember.team.name,
+        },
+        criteria: criterios.map((item) => item.criterion),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao buscar critérios do usuário');
+    }
+  }
+
   async buscarCriteriosPorEquipe(teamId: string) {
     try {
       const equipe = await this.prisma.team.findUnique({
