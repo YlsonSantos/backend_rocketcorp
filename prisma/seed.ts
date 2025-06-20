@@ -157,6 +157,12 @@ async function main() {
         startDate: new Date('2025-07-01'),
         endDate: new Date('2025-09-30'),
       },
+      {
+        id: 'cycle4',
+        name: 'Cycle Q4 2025',
+        startDate: new Date('2025-05-01'),
+        endDate: new Date('2025-10-30'),
+      },
     ],
   });
 
@@ -208,11 +214,41 @@ async function main() {
         createdAt: new Date(),
         completed: true,
       },
+      {
+        id: 'eval11',
+        type: 'LIDER',
+        cycleId: 'cycle2',
+        evaluatorId: 'user3',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
       // Autoavaliação Alice
       {
         id: 'eval2',
         type: 'AUTO',
         cycleId: 'cycle1',
+        evaluatorId: 'user1',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
+      {
+        id: 'eval22',
+        type: 'AUTO',
+        cycleId: 'cycle2',
+        evaluatorId: 'user1',
+        evaluatedId: 'user1',
+        teamId: 'team1',
+        createdAt: new Date(),
+        completed: true,
+      },
+      {
+        id: 'eval223',
+        type: 'AUTO',
+        cycleId: 'cycle3',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -284,6 +320,20 @@ async function main() {
         score: 5,
         justification: 'Sempre proativa e com iniciativa.',
       },
+      {
+        id: 'ans111',
+        evaluationId: 'eval11',
+        criterionId: 'crit1',
+        score: 4,
+        justification: 'Colaborou muito bem com o time.',
+      },
+      {
+        id: 'ans21',
+        evaluationId: 'eval11',
+        criterionId: 'crit2',
+        score: 5,
+        justification: 'Sempre proativa e com iniciativa.',
+      },
 
       // Avaliação eval2 (Alice autoavaliação)
       {
@@ -296,6 +346,36 @@ async function main() {
       {
         id: 'ans4',
         evaluationId: 'eval2',
+        criterionId: 'crit2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo2 (Alice autoavaliação)
+      {
+        id: 'ans33',
+        evaluationId: 'eval22',
+        criterionId: 'crit1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans44',
+        evaluationId: 'eval22',
+        criterionId: 'crit2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo3 (Alice autoavaliação)
+      {
+        id: 'ans35',
+        evaluationId: 'eval223',
+        criterionId: 'crit1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans45',
+        evaluationId: 'eval223',
         criterionId: 'crit2',
         score: 4,
         justification: 'Costumo tomar iniciativa em projetos.',

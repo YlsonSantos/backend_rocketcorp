@@ -309,4 +309,4 @@ export class EvaluationCriteriaController {
   ): Promise<void> {
     return await this.evaluationCriteriaService.removeAssignment(assignmentId);
   }
-} 
+}

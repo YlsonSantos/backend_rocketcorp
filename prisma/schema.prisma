@@ -172,9 +172,9 @@ model ScorePerCycle {
   userId       String
   cycleId      String
 
-  selfScore    Float    // Nota da autoavaliação (AUTO)
-  leaderScore  Float?   // Nota do líder (LIDER)
-  finalScore  Float?   // Nota do comitê (COMITE)
+  selfScore    Float   
+  leaderScore  Float?  
+  finalScore  Float?   
 
   feedback     String?
   createdAt    DateTime @default(now())
