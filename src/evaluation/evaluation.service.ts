@@ -402,7 +402,7 @@ export class EvaluationService {
 
   async buscarMembrosEquipe(userId: string) {
     try {
-      // Buscar o usuário atual
+      
       const usuarioAtual = await this.prisma.user.findUnique({
         where: { id: userId },
         select: {
