@@ -28,7 +28,7 @@ export type EvaluationWithRelations = Evaluation & {
 export interface EvaluationOutput {
   evaluationId: string;
   completedAt: Date;
-  evaluationType: EvaluationType; // <-- adiciona aqui
+  evaluationType: EvaluationType;
   evaluatedUser: {
     id: string;
     name: string;
