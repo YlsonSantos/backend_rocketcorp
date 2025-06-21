@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+//import { CreateUserDto } from './dto/create-user.dto';
+//import { UpdateUserDto } from './dto/update-user.dto';
 import { CycleGroup, EvaluationOutput } from './typesPrisma';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
-
+  /*
   create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: createUserDto,
@@ -47,10 +47,9 @@ export class UsersService {
     return this.prisma.user.delete({
       where: { id },
     });
-  }
+  }*/
 
   async findEvaluationsByCycle(userId: string) {
-    // 1. Pega todos os ciclos
     const allCycles = await this.prisma.evaluationCycle.findMany({
       select: {
         id: true,
@@ -60,7 +59,6 @@ export class UsersService {
       },
     });
 
-    // 2. Pega todos os scores desse usuário
     const userScores = await this.prisma.scorePerCycle.findMany({
       where: { userId },
       select: {
@@ -77,10 +75,8 @@ export class UsersService {
       },
     });
 
-    // 3. Transforma os scores em um map para acesso rápido
     const scoreMap = new Map(userScores.map((score) => [score.cycleId, score]));
 
-    // 4. Mescla os dados
     const merged = allCycles.map((cycle) => {
       const score = scoreMap.get(cycle.id);
 
@@ -98,7 +94,6 @@ export class UsersService {
         };
       }
 
-      // Caso não tenha score ainda
       return {
         cycleId: cycle.id,
         name: cycle.name,
@@ -219,5 +214,51 @@ export class UsersService {
     );
 
     return groupedByCycle;
+  }
+
+  async findAutoavaliationByUserId(userId: string) {
+    return await this.prisma.evaluation.findMany({
+      where: {
+        evaluatedId: userId,
+        type: 'AUTO',
+        completed: true,
+      },
+      include: {
+        answers: {
+          include: {
+            criterion: true,
+          },
+        },
+        cycle: true,
+      },
+    });
+  }
+
+  async findAllCurrentCycle() {
+    const currentCycle = await this.prisma.evaluationCycle.findFirst({
+      where: {
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+      },
+    });
+
+    if (!currentCycle) {
+      throw new Error('Não há ciclos abertos');
+    }
+
+    const users = await this.prisma.user.findMany({
+      include: {
+        scorePerCycle: {
+          where: {
+            cycleId: currentCycle.id,
+          },
+        },
+      },
+    });
+
+    return {
+      cicloAtual: currentCycle,
+      usuarios: users,
+    };
   }
 }
