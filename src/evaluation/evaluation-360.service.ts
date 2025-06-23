@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -116,7 +120,7 @@ export class Evaluation360Service {
 
   async buscarMembrosEquipePorCiclo(userId: string, cycleId: string) {
     try {
-      // Verificar se o ciclo existe
+      
       const ciclo = await this.prisma.evaluationCycle.findUnique({
         where: { id: cycleId },
       });
@@ -232,7 +236,9 @@ export class Evaluation360Service {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException('Erro ao buscar membros da equipe para o ciclo');
+      throw new BadRequestException(
+        'Erro ao buscar membros da equipe para o ciclo',
+      );
     }
   }
 }
