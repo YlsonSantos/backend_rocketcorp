@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -232,7 +236,9 @@ export class Evaluation360Service {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException('Erro ao buscar membros da equipe para o ciclo');
+      throw new BadRequestException(
+        'Erro ao buscar membros da equipe para o ciclo',
+      );
     }
   }
 }

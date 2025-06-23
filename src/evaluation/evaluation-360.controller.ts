@@ -84,14 +84,15 @@ export class Evaluation360Controller {
     description: 'Usuário não encontrado ou não pertence a nenhuma equipe',
   })
   async buscarMembrosEquipe(@Req() req: any) {
-    const userId = req.user.sub; // JWT payload contém o userId no campo 'sub'
+    const userId = req.user.userId; // JWT strategy retorna 'userId', não 'sub'
     return await this.evaluation360Service.buscarMembrosEquipe(userId);
   }
 
   @Get('team-members/:cycleId')
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({
-    summary: 'Buscar membros da equipe para avaliação 360 em um ciclo específico',
+    summary:
+      'Buscar membros da equipe para avaliação 360 em um ciclo específico',
   })
   @ApiParam({ name: 'cycleId', description: 'ID do ciclo de avaliação' })
   @ApiResponse({
@@ -104,7 +105,7 @@ export class Evaluation360Controller {
     @Req() req: any,
     @Param('cycleId') cycleId: string,
   ) {
-    const userId = req.user.sub;
+    const userId = req.user.userId; // JWT strategy retorna 'userId', não 'sub'
     return await this.evaluation360Service.buscarMembrosEquipePorCiclo(
       userId,
       cycleId,
