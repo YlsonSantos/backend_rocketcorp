@@ -120,7 +120,7 @@ export class Evaluation360Service {
 
   async buscarMembrosEquipePorCiclo(userId: string, cycleId: string) {
     try {
-      // Verificar se o ciclo existe
+      
       const ciclo = await this.prisma.evaluationCycle.findUnique({
         where: { id: cycleId },
       });
