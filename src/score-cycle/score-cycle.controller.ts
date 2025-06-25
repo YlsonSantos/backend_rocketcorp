@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Body, Patch, Param, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -15,7 +6,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ScoreService } from './score-cycle.service';
-import { CreateScoreDto } from './dto/create-score-cycle.dto';
 import { UpdateScoreDto } from './dto/update-score-cycle.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -28,6 +18,7 @@ import { Roles } from '../auth/roles.decorator';
 export class ScoreCycleController {
   constructor(private readonly scoreCycleService: ScoreService) {}
 
+  /*
   @Roles('LIDER', 'COLABORADOR')
   @Post()
   @ApiOperation({ summary: 'Cria um ScoreCycle' })
@@ -55,15 +46,6 @@ export class ScoreCycleController {
   findOne(@Param('id') id: string) {
     return this.scoreCycleService.findOne(id);
   }
-
-  @Roles('LIDER', 'COMITE')
-  @Patch(':id')
-  @ApiOperation({ summary: 'Atualiza um ScoreCycle' })
-  @ApiResponse({ status: 200, description: 'Score atualizado com sucesso' })
-  update(@Param('id') id: string, @Body() updateScoreCycleDto: UpdateScoreDto) {
-    return this.scoreCycleService.update(id, updateScoreCycleDto);
-  }
-
   @Roles('RH')
   @Delete(':id')
   @ApiOperation({ summary: 'Remove um ScoreCycle por ID' })
@@ -71,5 +53,13 @@ export class ScoreCycleController {
   @ApiResponse({ status: 404, description: 'Score não encontrado' })
   remove(@Param('id') id: string) {
     return this.scoreCycleService.remove(id);
+  }*/
+
+  @Roles('LIDER', 'COMITE')
+  @Patch(':id')
+  @ApiOperation({ summary: 'Atualiza um ScoreCycle' })
+  @ApiResponse({ status: 200, description: 'Score atualizado com sucesso' })
+  update(@Param('id') id: string, @Body() updateScoreCycleDto: UpdateScoreDto) {
+    return this.scoreCycleService.update(id, updateScoreCycleDto);
   }
 }
