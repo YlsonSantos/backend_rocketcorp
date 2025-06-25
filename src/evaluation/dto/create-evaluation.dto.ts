@@ -4,9 +4,45 @@ import {
   IsEnum,
   IsBoolean,
   IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { EvaluationType } from '@prisma/client';
+import { Type } from 'class-transformer';
+
+export class CreateEvaluationAnswerDto {
+  @ApiProperty({
+    description: 'ID do critério de avaliação',
+    example: 'crit1',
+  })
+  @IsString({ message: 'ID do critério deve ser uma string válida' })
+  @IsNotEmpty({ message: 'ID do critério é obrigatório' })
+  criterionId: string;
+
+  @ApiProperty({
+    description: 'Score dado para este critério (1-5)',
+    example: 4,
+    minimum: 1,
+    maximum: 5,
+  })
+  @IsNumber({}, { message: 'Score deve ser um número' })
+  @Min(1, { message: 'Score mínimo é 1' })
+  @Max(5, { message: 'Score máximo é 5' })
+  score: number;
+
+  @ApiProperty({
+    description: 'Justificativa para o score dado',
+    example: 'Demonstrou excelente trabalho em equipe durante o projeto',
+    required: false,
+  })
+  @IsString({ message: 'Justificativa deve ser uma string' })
+  @IsOptional()
+  justification?: string;
+}
 
 export class CreateEvaluationDto {
   @ApiProperty({
@@ -51,7 +87,6 @@ export class CreateEvaluationDto {
   @IsString({ message: 'ID da equipe deve ser uma string válida' })
   @IsNotEmpty({ message: 'ID da equipe é obrigatório' })
   teamId: string;
-
   @ApiProperty({
     description: 'Se a avaliação está completa',
     example: false,
@@ -60,4 +95,15 @@ export class CreateEvaluationDto {
   @IsBoolean({ message: 'Campo completo deve ser um valor booleano' })
   @IsOptional()
   completed?: boolean;
+
+  @ApiProperty({
+    description: 'Respostas da avaliação com scores por critério',
+    type: [CreateEvaluationAnswerDto],
+    required: false,
+  })
+  @IsArray({ message: 'Respostas devem ser um array' })
+  @ValidateNested({ each: true })
+  @Type(() => CreateEvaluationAnswerDto)
+  @IsOptional()
+  answers?: CreateEvaluationAnswerDto[];
 }
