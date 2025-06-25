@@ -121,6 +121,7 @@ CREATE TABLE "EvaluationCycle" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "startDate" DATETIME NOT NULL,
+    "reviewDate" DATETIME NOT NULL,
     "endDate" DATETIME NOT NULL
 );
 
