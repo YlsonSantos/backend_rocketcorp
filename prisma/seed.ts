@@ -14,6 +14,16 @@ async function main() {
 
   await prisma.user.createMany({
     data: [
+      // Anonymous user for audit logs
+      {
+        id: 'anonymous',
+        name: 'Anonymous User',
+        email: 'anonymous@system.com',
+        password: 'system',
+        role: 'COLABORADOR',
+        positionId: 'pos1',
+        managerId: null,
+      },
       // Team Alpha
       {
         id: 'user1',
