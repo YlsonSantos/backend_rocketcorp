@@ -8,6 +8,7 @@ import { ScoreCycleModule } from './score-cycle/score-cycle.module';
 import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
 import { Evaluation360Module } from './evaluation/evaluation-360.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Evaluation360Module } from './evaluation/evaluation-360.module';
     ScoreCycleModule,
     MentoringModule,
     EvaluationCriteriaModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
