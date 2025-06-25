@@ -51,6 +51,7 @@ export type CycleGroup = {
   cycleId: string;
   cycleName: string;
   startDate: Date;
+  reviewDate: Date;
   endDate: Date;
   evaluations: EvaluationOutput[];
   scorePerCycle?: {

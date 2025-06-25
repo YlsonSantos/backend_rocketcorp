@@ -9,11 +9,23 @@ async function main() {
       { id: 'pos3', name: 'Product Manager', track: 'FINANCEIRO' },
       { id: 'pos4', name: 'QA Engineer', track: 'DESENVOLVIMENTO' },
       { id: 'pos5', name: 'UX Researcher', track: 'DESIGN' },
+      { id: 'pos6', name: 'COMITE', track: 'COMITE' },
+      { id: 'pos7', name: 'RH', track: 'RH' },
     ],
   });
 
   await prisma.user.createMany({
     data: [
+      // Anonymous user for audit logs
+      {
+        id: 'anonymous',
+        name: 'Anonymous User',
+        email: 'anonymous@system.com',
+        password: 'system',
+        role: 'COLABORADOR',
+        positionId: 'pos1',
+        managerId: null,
+      },
       // Team Alpha
       {
         id: 'user1',
@@ -111,6 +123,26 @@ async function main() {
         managerId: 'user8',
         mentorId: 'user9',
       },
+      {
+        id: 'user11',
+        name: 'Ylson Santos',
+        email: 'ylson@example.com',
+        password: '123',
+        role: 'COMITE',
+        positionId: 'pos6',
+        managerId: null,
+        mentorId: null,
+      },
+      {
+        id: 'user12',
+        name: 'Ana Laura',
+        email: 'analaura@example.com',
+        password: '123',
+        role: 'RH',
+        positionId: 'pos7',
+        managerId: null,
+        mentorId: null,
+      },
     ],
   });
 
@@ -139,29 +171,59 @@ async function main() {
 
   await prisma.evaluationCycle.createMany({
     data: [
+      // Ciclos de 2023
       {
-        id: 'cycle1',
-        name: 'Cycle Q1 2025',
-        startDate: new Date('2025-01-01'),
-        endDate: new Date('2025-03-31'),
+        id: 'cycle2023_1',
+        name: '2023.1',
+        startDate: new Date('2023-06-01'),
+        reviewDate: new Date('2023-06-20'),
+        endDate: new Date('2023-06-30'),
       },
       {
-        id: 'cycle2',
-        name: 'Cycle Q2 2025',
-        startDate: new Date('2025-04-01'),
+        id: 'cycle2023_2',
+        name: '2023.2',
+        startDate: new Date('2023-12-01'),
+        reviewDate: new Date('2023-12-21'),
+        endDate: new Date('2023-12-31'),
+      },
+
+      // Ciclos de 2024
+      {
+        id: 'cycle2024_1',
+        name: '2024.1',
+        startDate: new Date('2024-06-01'),
+        reviewDate: new Date('2024-06-20'),
+        endDate: new Date('2024-06-30'),
+      },
+      {
+        id: 'cycle2024_2',
+        name: '2024.2',
+        startDate: new Date('2024-12-01'),
+        reviewDate: new Date('2024-12-21'),
+        endDate: new Date('2024-12-31'),
+      },
+
+      // Ciclos de 2025
+      {
+        id: 'cycle2025_1',
+        name: '2025.1',
+        startDate: new Date('2025-06-01'),
+        reviewDate: new Date('2025-06-20'),
         endDate: new Date('2025-06-30'),
       },
       {
-        id: 'cycle3',
-        name: 'Cycle Q3 2025',
-        startDate: new Date('2025-07-01'),
-        endDate: new Date('2025-09-30'),
+        id: 'cycle2025_2',
+        name: '2025.2',
+        startDate: new Date('2025-12-01'),
+        reviewDate: new Date('2025-12-21'),
+        endDate: new Date('2025-12-31'),
       },
       {
-        id: 'cycle4',
-        name: 'Cycle Q4 2025',
-        startDate: new Date('2025-05-01'),
-        endDate: new Date('2025-10-30'),
+        id: 'cycle2025_1teste',
+        name: '2025.1 teste',
+        startDate: new Date('2025-01-01'),
+        reviewDate: new Date('2025-12-21'),
+        endDate: new Date('2025-12-31'),
       },
     ],
   });
@@ -207,7 +269,7 @@ async function main() {
       {
         id: 'eval1',
         type: 'LIDER',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         evaluatorId: 'user3',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -217,7 +279,7 @@ async function main() {
       {
         id: 'eval11',
         type: 'LIDER',
-        cycleId: 'cycle2',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user3',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -228,7 +290,7 @@ async function main() {
       {
         id: 'eval2',
         type: 'AUTO',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -238,7 +300,7 @@ async function main() {
       {
         id: 'eval22',
         type: 'AUTO',
-        cycleId: 'cycle2',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -248,7 +310,7 @@ async function main() {
       {
         id: 'eval223',
         type: 'AUTO',
-        cycleId: 'cycle3',
+        cycleId: 'cycle2024_1',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -259,7 +321,7 @@ async function main() {
       {
         id: 'eval3',
         type: 'PAR',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user2',
         evaluatedId: 'user4',
         teamId: 'team1',
@@ -271,7 +333,7 @@ async function main() {
       {
         id: 'eval4',
         type: 'LIDER',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user8',
         evaluatedId: 'user6',
         teamId: 'team2',
@@ -282,7 +344,7 @@ async function main() {
       {
         id: 'eval5',
         type: 'AUTO',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user6',
         evaluatedId: 'user6',
         teamId: 'team2',
@@ -293,7 +355,7 @@ async function main() {
       {
         id: 'eval6',
         type: 'PAR',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2025_1',
         evaluatorId: 'user7',
         evaluatedId: 'user10',
         teamId: 'team2',
@@ -473,32 +535,11 @@ async function main() {
     ],
   });
 
-  await prisma.auditLog.createMany({
-    data: [
-      {
-        id: 'log1',
-        userId: 'user1',
-        action: 'CREATE',
-        table: 'EvaluationAnswer',
-        timestamp: new Date(),
-        metadata: { details: 'Resposta criada manualmente' },
-      },
-      {
-        id: 'log2',
-        userId: 'user6',
-        action: 'CREATE',
-        table: 'Evaluation',
-        timestamp: new Date(),
-        metadata: { details: 'Avaliação criada para Fabiana' },
-      },
-    ],
-  });
-
   await prisma.genaiInsight.createMany({
     data: [
       {
         id: 'insight1',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         evaluatedId: 'user1',
         summary: 'Alice colaborou bem',
         discrepancies: 'Nenhuma',
@@ -506,7 +547,7 @@ async function main() {
       },
       {
         id: 'insight2',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         evaluatedId: 'user6',
         summary: 'Fabiana é muito engajada',
         discrepancies: 'Pequenas divergências em prazos',
@@ -520,7 +561,7 @@ async function main() {
         id: 'eval1',
         mentorId: 'user1',
         menteeId: 'user2',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         score: 8.0,
         feedback: 'Bruno tem se mostrado bem dedicado.',
       },
@@ -528,7 +569,7 @@ async function main() {
         id: 'eval2',
         mentorId: 'user4',
         menteeId: 'user5',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         score: 7.5,
         feedback:
           'Eduardo está evoluindo bem, mas pode melhorar na comunicação.',
@@ -537,7 +578,7 @@ async function main() {
         id: 'eval3',
         mentorId: 'user6',
         menteeId: 'user7',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         score: 9.0,
         feedback: 'Gabriel tem excelente iniciativa.',
       },
@@ -545,7 +586,7 @@ async function main() {
         id: 'eval4',
         mentorId: 'user9',
         menteeId: 'user10',
-        cycleId: 'cycle1',
+        cycleId: 'cycle2023_1',
         score: 8.5,
         feedback: 'Julia é muito comprometida com as entregas.',
       },
@@ -556,7 +597,7 @@ async function main() {
     {
       id: 'scr1',
       userId: 'user1',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 3.5,
       leaderScore: 3.8,
       peerScore: [4.2, 4.4, 4.3],
@@ -564,9 +605,29 @@ async function main() {
       feedback: 'Bom desempenho, pode melhorar alguns pontos.',
     },
     {
+      id: 'scr1234',
+      userId: 'user1',
+      cycleId: 'cycle2024_2',
+      selfScore: 3,
+      leaderScore: 3.8,
+      peerScore: [3.2, 3.4, 3.3],
+      finalScore: 3.0,
+      feedback: 'Bom desempenho, pode melhorar alguns pontos.',
+    },
+    {
+      id: 'scr12348',
+      userId: 'user1',
+      cycleId: 'cycle2023_1',
+      selfScore: 3,
+      leaderScore: 3.8,
+      peerScore: [4.2, 2.4, 3.3],
+      finalScore: 3.4,
+      feedback: 'Bom desempenho, pode melhorar alguns pontos.',
+    },
+    {
       id: 'scr00',
       userId: 'user1',
-      cycleId: 'cycle2',
+      cycleId: 'cycle2023_2',
       selfScore: 3.5,
       leaderScore: 3.8,
       peerScore: [4.3, 4.1],
@@ -576,7 +637,7 @@ async function main() {
     {
       id: 'scr09',
       userId: 'user1',
-      cycleId: 'cycle3',
+      cycleId: 'cycle2024_1',
       selfScore: 3.5,
       leaderScore: 3.8,
       peerScore: [4.4, 4.2],
@@ -586,7 +647,7 @@ async function main() {
     {
       id: 'scr2',
       userId: 'user2',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 4.0,
       leaderScore: 4.5,
       peerScore: [4.1, 4.3],
@@ -596,7 +657,7 @@ async function main() {
     {
       id: 'scr3',
       userId: 'user3',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 4.5,
       leaderScore: 4.8,
       peerScore: [4.7, 4.6, 4.8],
@@ -606,7 +667,7 @@ async function main() {
     {
       id: 'scr4',
       userId: 'user4',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 3.5,
       leaderScore: 4.0,
       peerScore: [4.0, 4.2],
@@ -616,7 +677,7 @@ async function main() {
     {
       id: 'scr5',
       userId: 'user5',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 4.5,
       leaderScore: 4.5,
       peerScore: [4.1, 4.3],
@@ -626,7 +687,7 @@ async function main() {
     {
       id: 'scr6',
       userId: 'user6',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 3.5,
       leaderScore: 3.8,
       peerScore: [3.7, 3.6],
@@ -636,7 +697,7 @@ async function main() {
     {
       id: 'scr7',
       userId: 'user7',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 3.5,
       leaderScore: 2.8,
       peerScore: [3.5, 3.9],
@@ -646,7 +707,7 @@ async function main() {
     {
       id: 'scr8',
       userId: 'user8',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 4.0,
       leaderScore: 4.2,
       peerScore: [4.1, 4.1],
@@ -656,7 +717,7 @@ async function main() {
     {
       id: 'scr9',
       userId: 'user9',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 5.0,
       leaderScore: 4.8,
       peerScore: [4.7, 4.6],
@@ -666,7 +727,7 @@ async function main() {
     {
       id: 'scr10',
       userId: 'user10',
-      cycleId: 'cycle1',
+      cycleId: 'cycle2025_1',
       selfScore: 4.0,
       leaderScore: 3.8,
       peerScore: [3.6, 3.8],

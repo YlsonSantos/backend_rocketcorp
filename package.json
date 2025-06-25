@@ -29,6 +29,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.4.2",
     "@prisma/client": "^6.9.0",
+    "@types/uuid": "^10.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -38,7 +39,11 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
+<<<<<<< HEAD
     "xlsx": "^0.18.5"
+=======
+    "uuid": "^11.1.0"
+>>>>>>> c10d0188d145661e1d7cf3edc7338dbd11cd0621
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

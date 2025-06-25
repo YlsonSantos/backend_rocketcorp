@@ -22,12 +22,6 @@ import {
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './dto/create-evaluation.dto';
 import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
-import {
-  UpdateLeaderScoreDto,
-  UpdateFinalScoreDto,
-  AddPeerScoreDto,
-  UpdateSelfScoreDto,
-} from './dto/update-score.dto';
 import { Evaluation } from './entities/evaluation.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -40,9 +34,8 @@ import { Roles } from '../auth/roles.decorator';
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class EvaluationController {
   constructor(private readonly evaluationService: EvaluationService) {}
-
   @Post()
-  @Roles('LIDER', 'RH', 'COMITE')
+  @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({ summary: 'Criar uma nova avaliação' })
   @ApiResponse({
     status: 201,
@@ -240,77 +233,5 @@ export class EvaluationController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remover(@Param('id') id: string): Promise<void> {
     return await this.evaluationService.remover(id);
-  }
-
-  @Patch('score/leader')
-  @Roles('LIDER', 'ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Atualizar score do líder' })
-  @ApiResponse({
-    status: 200,
-    description: 'Score do líder atualizado com sucesso',
-  })
-  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
-  async atualizarLeaderScore(
-    @Body() updateLeaderScoreDto: UpdateLeaderScoreDto,
-  ) {
-    return this.evaluationService.atualizarLeaderScore(
-      updateLeaderScoreDto.userId,
-      updateLeaderScoreDto.cycleId,
-      updateLeaderScoreDto.leaderScore,
-      updateLeaderScoreDto.feedback,
-    );
-  }
-
-  @Patch('score/final')
-  @Roles('ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Atualizar score final (comitê)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Score final atualizado com sucesso',
-  })
-  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
-  async atualizarFinalScore(@Body() updateFinalScoreDto: UpdateFinalScoreDto) {
-    return this.evaluationService.atualizarFinalScore(
-      updateFinalScoreDto.userId,
-      updateFinalScoreDto.cycleId,
-      updateFinalScoreDto.finalScore,
-      updateFinalScoreDto.feedback,
-    );
-  }
-
-  @Post('score/peer')
-  @Roles('COLABORADOR', 'LIDER', 'ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Adicionar peer score' })
-  @ApiResponse({
-    status: 201,
-    description: 'Peer score adicionado com sucesso',
-  })
-  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
-  async adicionarPeerScore(@Body() addPeerScoreDto: AddPeerScoreDto) {
-    return this.evaluationService.adicionarPeerScore(
-      addPeerScoreDto.userId,
-      addPeerScoreDto.cycleId,
-      addPeerScoreDto.peerScore,
-    );
-  }
-
-  @Patch('score/self')
-  @Roles('COLABORADOR', 'LIDER', 'ADMIN')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Atualizar self score' })
-  @ApiResponse({
-    status: 200,
-    description: 'Self score atualizado com sucesso',
-  })
-  @ApiResponse({ status: 404, description: 'ScorePerCycle não encontrado' })
-  async atualizarSelfScore(@Body() updateSelfScoreDto: UpdateSelfScoreDto) {
-    return this.evaluationService.atualizarSelfScore(
-      updateSelfScoreDto.userId,
-      updateSelfScoreDto.cycleId,
-      updateSelfScoreDto.selfScore,
-    );
   }
 }
