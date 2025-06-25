@@ -56,6 +56,7 @@ export class UsersService {
         name: true,
         startDate: true,
         endDate: true,
+        reviewDate: true,
       },
     });
 
@@ -85,6 +86,7 @@ export class UsersService {
           cycleId: cycle.id,
           name: cycle.name,
           startDate: cycle.startDate,
+          reviewDate: cycle.reviewDate,
           endDate: cycle.endDate,
           selfScore: score.selfScore,
           leaderScore: score.leaderScore,
@@ -98,6 +100,7 @@ export class UsersService {
         cycleId: cycle.id,
         name: cycle.name,
         startDate: cycle.startDate,
+        reviewDate: cycle.reviewDate,
         endDate: cycle.endDate,
         selfScore: null,
         leaderScore: null,
@@ -176,6 +179,7 @@ export class UsersService {
             cycleId: evaluation.cycle.id,
             cycleName: evaluation.cycle.name,
             startDate: evaluation.cycle.startDate,
+            reviewDate: evaluation.cycle.reviewDate,
             endDate: evaluation.cycle.endDate,
             scorePerCycle: score
               ? {

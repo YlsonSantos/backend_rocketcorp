@@ -1,12 +1,22 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AuditInterceptor } from './audit/audit.interceptor';
+import { CorrelationIdMiddleware } from './audit/middleware/correlation-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Enable CORS
   app.enableCors({
     origin: 'http://localhost:5173',
   });
+
+  // Apply correlation ID middleware globally
+  app.use(new CorrelationIdMiddleware().use);
+
+  // Apply global audit interceptor
+  app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   const config = new DocumentBuilder()
     .setTitle('RocketCorp API')

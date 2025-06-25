@@ -9,6 +9,7 @@ import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
 import { GenaiModule } from './genai/genai.module';
 import { Evaluation360Module } from './evaluation/evaluation-360.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { Evaluation360Module } from './evaluation/evaluation-360.module';
     MentoringModule,
     EvaluationCriteriaModule,
     GenaiModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

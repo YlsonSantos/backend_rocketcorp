@@ -157,6 +157,7 @@ model EvaluationCycle {
   id        String   @id @default(uuid())
   name      String
   startDate DateTime
+  reviewDate DateTime
   endDate   DateTime
 
   evaluations   Evaluation[]
@@ -236,6 +237,8 @@ enum TrackType {
   DESENVOLVIMENTO
   DESIGN
   FINANCEIRO
+  COMITE
+  RH
 }
 
 // add this block only if using Prisma 4.0+ and seeding in TypeScript
