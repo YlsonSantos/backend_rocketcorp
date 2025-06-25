@@ -8,6 +8,7 @@ import { ScoreCycleModule } from './score-cycle/score-cycle.module';
 import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
 import { GenaiModule } from './genai/genai.module';
+import { Evaluation360Module } from './evaluation/evaluation-360.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GenaiModule } from './genai/genai.module';
     }),
     AuthModule,
     EvaluationModule,
+    Evaluation360Module,
     ReferencesModule,
     UsersModule,
     ScoreCycleModule,

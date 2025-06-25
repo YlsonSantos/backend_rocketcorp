@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { MentoringService } from './mentoring.service';
 import { CreateMentoringDto } from './dto/create-mentoring.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -16,6 +16,7 @@ export class MentoringController {
     return this.mentoringService.create(dto);
   }
 
+  /*
   @Get()
   @ApiOperation({ summary: 'Lista todas as avaliações de mentoria' })
   @ApiResponse({ status: 200, description: 'Lista de avaliações' })
@@ -35,5 +36,5 @@ export class MentoringController {
   @ApiResponse({ status: 200, description: 'Avaliação removida com sucesso' })
   remove(@Param('id') id: string) {
     return this.mentoringService.remove(id);
-  }
+  }*/
 }
