@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ScoreCycleModule } from './score-cycle/score-cycle.module';
 import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
+import { GenaiModule } from './genai/genai.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-crite
     ScoreCycleModule,
     MentoringModule,
     EvaluationCriteriaModule,
+    GenaiModule,
   ],
 })
 export class AppModule {}
