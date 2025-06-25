@@ -176,6 +176,7 @@ export class UsersService {
             cycleId: evaluation.cycle.id,
             cycleName: evaluation.cycle.name,
             startDate: evaluation.cycle.startDate,
+            reviewDate: evaluation.cycle.reviewDate,
             endDate: evaluation.cycle.endDate,
             scorePerCycle: score
               ? {
