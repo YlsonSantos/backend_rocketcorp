@@ -7,6 +7,11 @@ import { CorrelationIdMiddleware } from './audit/middleware/correlation-id.middl
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS
+  app.enableCors({
+    origin: 'http://localhost:5173',
+  });
+
   // Apply correlation ID middleware globally
   app.use(new CorrelationIdMiddleware().use);
 
