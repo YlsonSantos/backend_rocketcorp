@@ -16,6 +16,7 @@ export class MentoringController {
     return this.mentoringService.create(dto);
   }
 
+  /*
   @Get()
   @ApiOperation({ summary: 'Lista todas as avaliações de mentoria' })
   @ApiResponse({ status: 200, description: 'Lista de avaliações' })
@@ -35,5 +36,5 @@ export class MentoringController {
   @ApiResponse({ status: 200, description: 'Avaliação removida com sucesso' })
   remove(@Param('id') id: string) {
     return this.mentoringService.remove(id);
-  }
+  }*/
 }
