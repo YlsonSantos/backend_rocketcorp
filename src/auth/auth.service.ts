@@ -34,7 +34,7 @@ export class AuthService {
       role: user.role,
       name: user.name,
       userId: user.id,
-      mentorOf: user.mentorado?.id ?? null,
+      mentor: user.mentor?.id ?? null,
     };
   }
 }
