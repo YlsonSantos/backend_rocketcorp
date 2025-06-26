@@ -14,7 +14,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: loginUserDto.email },
       include: {
-        mentorado: { select: { id: true } },
+        mentor: { select: { id: true } },
       },
     });
     if (user && user.password === loginUserDto.password) {
