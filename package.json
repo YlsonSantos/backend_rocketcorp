@@ -39,11 +39,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-<<<<<<< HEAD
-    "xlsx": "^0.18.5"
-=======
+    "xlsx": "^0.18.5",
     "uuid": "^11.1.0"
->>>>>>> c10d0188d145661e1d7cf3edc7338dbd11cd0621
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

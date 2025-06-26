@@ -13,6 +13,13 @@ function parseNota(notaTexto: string): number | null {
   return parseFloat(notaLimpa[0].replace(',', '.'));
 }
 
+interface LinhaAuto {
+  CRITÉRIO: string;
+  'AUTO-AVALIAÇÃO': string;
+  'DADOS E FATOS DA AUTO-AVALIAÇÃO': string;
+  'DESCRIÇÃO GERAL': string;
+}
+
 async function main() {
   // Carrega o arquivo Excel
   const workbook = xlsx.readFile('./src/etl/data/ANA_DA_2024_2.xlsx');
@@ -55,6 +62,7 @@ async function main() {
       data: {
         name: String(cicloNome),
         startDate: new Date(),
+        reviewDate: new Date(),
         endDate: new Date(),
       },
     });
@@ -65,13 +73,29 @@ async function main() {
     where: { email },
   });
 
+  const autoSheet = workbook.Sheets['Autoavaliação'];
+  const respostas = xlsx.utils.sheet_to_json<LinhaAuto>(autoSheet);
+
+  const linhaGestao = respostas.find(
+    (linha) => linha['CRITÉRIO'].trim().toUpperCase() === 'GESTÃO DE PESSOAS',
+  );
+
+  let role = 'COLABORADOR';
+  if (
+    linhaGestao &&
+    typeof linhaGestao['AUTO-AVALIAÇÃO'] === 'string' &&
+    !linhaGestao['AUTO-AVALIAÇÃO'].toUpperCase().includes('NA')
+  ) {
+    role = 'LIDER';
+  }
+
   if (!user) {
     user = await prisma.user.create({
       data: {
         name: String(nome),
         email: String(email),
         password: '123',
-        role: 'COLABORADOR',
+        role: role as any as import('@prisma/client').Role,
         position: {
           create: {
             name: 'Padrão',
@@ -122,77 +146,147 @@ async function main() {
     },
   });
 
-  // === 8. Lê a aba "Autoavaliação" para processar os critérios ===
-  interface LinhaAuto {
-    'CRITÉRIO': string;
-    'AUTO-AVALIAÇÃO': string;
-    'DADOS E FATOS DA AUTO-AVALIAÇÃO': string;
+  let score = await prisma.scorePerCycle.findUnique({
+    where: {
+      userId_cycleId: {
+        userId: user.id,
+        cycleId: ciclo.id,
+      },
+    },
+  });
+
+  if (!score) {
+    score = await prisma.scorePerCycle.create({
+      data: {
+        userId: user.id,
+        cycleId: ciclo.id,
+        selfScore: 0, // Valor inicial, pode ser atualizado depois
+        leaderScore: null,
+        finalScore: null,
+        feedback: null,
+      },
+    });
+
+    console.log(
+      `🆕 ScorePerCycle criado para ${user.email} no ciclo ${ciclo.name}`,
+    );
+  } else {
+    console.log(
+      `ℹ️ ScorePerCycle já existente para ${user.email} no ciclo ${ciclo.name}`,
+    );
   }
 
-  const autoSheet = workbook.Sheets['Autoavaliação'];
-  const respostas = xlsx.utils.sheet_to_json<LinhaAuto>(autoSheet);
+  let totalNotas = 0;
+  let countNotas = 0;
 
+  // === 8. Lê a aba "Autoavaliação" para processar os critérios ===
+  console.log(`Total de linhas da aba Autoavaliação: ${respostas.length}`);
   for (const linha of respostas) {
-    const criterio = linha['CRITÉRIO'];
+    const criterioOriginal = linha['CRITÉRIO']?.trim();
+    if (!criterioOriginal) {
+      console.log('❌ Linha ignorada: critério vazio ou inválido:', linha);
+      continue;
+    }
+
     const notaTexto = linha['AUTO-AVALIAÇÃO'];
     const justificativa = linha['DADOS E FATOS DA AUTO-AVALIAÇÃO'];
+    const descricao = linha['DESCRIÇÃO GERAL'];
 
-    if (typeof notaTexto !== 'string' || notaTexto.toUpperCase().includes('NA')) continue;
+    if (typeof notaTexto !== 'string' && typeof notaTexto !== 'number') {
+      console.warn(
+        `⚠️ Nota inválida para critério "${criterioOriginal}":`,
+        notaTexto,
+      );
+      continue;
+    }
 
-    const nota = parseNota(notaTexto);
-    if (nota === null) continue;
+    const nota = parseNota(notaTexto.toString());
+    if (nota === null || notaTexto.toString().toUpperCase().includes('NA')) {
+      console.log(
+        `⏭️ Ignorando critério "${criterioOriginal}" por nota "${notaTexto}"`,
+      );
+      continue;
+    }
+
+    totalNotas += nota;
+    countNotas++;
 
     let criterioDb = await prisma.evaluationCriterion.findFirst({
-      where: { title: criterio },
+      where: {
+        title: {
+          contains: criterioOriginal,
+        },
+      },
     });
 
     if (!criterioDb) {
-      // Cria o critério
-      criterioDb = await prisma.evaluationCriterion.create({
-        data: {
-          title: criterio,
-          description: 'Critério importado automaticamente do Excel',
-          type: CriterionType.HABILIDADES,
-        },
-      });
-
-      console.log(`⚠️ Critério "${criterio}" criado automaticamente.`);
-
-      // Verifica se já há atribuição para evitar duplicações
-      const existingAssignment = await prisma.criteriaAssignment.findFirst({
-        where: {
-          criterionId: criterioDb.id,
-          teamId: team.id,
-          positionId: user.positionId,
-        },
-      });
-
-      if (!existingAssignment) {
-        await prisma.criteriaAssignment.create({
+      try {
+        criterioDb = await prisma.evaluationCriterion.create({
           data: {
-            criterionId: criterioDb.id,
-            teamId: team.id,
-            positionId: user.positionId,
-            isRequired: false,
+            title: criterioOriginal,
+            description: descricao,
+            type: CriterionType.HABILIDADES,
           },
         });
-
-        console.log(
-          `🔗 Critério "${criterio}" atribuído ao time "${team.name}" e posição do usuário.`,
-        );
-      } else {
-        console.log(`ℹ️ Atribuição já existia para o critério "${criterio}".`);
+        console.log(`✅ Critério "${criterioOriginal}" criado.`);
+      } catch (e) {
+        console.error(`❌ Erro ao criar critério "${criterioOriginal}":`, e);
+        continue;
       }
     }
 
-    await prisma.evaluationAnswer.create({
-      data: {
-        evaluationId: evaluation.id,
+    // Verifica e cria atribuição se necessário
+    const existingAssignment = await prisma.criteriaAssignment.findFirst({
+      where: {
         criterionId: criterioDb.id,
-        score: nota,
-        justification: justificativa || '',
+        teamId: team.id,
+        positionId: user.positionId,
       },
     });
+
+    if (!existingAssignment) {
+      await prisma.criteriaAssignment.create({
+        data: {
+          criterionId: criterioDb.id,
+          teamId: team.id,
+          positionId: user.positionId,
+          isRequired: false,
+        },
+      });
+      console.log(`🔗 Atribuição criada para critério "${criterioOriginal}".`);
+    }
+
+    // Cria resposta
+    try {
+      await prisma.evaluationAnswer.create({
+        data: {
+          evaluationId: evaluation.id,
+          criterionId: criterioDb.id,
+          score: nota,
+          justification: justificativa || '',
+        },
+      });
+    } catch (e) {
+      console.error(
+        `❌ Erro ao criar resposta para critério "${criterioOriginal}":`,
+        e,
+      );
+    }
+  }
+
+  if (countNotas > 0) {
+    const media = totalNotas / countNotas;
+    await prisma.scorePerCycle.update({
+      where: { id: score.id },
+      data: { selfScore: media },
+    });
+    console.log(
+      `📊 Média da autoavaliação calculada e salva: ${media.toFixed(2)}`,
+    );
+  } else {
+    console.log(
+      '⚠️ Nenhuma nota válida para calcular a média da autoavaliação.',
+    );
   }
 
   console.log('✅ ETL de autoavaliação finalizado com sucesso!');

@@ -17,7 +17,7 @@ model EvaluationAnswer {
   id            String    @id @default(uuid())
   evaluationId  String
   criterionId   String
-  score         Int
+  score         Float
   justification String
 
   evaluation    Evaluation  @relation(fields: [evaluationId], references: [id])

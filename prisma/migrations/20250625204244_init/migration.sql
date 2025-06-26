@@ -3,7 +3,7 @@ CREATE TABLE "EvaluationAnswer" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "evaluationId" TEXT NOT NULL,
     "criterionId" TEXT NOT NULL,
-    "score" INTEGER NOT NULL,
+    "score" REAL NOT NULL,
     "justification" TEXT NOT NULL,
     CONSTRAINT "EvaluationAnswer_evaluationId_fkey" FOREIGN KEY ("evaluationId") REFERENCES "Evaluation" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "EvaluationAnswer_criterionId_fkey" FOREIGN KEY ("criterionId") REFERENCES "EvaluationCriterion" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
