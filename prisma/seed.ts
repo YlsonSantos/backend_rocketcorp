@@ -35,6 +35,7 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos1',
         managerId: 'user3',
+        mentorId: 'user2',
       },
       {
         id: 'user2',
@@ -44,7 +45,6 @@ async function main() {
         role: 'COLABORADOR',
         positionId: 'pos2',
         managerId: 'user3',
-        mentorId: 'user1', // 👈 Alice é mentora
       },
       {
         id: 'user3',
@@ -557,14 +557,6 @@ async function main() {
   });
   await prisma.mentorshipEvaluation.createMany({
     data: [
-      {
-        id: 'eval1',
-        mentorId: 'user1',
-        menteeId: 'user2',
-        cycleId: 'cycle2023_1',
-        score: 8.0,
-        feedback: 'Bruno tem se mostrado bem dedicado.',
-      },
       {
         id: 'eval2',
         mentorId: 'user4',
