@@ -239,15 +239,32 @@ export class UsersService {
   }
 
   async findAllCurrentCycle() {
-    const currentCycle = await this.prisma.evaluationCycle.findFirst({
+    const now = new Date();
+
+    // Tenta buscar um ciclo aberto
+    let currentCycle = await this.prisma.evaluationCycle.findFirst({
       where: {
-        startDate: { lte: new Date() },
-        endDate: { gte: new Date() },
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      orderBy: {
+        startDate: 'desc',
       },
     });
 
     if (!currentCycle) {
-      throw new Error('Não há ciclos abertos');
+      currentCycle = await this.prisma.evaluationCycle.findFirst({
+        where: {
+          endDate: { lt: now },
+        },
+        orderBy: {
+          endDate: 'desc',
+        },
+      });
+
+      if (!currentCycle) {
+        throw new Error('Não há ciclos disponíveis (abertos ou encerrados).');
+      }
     }
 
     const users = await this.prisma.user.findMany({
@@ -261,7 +278,7 @@ export class UsersService {
     });
 
     return {
-      cicloAtual: currentCycle,
+      ciclo_atual_ou_ultimo: currentCycle,
       usuarios: users,
     };
   }
