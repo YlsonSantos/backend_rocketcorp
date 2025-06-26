@@ -24,18 +24,6 @@ export class UsersService {
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        position: true,
-        manager: true,
-        evaluationsGiven: true,
-        evaluationsReceived: true,
-      },
-    });
-  }
-
   update(id: string, updateUserDto: UpdateUserDto) {
     return this.prisma.user.update({
       where: { id },
@@ -48,6 +36,18 @@ export class UsersService {
       where: { id },
     });
   }*/
+
+  findOne(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        position: true,
+        manager: true,
+        evaluationsGiven: true,
+        evaluationsReceived: true,
+      },
+    });
+  }
 
   async findEvaluationsByCycle(userId: string) {
     const allCycles = await this.prisma.evaluationCycle.findMany({

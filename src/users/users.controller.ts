@@ -22,14 +22,6 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Busca um usuário por ID' })
-  @ApiResponse({ status: 200, description: 'Usuário encontrado' })
-  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
-  }
-
   @Patch(':id')
   @ApiOperation({ summary: 'Atualiza um usuário' })
   @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
@@ -44,6 +36,13 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }*/
+
+  @Get(':id')
+  @Roles('LIDER', 'RH', 'COMITE', 'COLABORADOR')
+  @ApiOperation({ summary: 'Busca um usuário por ID' })
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
 
   @Get()
   @Roles('LIDER', 'RH', 'COMITE')
