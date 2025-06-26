@@ -18,6 +18,7 @@ interface LinhaAuto {
   'AUTO-AVALIAÇÃO': string;
   'DADOS E FATOS DA AUTO-AVALIAÇÃO': string;
   'DESCRIÇÃO GERAL': string;
+  'DADOS E FATOS DA AUTO-AVALIAÇÃO\nCITE, DE FORMA OBJETIVA, CASOS E SITUAÇÕES REAIS': string;
 }
 
 async function main() {
@@ -30,15 +31,10 @@ async function main() {
   const perfil = xlsx.utils.sheet_to_json<string[][]>(perfilSheet, {
     header: 1,
   });
-  console.log(perfil[1][0], perfil[1][1], perfil[1][2]);
-  console.log(typeof perfil[1][0], typeof perfil[1][1], typeof perfil[1][2]);
 
   const nome = perfil[1][0];
   const email = perfil[1][1] as unknown as string;
   const cicloNome = perfil[1][2];
-  console.log('Nome:', nome, typeof nome);
-  console.log('Email:', email, typeof email);
-  console.log('Ciclo:', cicloNome, typeof cicloNome);
 
   // === 2. Lê a aba "Avaliação 360" para pegar o nome do projeto ===
   const avaliacao360Sheet = workbook.Sheets['Avaliação 360'];
@@ -189,7 +185,10 @@ async function main() {
     }
 
     const notaTexto = linha['AUTO-AVALIAÇÃO'];
-    const justificativa = linha['DADOS E FATOS DA AUTO-AVALIAÇÃO'];
+    const justificativa =
+      linha[
+        'DADOS E FATOS DA AUTO-AVALIAÇÃO\nCITE, DE FORMA OBJETIVA, CASOS E SITUAÇÕES REAIS'
+      ];
     const descricao = linha['DESCRIÇÃO GERAL'];
 
     if (typeof notaTexto !== 'string' && typeof notaTexto !== 'number') {
