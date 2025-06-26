@@ -1,14 +1,25 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { MentoringService } from './mentoring.service';
 import { CreateMentoringDto } from './dto/create-mentoring.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 
 @ApiTags('Mentoring')
 @Controller('mentoring')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MentoringController {
   constructor(private readonly mentoringService: MentoringService) {}
 
   @Post()
+  @Roles('COLABORADOR')
   @ApiOperation({ summary: 'Cria uma avaliação de mentoria' })
   @ApiResponse({ status: 201, description: 'Avaliação criada com sucesso' })
   @ApiResponse({ status: 409, description: 'Avaliação duplicada' })
