@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { ScoreCycleModule } from './score-cycle/score-cycle.module';
 import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
+import { GenaiModule } from './genai/genai.module';
 import { Evaluation360Module } from './evaluation/evaluation-360.module';
 import { AuditModule } from './audit/audit.module';
 
@@ -23,6 +24,7 @@ import { AuditModule } from './audit/audit.module';
     ScoreCycleModule,
     MentoringModule,
     EvaluationCriteriaModule,
+    GenaiModule,
     AuditModule,
   ],
 })
