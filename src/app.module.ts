@@ -9,12 +9,14 @@ import { MentoringModule } from './mentoring/mentoring.module';
 import { EvaluationCriteriaModule } from './evaluation-criteria/evaluation-criteria.module';
 import { Evaluation360Module } from './evaluation/evaluation-360.module';
 import { AuditModule } from './audit/audit.module';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    PrismaModule,
     AuthModule,
     EvaluationModule,
     Evaluation360Module,
