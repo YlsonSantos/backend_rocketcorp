@@ -11,6 +11,8 @@ export class AuditService {
 
   async log(auditEvent: AuditEventDto): Promise<void> {
     try {
+      this.logger.debug(`Starting audit log for event: ${auditEvent.eventId}`);
+      
       // Check if user exists, if not use a fallback
       let userId = auditEvent.actorId;
 
@@ -28,17 +30,19 @@ export class AuditService {
               `User ${auditEvent.actorId} not found, using anonymous for audit log`,
             );
           }
-        } catch {
+        } catch (error) {
           // If there's any error checking the user, use anonymous
           userId = 'anonymous';
           this.logger.warn(
-            `Error checking user ${auditEvent.actorId}, using anonymous for audit log`,
+            `Error checking user ${auditEvent.actorId}, using anonymous for audit log: ${error.message}`,
           );
         }
       }
 
+      this.logger.debug(`Attempting to save audit log to database with userId: ${userId}`);
+
       // Log to database
-      await this.prisma.auditLog.create({
+      const savedAuditLog = await this.prisma.auditLog.create({
         data: {
           id: auditEvent.eventId,
           userId,
@@ -58,6 +62,8 @@ export class AuditService {
         },
       });
 
+      this.logger.debug(`Successfully saved audit log to database: ${savedAuditLog.id}`);
+
       // Also log to console for development/debugging
       this.logger.log(
         `AUDIT: ${auditEvent.action} on ${auditEvent.resource} by ${auditEvent.actorId}`,
@@ -65,11 +71,21 @@ export class AuditService {
           eventId: auditEvent.eventId,
           traceId: auditEvent.traceId,
           result: auditEvent.result,
+          databaseId: savedAuditLog.id,
         },
       );
     } catch (error) {
       // Don't let audit failures break the main application
-      this.logger.error('Failed to log audit event', error);
+      this.logger.error('Failed to log audit event', {
+        error: error.message,
+        stack: error.stack,
+        auditEvent: {
+          eventId: auditEvent.eventId,
+          action: auditEvent.action,
+          resource: auditEvent.resource,
+          actorId: auditEvent.actorId,
+        },
+      });
     }
   }
 
