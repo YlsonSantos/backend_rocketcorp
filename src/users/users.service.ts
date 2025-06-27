@@ -274,6 +274,11 @@ export class UsersService {
             cycleId: currentCycle.id,
           },
         },
+        position: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
