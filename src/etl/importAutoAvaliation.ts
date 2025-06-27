@@ -4,7 +4,7 @@ import { PrismaClient, EvaluationType, CriterionType } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Função auxiliar para transformar o texto da nota em número
-function parseNota(notaTexto: string): number | null {
+export function parseNota(notaTexto: string): number | null {
   if (!notaTexto) return null;
 
   const notaLimpa = notaTexto.match(/[\d,\.]+/);
@@ -21,10 +21,9 @@ interface LinhaAuto {
   'DADOS E FATOS DA AUTO-AVALIAÇÃO\nCITE, DE FORMA OBJETIVA, CASOS E SITUAÇÕES REAIS': string;
 }
 
-async function main() {
+export async function runAutoAvaliation(filePath: string) {
   // Carrega o arquivo Excel
-  const workbook = xlsx.readFile('./src/etl/data/ANA_DA_2024_2.xlsx');
-  console.log(workbook.SheetNames);
+  const workbook = xlsx.readFile(filePath);
 
   // === 1. Lê a aba "Perfil" para pegar nome, email e ciclo ===
   const perfilSheet = workbook.Sheets['Perfil'];
@@ -85,6 +84,22 @@ async function main() {
     role = 'LIDER';
   }
 
+  let position = await prisma.position.findFirst({
+    where: {
+      name: 'Padrão',
+      track: 'DESENVOLVIMENTO',
+    },
+  });
+
+  if (!position) {
+    position = await prisma.position.create({
+      data: {
+        name: 'Padrão',
+        track: 'DESENVOLVIMENTO',
+      },
+    });
+  }
+
   if (!user) {
     user = await prisma.user.create({
       data: {
@@ -92,12 +107,7 @@ async function main() {
         email: String(email),
         password: '123',
         role: role as any as import('@prisma/client').Role,
-        position: {
-          create: {
-            name: 'Padrão',
-            track: 'DESENVOLVIMENTO',
-          },
-        },
+        positionId: position.id,
       },
     });
   }
@@ -290,11 +300,3 @@ async function main() {
 
   console.log('✅ ETL de autoavaliação finalizado com sucesso!');
 }
-
-main()
-  .catch((e) => {
-    console.error('❌ Erro ao executar ETL:', e);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });

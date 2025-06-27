@@ -23,8 +23,8 @@ async function carregarMapaDePara(
   return mapa;
 }
 
-async function atualizarRespostas(caminhoExcel: string) {
-  const criterioDePara = await carregarMapaDePara(caminhoExcel);
+export async function runFromToCriteria(filePath: string) {
+  const criterioDePara = await carregarMapaDePara(filePath);
 
   for (const [antigo, novo] of Object.entries(criterioDePara)) {
     const criterioAntigo = await prisma.evaluationCriterion.findFirst({
@@ -58,9 +58,6 @@ async function atualizarRespostas(caminhoExcel: string) {
     console.log(
       `🔍 Encontradas ${respostasAntigas.length} respostas para o critério`,
     );
-    respostasAntigas.forEach((resposta) => {
-      console.log(resposta.justification, resposta.score);
-    });
 
     let count = 0;
 
@@ -79,8 +76,6 @@ async function atualizarRespostas(caminhoExcel: string) {
         );
         continue;
       }
-
-      console.log(respostasAntigas);
 
       // Cria nova resposta com mesmo conteúdo, mas com o critério novo
       await prisma.evaluationAnswer.create({
@@ -105,9 +100,5 @@ async function atualizarRespostas(caminhoExcel: string) {
     );
   }
 
-  await prisma.$disconnect();
   console.log('✅ Atualização completa.');
 }
-
-const CAMINHO_ARQUIVO = './src/etl/data/De-para de Critérios.xlsx';
-atualizarRespostas(CAMINHO_ARQUIVO).catch(console.error);
