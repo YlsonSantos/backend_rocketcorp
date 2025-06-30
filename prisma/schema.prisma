@@ -87,6 +87,9 @@ model Evaluation {
   evaluated    User            @relation("Evaluated", fields: [evaluatedId], references: [id])
   team         Team            @relation(fields: [teamId], references: [id])
   answers      EvaluationAnswer[]
+
+  @@unique([type, evaluatorId, evaluatedId, cycleId])
+
 }
 
 model Reference {
