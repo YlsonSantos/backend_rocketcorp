@@ -287,4 +287,70 @@ export class UsersService {
       usuarios: users,
     };
   }
+
+  async findAllSubordinates(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teamMemberships: {
+          include: {
+            team: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const teams = user.teamMemberships.map((tm) => tm.team);
+
+    const now = new Date();
+    const recentCycles = await this.prisma.evaluationCycle.findMany({
+      where: {
+        OR: [
+          {
+            startDate: { lte: now },
+            endDate: { gte: now },
+          },
+          {
+            endDate: { lt: now },
+          },
+        ],
+      },
+      orderBy: {
+        startDate: 'desc',
+      },
+      take: 2,
+    });
+
+    const cycleIds = recentCycles.map((cycle) => cycle.id);
+
+    const subordinates = await this.prisma.user.findMany({
+      where: {
+        managerId: userId,
+        teamMemberships: {
+          some: {
+            teamId: { in: teams.map((team) => team.id) },
+          },
+        },
+      },
+      include: {
+        position: true,
+        scorePerCycle: {
+          where: {
+            cycleId: {
+              in: cycleIds,
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      ciclo_atual_ou_ultimo: recentCycles,
+      usuarios: subordinates,
+    };
+  }
 }

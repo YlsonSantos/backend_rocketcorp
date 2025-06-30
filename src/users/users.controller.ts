@@ -45,10 +45,19 @@ export class UsersController {
   }
 
   @Get()
-  @Roles('LIDER', 'RH', 'COMITE')
+  @Roles('RH', 'COMITE')
   @ApiOperation({ summary: 'Lista todos os usuários do ciclo atual' })
   findAll() {
     return this.usersService.findAllCurrentCycle();
+  }
+
+  @Get(':id/subordinates')
+  @Roles('LIDER')
+  @ApiOperation({
+    summary: 'Lista todos os subordinados de um usuário',
+  })
+  findAllSubordinates(@Param('id') id: string) {
+    return this.usersService.findAllSubordinates(id);
   }
 
   @Get(':id/evaluationsPerCycle')
