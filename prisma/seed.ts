@@ -509,6 +509,7 @@ async function main() {
   await encryptedPrisma.createMany('reference', [
     {
       id: 'ref1',
+      cycleId: 'cycle2025_1',
       evaluatorId: 'user1',
       referencedId: 'user2',
       theme: 'Ajuda constante',
@@ -516,6 +517,7 @@ async function main() {
     },
     {
       id: 'ref2',
+      cycleId: 'cycle2025_1',
       evaluatorId: 'user6',
       referencedId: 'user7',
       theme: 'Design inovador',
@@ -523,6 +525,7 @@ async function main() {
     },
     {
       id: 'ref3',
+      cycleId: 'cycle2025_1',
       evaluatorId: 'user3',
       referencedId: 'user5',
       theme: 'Entregas pontuais',

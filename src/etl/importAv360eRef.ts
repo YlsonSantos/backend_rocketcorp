@@ -259,6 +259,7 @@ export async function runAv360eRef(filePath: string) {
       // Cria referência
       await prisma.reference.create({
         data: {
+          cycleId: ciclo.id,
           evaluatorId: avaliador.id,
           referencedId: referenciado.id,
           theme: 'Referência técnica/comportamental',
