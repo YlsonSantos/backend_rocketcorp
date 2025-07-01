@@ -5,11 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEvaluation360Dto } from './dto/create-evaluation-360.dto';
+import { EvaluationService } from './evaluation.service';
 import { Evaluation } from '@prisma/client';
 
 @Injectable()
 export class Evaluation360Service {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly evaluationService: EvaluationService,
+  ) {}
 
   async buscarMembrosEquipe(userId: string) {
     try {
@@ -246,7 +250,7 @@ export class Evaluation360Service {
           where: { id: evaluatorId },
         }),
         this.prisma.user.findUnique({
-          where: { id: criarAvaliacao360Dto.evaluatedUserId },
+          where: { id: criarAvaliacao360Dto.evaluatedId },
         }),
       ]);
 
@@ -267,7 +271,7 @@ export class Evaluation360Service {
           include: { team: true },
         }),
         this.prisma.teamMember.findFirst({
-          where: { userId: criarAvaliacao360Dto.evaluatedUserId },
+          where: { userId: criarAvaliacao360Dto.evaluatedId },
           include: { team: true },
         }),
       ]);
@@ -283,7 +287,7 @@ export class Evaluation360Service {
       }
 
       // Validar se não é autoavaliação
-      if (evaluatorId === criarAvaliacao360Dto.evaluatedUserId) {
+      if (evaluatorId === criarAvaliacao360Dto.evaluatedId) {
         throw new BadRequestException(
           'Não é possível fazer avaliação 360 de si mesmo',
         );
@@ -294,7 +298,7 @@ export class Evaluation360Service {
         where: {
           cycleId: criarAvaliacao360Dto.cycleId,
           evaluatorId: evaluatorId,
-          evaluatedId: criarAvaliacao360Dto.evaluatedUserId,
+          evaluatedId: criarAvaliacao360Dto.evaluatedId,
           type: 'PAR',
         },
       });
@@ -321,10 +325,14 @@ export class Evaluation360Service {
               type: 'HABILIDADES',
             },
           });
-          console.log('✅ Critério 360_evaluation criado automaticamente durante criação de avaliação');
+          console.log(
+            '✅ Critério 360_evaluation criado automaticamente durante criação de avaliação',
+          );
         } catch (createError) {
           console.error('Erro ao criar critério 360:', createError);
-          throw new BadRequestException('Erro ao criar critério 360_evaluation');
+          throw new BadRequestException(
+            'Erro ao criar critério 360_evaluation',
+          );
         }
       }
 
@@ -344,7 +352,7 @@ export class Evaluation360Service {
             type: 'PAR',
             cycleId: criarAvaliacao360Dto.cycleId,
             evaluatorId: evaluatorId,
-            evaluatedId: criarAvaliacao360Dto.evaluatedUserId,
+            evaluatedId: criarAvaliacao360Dto.evaluatedId,
             teamId: teamMemberAvaliador.teamId,
             completed: criarAvaliacao360Dto.completed ?? true,
           },
@@ -410,7 +418,8 @@ export class Evaluation360Service {
               evaluationId: avaliacao.id,
               criterionId: answer.criterionId,
               score: answer.score,
-              justification,
+              justification:
+                justification || `Avaliação 360 - Score: ${answer.score}`,
             };
           }),
         });
@@ -462,9 +471,6 @@ export class Evaluation360Service {
             },
           },
           answers: {
-            where: {
-              criterionId: '360_evaluation', // Filtrar apenas respostas do critério 360
-            },
             include: {
               criterion: {
                 select: {
@@ -510,31 +516,143 @@ export class Evaluation360Service {
       }
 
       // Se não encontrou, buscar por título contendo "360"
-      const criterioAlternativo = await this.prisma.evaluationCriterion.findFirst({
-        where: {
-          title: {
-            contains: '360'
-          }
-        },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          type: true,
-        },
-      });
+      const criterioAlternativo =
+        await this.prisma.evaluationCriterion.findFirst({
+          where: {
+            title: {
+              contains: '360',
+            },
+          },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+          },
+        });
 
       if (criterioAlternativo) {
         return criterioAlternativo;
       }
 
       throw new NotFoundException('Critério 360 não encontrado');
-      
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new BadRequestException('Erro ao buscar critério 360');
+    }
+  }
+
+  async criarAvaliacaoPeerPadrao(
+    evaluatorId: string,
+    createEvaluation360Dto: CreateEvaluation360Dto,
+  ): Promise<Evaluation> {
+    try {
+      // Validar que existe apenas uma resposta (já validado pelo DTO, mas garantindo)
+      if (createEvaluation360Dto.answers.length !== 1) {
+        throw new BadRequestException(
+          'Avaliação 360 deve ter exatamente uma resposta',
+        );
+      }
+
+      const answer = createEvaluation360Dto.answers[0];
+
+      // Buscar critério 360 para garantir que existe e obter o ID real
+      let criterio360 = await this.prisma.evaluationCriterion.findUnique({
+        where: { id: '360_evaluation' },
+      });
+
+      // Se não encontrou com ID fixo, buscar por título
+      if (!criterio360) {
+        criterio360 = await this.prisma.evaluationCriterion.findFirst({
+          where: {
+            title: {
+              contains: '360',
+            },
+          },
+        });
+      }
+
+      // Se ainda não encontrou, tentar com o criterionId fornecido
+      if (!criterio360 && answer.criterionId !== '360_evaluation') {
+        criterio360 = await this.prisma.evaluationCriterion.findUnique({
+          where: { id: answer.criterionId },
+        });
+      }
+
+      if (!criterio360) {
+        throw new BadRequestException('Critério 360 não encontrado');
+      }
+
+      // Validar que o critério é 360 (aceitar tanto o ID hardcoded quanto o ID real)
+      if (
+        answer.criterionId !== '360_evaluation' &&
+        answer.criterionId !== criterio360.id
+      ) {
+        throw new BadRequestException(
+          `Para avaliações 360, o criterionId deve ser "360_evaluation" ou "${criterio360.id}"`,
+        );
+      }
+
+      // Criar DTO no formato padrão do evaluation service
+      const answerData = createEvaluation360Dto.answers[0];
+
+      // Concatenar pontos fortes e fracos na justificativa
+      let justification = answerData.justification || '';
+
+      if (
+        createEvaluation360Dto.strongPoints ||
+        createEvaluation360Dto.weakPoints
+      ) {
+        const strongPointsText = createEvaluation360Dto.strongPoints
+          ? `Pontos Fortes: ${createEvaluation360Dto.strongPoints}`
+          : '';
+        const weakPointsText = createEvaluation360Dto.weakPoints
+          ? `Pontos Fracos: ${createEvaluation360Dto.weakPoints}`
+          : '';
+
+        const additionalFeedback = [strongPointsText, weakPointsText]
+          .filter((text) => text.length > 0)
+          .join(' | ');
+
+        if (additionalFeedback) {
+          justification = justification
+            ? `${justification} | ${additionalFeedback}`
+            : additionalFeedback;
+        }
+      }
+
+      const criarAvaliacaoDto = {
+        type: 'PAR' as any,
+        cycleId: createEvaluation360Dto.cycleId,
+        evaluatorId: evaluatorId,
+        evaluatedId: createEvaluation360Dto.evaluatedId,
+        completed: createEvaluation360Dto.completed ?? true,
+        answers: [
+          {
+            criterionId: criterio360.id,
+            score: answerData.score,
+            justification:
+              justification || `Avaliação 360 - Score: ${answerData.score}`,
+          },
+        ],
+      };
+
+      // Usar o mesmo método da autoavaliação/avaliação regular
+      const novaAvaliacao =
+        await this.evaluationService.criar(criarAvaliacaoDto);
+
+      // Retornar com os mesmos includes da busca por ID
+      return await this.buscarAvaliacao360PorId(novaAvaliacao.id);
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Erro ao criar avaliação 360');
     }
   }
 }

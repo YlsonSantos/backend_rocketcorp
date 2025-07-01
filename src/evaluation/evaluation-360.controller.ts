@@ -10,6 +10,7 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -115,25 +116,27 @@ export class Evaluation360Controller {
   @Post()
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({
-    summary: 'Criar uma nova avaliação 360',
+    summary: 'Criar uma avaliação 360 peer',
     description:
-      'Permite criar uma avaliação 360 entre pares da mesma equipe usando o critério específico 360_evaluation',
+      'Cria uma avaliação 360 do tipo PEER usando o formato padrão CreateEvaluationDto. Aceita apenas um critério (360_evaluation) no array answers.',
   })
   @ApiBody({
     type: CreateEvaluation360Dto,
-    description: 'Dados da avaliação 360',
+    description: 'Dados da avaliação 360 no formato padrão',
     examples: {
-      example1: {
-        summary: 'Exemplo de avaliação 360',
+      peerEvaluation: {
+        summary: 'Avaliação peer com formato padrão',
         value: {
-          evaluatedUserId: 'user2',
           cycleId: 'cycle2025_1',
+          evaluatedId: 'user2',
+          completed: true,
+          strongPoints: 'Excelente comunicação e liderança de equipe',
+          weakPoints: 'Pode melhorar a gestão de tempo em projetos complexos',
           answers: [
             {
               criterionId: '360_evaluation',
               score: 4,
-              justification:
-                'Demonstra excelente colaboração e capacidade de receber feedback',
+              justification: 'Excelente trabalho em equipe e comunicação',
             },
           ],
         },
@@ -142,7 +145,7 @@ export class Evaluation360Controller {
   })
   @ApiResponse({
     status: 201,
-    description: 'Avaliação 360 criada com sucesso',
+    description: 'Avaliação 360 peer criada com sucesso',
   })
   @ApiResponse({
     status: 400,
@@ -156,13 +159,31 @@ export class Evaluation360Controller {
   })
   @HttpCode(HttpStatus.CREATED)
   async criarAvaliacao360(
-    @Body() criarAvaliacao360Dto: CreateEvaluation360Dto,
+    @Body() createEvaluation360Dto: CreateEvaluation360Dto,
     @Req() req: any,
   ) {
     const evaluatorId = req.user.userId;
-    return await this.evaluation360Service.criarAvaliacao360(
+
+    // Buscar primeiro o critério 360 para validar
+    const criterio360 = await this.evaluation360Service.buscarCriterio360();
+    if (!criterio360) {
+      throw new BadRequestException('Critério 360 não encontrado');
+    }
+
+    // Validar que o critério é o 360 (aceitar tanto o ID hardcoded quanto o ID real)
+    const answer = createEvaluation360Dto.answers[0];
+    if (
+      answer.criterionId !== '360_evaluation' &&
+      answer.criterionId !== criterio360.id
+    ) {
+      throw new BadRequestException(
+        `Para avaliações 360, o criterionId deve ser "360_evaluation" ou "${criterio360.id}"`,
+      );
+    }
+
+    return await this.evaluation360Service.criarAvaliacaoPeerPadrao(
       evaluatorId,
-      criarAvaliacao360Dto,
+      createEvaluation360Dto,
     );
   }
 

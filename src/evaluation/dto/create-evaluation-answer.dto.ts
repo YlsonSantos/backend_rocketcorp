@@ -1,31 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsNumber, IsOptional, Min, Max, IsNotEmpty } from 'class-validator';
 
 export class CreateEvaluationAnswerDto {
   @ApiProperty({
     description: 'ID do critério de avaliação',
-    example: '550e8400-e29b-41d4-a716-446655440000',
+    example: 'crit1',
   })
-  @IsString()
+  @IsString({ message: 'ID do critério deve ser uma string válida' })
+  @IsNotEmpty({ message: 'ID do critério é obrigatório' })
   criterionId: string;
 
   @ApiProperty({
-    description: 'Pontuação dada ao critério (1-5)',
+    description: 'Score dado para este critério (1-5)',
+    example: 4,
     minimum: 1,
     maximum: 5,
-    example: 4,
   })
-  @IsNumber()
-  @Min(1)
-  @Max(5)
+  @IsNumber({}, { message: 'Score deve ser um número' })
+  @Min(1, { message: 'Score mínimo é 1' })
+  @Max(5, { message: 'Score máximo é 5' })
   score: number;
 
   @ApiProperty({
-    description: 'Justificativa opcional para a pontuação',
+    description: 'Justificativa para o score dado',
+    example: 'Demonstrou excelente trabalho em equipe durante o projeto',
     required: false,
-    example: 'Demonstrou excelente capacidade de liderança durante o projeto.',
   })
+  @IsString({ message: 'Justificativa deve ser uma string' })
   @IsOptional()
-  @IsString()
   justification?: string;
 }
