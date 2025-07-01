@@ -65,7 +65,7 @@ export class Evaluation360Service {
         },
       });
 
-      // Para cada membro, verificar se já existe uma avaliação do usuário logado para ele
+     
       const membrosComStatus = await Promise.all(
         membros.map(async (membro) => {
           // Buscar avaliação existente do usuário logado para este membro
@@ -115,7 +115,6 @@ export class Evaluation360Service {
 
   async buscarMembrosEquipePorCiclo(userId: string, cycleId: string) {
     try {
-      
       const ciclo = await this.prisma.evaluationCycle.findUnique({
         where: { id: cycleId },
       });
