@@ -162,6 +162,9 @@ CREATE TABLE "MentorshipEvaluation" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Evaluation_type_evaluatorId_evaluatedId_cycleId_key" ON "Evaluation"("type", "evaluatorId", "evaluatedId", "cycleId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex

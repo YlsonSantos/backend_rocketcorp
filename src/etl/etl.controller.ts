@@ -5,6 +5,7 @@ import {
   UseInterceptors,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -12,10 +13,24 @@ import { extname } from 'path';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { runAutoAvaliation } from '../etl/importAutoAvaliation';
 import { runAv360eRef } from '../etl/importAv360eRef';
+import { Roles } from 'src/auth/roles.decorator';
+import * as fsSync from 'fs';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @ApiTags('ETL')
 @Controller('etl')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EtlController {
+  constructor() {
+    const uploadDir = path.join(__dirname, '..', 'etl', 'uploads');
+    if (!fsSync.existsSync(uploadDir)) {
+      fsSync.mkdirSync(uploadDir, { recursive: true });
+      console.log('📂 Pasta de upload criada:', uploadDir);
+    }
+  }
   // Função para customizar o nome dos arquivos
   private static editFileName(
     _req: any,
@@ -28,7 +43,9 @@ export class EtlController {
     callback(null, `${name}-${uniqueSuffix}${fileExtName}`);
   }
 
+  //como apenas existirá esse endpoint, não há necessidade de criar um service para o ETL
   @Post('upload')
+  @Roles('RH')
   @ApiOperation({ summary: 'Upload de arquivos .xlsx para ETL' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(
@@ -62,9 +79,9 @@ export class EtlController {
     const resultados = [];
 
     for (const file of files) {
-      try {
-        const filePath = file.path;
+      const filePath = file.path;
 
+      try {
         await runAutoAvaliation(filePath);
         await runAv360eRef(filePath);
 
@@ -79,6 +96,16 @@ export class EtlController {
           status: 'erro',
           error: error.message,
         });
+      } finally {
+        try {
+          await fs.unlink(filePath);
+          console.log(`🗑️ Arquivo deletado: ${file.originalname}`);
+        } catch (unlinkError) {
+          console.error(
+            `❌ Falha ao deletar ${file.originalname}:`,
+            unlinkError,
+          );
+        }
       }
     }
 
