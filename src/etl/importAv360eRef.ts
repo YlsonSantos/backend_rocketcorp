@@ -141,7 +141,23 @@ export async function runAv360eRef(filePath: string) {
       continue;
     }
 
-    const evaluation = await prisma.evaluation.create({
+    let evaluation = await prisma.evaluation.findFirst({
+      where: {
+        type: EvaluationType.PAR,
+        cycleId: ciclo.id,
+        evaluatorId: avaliador.id,
+        evaluatedId: avaliado.id,
+      },
+    });
+
+    if (evaluation) {
+      console.log(
+        `⚠️ Avaliação 360 já existente: ${avaliador.email} → ${avaliado.email}, pulando.`,
+      );
+      continue;
+    }
+
+    evaluation = await prisma.evaluation.create({
       data: {
         type: EvaluationType.PAR,
         cycleId: ciclo.id,

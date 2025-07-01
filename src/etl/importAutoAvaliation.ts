@@ -141,7 +141,23 @@ export async function runAutoAvaliation(filePath: string) {
   }
 
   // === 7. Cria a avaliação AUTO ===
-  const evaluation = await prisma.evaluation.create({
+  let evaluation = await prisma.evaluation.findFirst({
+    where: {
+      type: EvaluationType.AUTO,
+      cycleId: ciclo.id,
+      evaluatorId: user.id,
+      evaluatedId: user.id,
+    },
+  });
+
+  if (evaluation) {
+    console.log(
+      `⚠️ Autoavaliação já existente para do tipo ${evaluation.type} no ciclo ${ciclo.name} para ${evaluation.evaluatorId} e ${evaluation.evaluatedId}, ETL interrompido.`,
+    );
+    return;
+  }
+
+  evaluation = await prisma.evaluation.create({
     data: {
       type: EvaluationType.AUTO,
       cycleId: ciclo.id,
@@ -166,7 +182,7 @@ export async function runAutoAvaliation(filePath: string) {
       data: {
         userId: user.id,
         cycleId: ciclo.id,
-        selfScore: 0, // Valor inicial, pode ser atualizado depois
+        selfScore: 0,
         leaderScore: null,
         finalScore: null,
         feedback: null,
