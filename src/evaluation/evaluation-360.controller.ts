@@ -57,14 +57,11 @@ export class Evaluation360Controller {
             properties: {
               id: { type: 'string' },
               name: { type: 'string' },
-              email: { type: 'string' },
-              role: { type: 'string' },
               position: {
                 type: 'object',
                 properties: {
                   id: { type: 'string' },
                   name: { type: 'string' },
-                  track: { type: 'string' },
                 },
               },
               hasEvaluation: { type: 'boolean' },

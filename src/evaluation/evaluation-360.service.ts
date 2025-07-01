@@ -54,13 +54,10 @@ export class Evaluation360Service {
             select: {
               id: true,
               name: true,
-              email: true,
-              role: true,
               position: {
                 select: {
                   id: true,
                   name: true,
-                  track: true,
                 },
               },
             },
@@ -86,8 +83,6 @@ export class Evaluation360Service {
           return {
             id: membro.user.id,
             name: membro.user.name,
-            email: membro.user.email,
-            role: membro.user.role,
             position: membro.user.position,
             hasEvaluation: !!avaliacaoExistente,
             evaluationStatus: avaliacaoExistente
@@ -172,13 +167,10 @@ export class Evaluation360Service {
             select: {
               id: true,
               name: true,
-              email: true,
-              role: true,
               position: {
                 select: {
                   id: true,
                   name: true,
-                  track: true,
                 },
               },
             },
@@ -201,8 +193,6 @@ export class Evaluation360Service {
           return {
             id: membro.user.id,
             name: membro.user.name,
-            email: membro.user.email,
-            role: membro.user.role,
             position: membro.user.position,
             hasEvaluation: !!avaliacaoExistente,
             evaluationStatus: avaliacaoExistente
