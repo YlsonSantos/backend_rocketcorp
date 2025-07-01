@@ -13,12 +13,12 @@ import { extname } from 'path';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { runAutoAvaliation } from '../etl/importAutoAvaliation';
 import { runAv360eRef } from '../etl/importAv360eRef';
-import { Roles } from 'src/auth/roles.decorator';
+import { Roles } from '../auth/roles.decorator';
 import * as fsSync from 'fs';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/roles.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('ETL')
 @Controller('etl')

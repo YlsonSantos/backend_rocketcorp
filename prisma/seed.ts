@@ -1,7 +1,13 @@
+import { NestFactory } from '@nestjs/core';
 import { PrismaClient } from '@prisma/client';
+import { AppModule } from '../src/app.module';
+import { EncryptedPrismaService } from '../src/encryption/encrypted-prisma.service';
 const prisma = new PrismaClient();
 
 async function main() {
+  const app = await NestFactory.createApplicationContext(AppModule);
+  const encryptedPrisma = app.get(EncryptedPrismaService);
+
   await prisma.position.createMany({
     data: [
       { id: 'pos1', name: 'Software Engineer', track: 'DESENVOLVIMENTO' },
@@ -358,225 +364,217 @@ async function main() {
     ],
   });
 
-  await prisma.evaluationAnswer.createMany({
-    data: [
-      // Avaliação eval1 (Carlos -> Alice)
-      {
-        id: 'ans1',
-        evaluationId: 'eval1',
-        criterionId: 'crit1',
-        score: 4,
-        justification: 'Colaborou muito bem com o time.',
-      },
-      {
-        id: 'ans2',
-        evaluationId: 'eval1',
-        criterionId: 'crit2',
-        score: 5,
-        justification: 'Sempre proativa e com iniciativa.',
-      },
-      {
-        id: 'ans111',
-        evaluationId: 'eval11',
-        criterionId: 'crit1',
-        score: 4,
-        justification: 'Colaborou muito bem com o time.',
-      },
-      {
-        id: 'ans21',
-        evaluationId: 'eval11',
-        criterionId: 'crit2',
-        score: 5,
-        justification: 'Sempre proativa e com iniciativa.',
-      },
+  await encryptedPrisma.createMany('evaluationAnswer', [
+    // Avaliação eval1 (Carlos -> Alice)
+    {
+      id: 'ans1',
+      evaluationId: 'eval1',
+      criterionId: 'crit1',
+      score: 4,
+      justification: 'Colaborou muito bem com o time.',
+    },
+    {
+      id: 'ans2',
+      evaluationId: 'eval1',
+      criterionId: 'crit2',
+      score: 5,
+      justification: 'Sempre proativa e com iniciativa.',
+    },
+    {
+      id: 'ans111',
+      evaluationId: 'eval11',
+      criterionId: 'crit1',
+      score: 4,
+      justification: 'Colaborou muito bem com o time.',
+    },
+    {
+      id: 'ans21',
+      evaluationId: 'eval11',
+      criterionId: 'crit2',
+      score: 5,
+      justification: 'Sempre proativa e com iniciativa.',
+    },
 
-      // Avaliação eval2 (Alice autoavaliação)
-      {
-        id: 'ans3',
-        evaluationId: 'eval2',
-        criterionId: 'crit1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans4',
-        evaluationId: 'eval2',
-        criterionId: 'crit2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
-      // Avaliação ciclo2 (Alice autoavaliação)
-      {
-        id: 'ans33',
-        evaluationId: 'eval22',
-        criterionId: 'crit1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans44',
-        evaluationId: 'eval22',
-        criterionId: 'crit2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
-      // Avaliação ciclo3 (Alice autoavaliação)
-      {
-        id: 'ans35',
-        evaluationId: 'eval223',
-        criterionId: 'crit1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans45',
-        evaluationId: 'eval223',
-        criterionId: 'crit2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
+    // Avaliação eval2 (Alice autoavaliação)
+    {
+      id: 'ans3',
+      evaluationId: 'eval2',
+      criterionId: 'crit1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans4',
+      evaluationId: 'eval2',
+      criterionId: 'crit2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
+    // Avaliação ciclo2 (Alice autoavaliação)
+    {
+      id: 'ans33',
+      evaluationId: 'eval22',
+      criterionId: 'crit1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans44',
+      evaluationId: 'eval22',
+      criterionId: 'crit2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
+    // Avaliação ciclo3 (Alice autoavaliação)
+    {
+      id: 'ans35',
+      evaluationId: 'eval223',
+      criterionId: 'crit1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans45',
+      evaluationId: 'eval223',
+      criterionId: 'crit2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
 
-      // Avaliação eval3 (Bruno -> Daniela)
-      {
-        id: 'ans5',
-        evaluationId: 'eval3',
-        criterionId: 'crit1',
-        score: 4,
-        justification: 'Excelente trabalho em equipe.',
-      },
-      {
-        id: 'ans6',
-        evaluationId: 'eval3',
-        criterionId: 'crit3',
-        score: 3,
-        justification: 'Metas alcançadas parcialmente.',
-      },
+    // Avaliação eval3 (Bruno -> Daniela)
+    {
+      id: 'ans5',
+      evaluationId: 'eval3',
+      criterionId: 'crit1',
+      score: 4,
+      justification: 'Excelente trabalho em equipe.',
+    },
+    {
+      id: 'ans6',
+      evaluationId: 'eval3',
+      criterionId: 'crit3',
+      score: 3,
+      justification: 'Metas alcançadas parcialmente.',
+    },
 
-      // Avaliação eval4 (Helena -> Fabiana)
-      {
-        id: 'ans7',
-        evaluationId: 'eval4',
-        criterionId: 'crit1',
-        score: 5,
-        justification: 'Ótima colaboração no time Beta.',
-      },
-      {
-        id: 'ans8',
-        evaluationId: 'eval4',
-        criterionId: 'crit2',
-        score: 4,
-        justification: 'Sempre pronta para agir.',
-      },
+    // Avaliação eval4 (Helena -> Fabiana)
+    {
+      id: 'ans7',
+      evaluationId: 'eval4',
+      criterionId: 'crit1',
+      score: 5,
+      justification: 'Ótima colaboração no time Beta.',
+    },
+    {
+      id: 'ans8',
+      evaluationId: 'eval4',
+      criterionId: 'crit2',
+      score: 4,
+      justification: 'Sempre pronta para agir.',
+    },
 
-      // Avaliação eval5 (Fabiana autoavaliação)
-      {
-        id: 'ans9',
-        evaluationId: 'eval5',
-        criterionId: 'crit1',
-        score: 4,
-        justification: 'Acredito que sou colaborativa.',
-      },
-      {
-        id: 'ans10',
-        evaluationId: 'eval5',
-        criterionId: 'crit2',
-        score: 5,
-        justification: 'Tenho muita iniciativa.',
-      },
+    // Avaliação eval5 (Fabiana autoavaliação)
+    {
+      id: 'ans9',
+      evaluationId: 'eval5',
+      criterionId: 'crit1',
+      score: 4,
+      justification: 'Acredito que sou colaborativa.',
+    },
+    {
+      id: 'ans10',
+      evaluationId: 'eval5',
+      criterionId: 'crit2',
+      score: 5,
+      justification: 'Tenho muita iniciativa.',
+    },
 
-      // Avaliação eval6 (Gabriel -> Julia)
-      {
-        id: 'ans11',
-        evaluationId: 'eval6',
-        criterionId: 'crit1',
-        score: 3,
-        justification: 'Boa colaboração, pode melhorar.',
-      },
-      {
-        id: 'ans12',
-        evaluationId: 'eval6',
-        criterionId: 'crit3',
-        score: 4,
-        justification: 'Alcançou a maioria das metas.',
-      },
-    ],
-  });
+    // Avaliação eval6 (Gabriel -> Julia)
+    {
+      id: 'ans11',
+      evaluationId: 'eval6',
+      criterionId: 'crit1',
+      score: 3,
+      justification: 'Boa colaboração, pode melhorar.',
+    },
+    {
+      id: 'ans12',
+      evaluationId: 'eval6',
+      criterionId: 'crit3',
+      score: 4,
+      justification: 'Alcançou a maioria das metas.',
+    },
+  ]);
 
-  await prisma.reference.createMany({
-    data: [
-      {
-        id: 'ref1',
-        evaluatorId: 'user1',
-        referencedId: 'user2',
-        theme: 'Ajuda constante',
-        justification: 'Bruno ajudou em um bug crítico',
-      },
-      {
-        id: 'ref2',
-        evaluatorId: 'user6',
-        referencedId: 'user7',
-        theme: 'Design inovador',
-        justification: 'Gabriel trouxe ótimas ideias para UX',
-      },
-      {
-        id: 'ref3',
-        evaluatorId: 'user3',
-        referencedId: 'user5',
-        theme: 'Entregas pontuais',
-        justification: 'Eduardo sempre entrega no prazo',
-      },
-    ],
-  });
+  await encryptedPrisma.createMany('reference', [
+    {
+      id: 'ref1',
+      evaluatorId: 'user1',
+      referencedId: 'user2',
+      theme: 'Ajuda constante',
+      justification: 'Bruno ajudou em um bug crítico',
+    },
+    {
+      id: 'ref2',
+      evaluatorId: 'user6',
+      referencedId: 'user7',
+      theme: 'Design inovador',
+      justification: 'Gabriel trouxe ótimas ideias para UX',
+    },
+    {
+      id: 'ref3',
+      evaluatorId: 'user3',
+      referencedId: 'user5',
+      theme: 'Entregas pontuais',
+      justification: 'Eduardo sempre entrega no prazo',
+    },
+  ]);
 
-  await prisma.genaiInsight.createMany({
-    data: [
-      {
-        id: 'insight1',
-        cycleId: 'cycle2023_1',
-        evaluatedId: 'user1',
-        summary: 'Alice colaborou bem',
-        discrepancies: 'Nenhuma',
-        brutalFacts: 'Precisa melhorar entregas',
-      },
-      {
-        id: 'insight2',
-        cycleId: 'cycle2023_1',
-        evaluatedId: 'user6',
-        summary: 'Fabiana é muito engajada',
-        discrepancies: 'Pequenas divergências em prazos',
-        brutalFacts: 'Excelente comunicação',
-      },
-    ],
-  });
-  await prisma.mentorshipEvaluation.createMany({
-    data: [
-      {
-        id: 'eval2',
-        mentorId: 'user4',
-        menteeId: 'user5',
-        cycleId: 'cycle2023_1',
-        score: 7.5,
-        feedback:
-          'Eduardo está evoluindo bem, mas pode melhorar na comunicação.',
-      },
-      {
-        id: 'eval3',
-        mentorId: 'user6',
-        menteeId: 'user7',
-        cycleId: 'cycle2023_1',
-        score: 9.0,
-        feedback: 'Gabriel tem excelente iniciativa.',
-      },
-      {
-        id: 'eval4',
-        mentorId: 'user9',
-        menteeId: 'user10',
-        cycleId: 'cycle2023_1',
-        score: 8.5,
-        feedback: 'Julia é muito comprometida com as entregas.',
-      },
-    ],
-  });
+  await encryptedPrisma.createMany('genaiInsight', [
+    {
+      id: 'insight1',
+      cycleId: 'cycle2023_1',
+      evaluatedId: 'user1',
+      summary: 'Alice colaborou bem',
+      discrepancies: 'Nenhuma',
+      brutalFacts: 'Precisa melhorar entregas',
+    },
+    {
+      id: 'insight2',
+      cycleId: 'cycle2023_1',
+      evaluatedId: 'user6',
+      summary: 'Fabiana é muito engajada',
+      discrepancies: 'Pequenas divergências em prazos',
+      brutalFacts: 'Excelente comunicação',
+    },
+  ]);
+
+  await encryptedPrisma.createMany('mentorshipEvaluation', [
+    {
+      id: 'eval2',
+      mentorId: 'user4',
+      menteeId: 'user5',
+      cycleId: 'cycle2023_1',
+      score: 7.5,
+      feedback: 'Eduardo está evoluindo bem, mas pode melhorar na comunicação.',
+    },
+    {
+      id: 'eval3',
+      mentorId: 'user6',
+      menteeId: 'user7',
+      cycleId: 'cycle2023_1',
+      score: 9.0,
+      feedback: 'Gabriel tem excelente iniciativa.',
+    },
+    {
+      id: 'eval4',
+      mentorId: 'user9',
+      menteeId: 'user10',
+      cycleId: 'cycle2023_1',
+      score: 8.5,
+      feedback: 'Julia é muito comprometida com as entregas.',
+    },
+  ]);
 
   const dataScore = [
     {
@@ -722,18 +720,16 @@ async function main() {
   ];
 
   for (const entry of dataScore) {
-    await prisma.scorePerCycle.create({
-      data: {
-        id: entry.id,
-        userId: entry.userId,
-        cycleId: entry.cycleId,
-        selfScore: entry.selfScore,
-        leaderScore: entry.leaderScore,
-        finalScore: entry.finalScore,
-        feedback: entry.feedback,
-        peerScores: {
-          create: entry.peerScore.map((value) => ({ value })),
-        },
+    await encryptedPrisma.create('scorePerCycle', {
+      id: entry.id,
+      userId: entry.userId,
+      cycleId: entry.cycleId,
+      selfScore: entry.selfScore,
+      leaderScore: entry.leaderScore,
+      finalScore: entry.finalScore,
+      feedback: entry.feedback,
+      peerScores: {
+        create: entry.peerScore.map((value) => ({ value })),
       },
     });
   }

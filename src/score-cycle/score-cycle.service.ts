@@ -7,16 +7,20 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateScoreDto } from './dto/create-score-cycle.dto';
 import { UpdateScoreDto } from './dto/update-score-cycle.dto';
 import { Prisma } from '@prisma/client';
+import { EncryptedPrismaService } from '../encryption/encrypted-prisma.service';
 
 @Injectable()
 export class ScoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryptedPrisma: EncryptedPrismaService,
+  ) {}
 
   async create(createScoreDto: CreateScoreDto) {
     const { peerScores, ...scoreData } = createScoreDto;
 
     try {
-      const score = await this.prisma.scorePerCycle.create({
+      const score = await this.encryptedPrisma.create('scorePerCycle', {
         data: {
           ...scoreData,
           peerScores: peerScores
@@ -44,7 +48,7 @@ export class ScoreService {
   }
 
   async findAll() {
-    return this.prisma.scorePerCycle.findMany({
+    return this.encryptedPrisma.findMany('scorePerCycle', {
       include: { peerScores: true, user: true, cycle: true },
     });
   }
@@ -74,7 +78,7 @@ export class ScoreService {
     });
     if (!existing) throw new NotFoundException(`Score ${id} not found`);
 
-    const updatedScore = await this.prisma.scorePerCycle.update({
+    const updatedScore = await this.encryptedPrisma.update('scorePerCycle', {
       where: { id },
       data: {
         ...scoreData,
