@@ -1,4 +1,4 @@
-import { Controller, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Body, Patch, Param, UseGuards, Get } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -38,14 +38,6 @@ export class ScoreCycleController {
     return this.scoreCycleService.findAll();
   }
 
-  @Roles('COLABORADOR', 'LIDER', 'COMITE', 'RH')
-  @Get(':id')
-  @ApiOperation({ summary: 'Busca um ScoreCycle por ID' })
-  @ApiResponse({ status: 200, description: 'Score encontrado' })
-  @ApiResponse({ status: 404, description: 'Score não encontrado' })
-  findOne(@Param('id') id: string) {
-    return this.scoreCycleService.findOne(id);
-  }
   @Roles('RH')
   @Delete(':id')
   @ApiOperation({ summary: 'Remove um ScoreCycle por ID' })
@@ -54,6 +46,13 @@ export class ScoreCycleController {
   remove(@Param('id') id: string) {
     return this.scoreCycleService.remove(id);
   }*/
+
+  @Roles('COLABORADOR', 'LIDER', 'COMITE', 'RH')
+  @Get()
+  @ApiOperation({ summary: 'Retorna o ciclo atual' })
+  findNewest() {
+    return this.scoreCycleService.findNewest();
+  }
 
   @Roles('LIDER', 'COMITE')
   @Patch(':id')
