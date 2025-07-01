@@ -8,6 +8,12 @@ export class Reference {
   id: string;
 
   @ApiProperty({
+    example: 'cycle-uuid',
+    description: 'ID of the cycle',
+  })
+  cycle: string;
+
+  @ApiProperty({
     example: 'user-uuid',
     description: 'ID of the evaluator (creator)',
   })

@@ -94,6 +94,7 @@ model Evaluation {
 
 model Reference {
   id             String @id @default(uuid())
+  cycleId        String
   evaluatorId    String
   referencedId   String
   theme          String
@@ -101,6 +102,8 @@ model Reference {
 
   evaluator      User @relation("RefEvaluator", fields: [evaluatorId], references: [id])
   referenced     User @relation("RefReferenced", fields: [referencedId], references: [id])
+  @@unique([evaluatorId, referencedId, cycleId])
+
 }
 
 model User {
