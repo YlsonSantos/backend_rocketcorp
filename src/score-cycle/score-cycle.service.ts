@@ -49,14 +49,21 @@ export class ScoreService {
     });
   }
 
-  async findOne(id: string) {
-    const score = await this.prisma.scorePerCycle.findUnique({
-      where: { id },
-      include: { peerScores: true, user: true, cycle: true },
+  async findNewest() {
+    const now = new Date();
+    const currentCycle = await this.prisma.evaluationCycle.findFirst({
+      where: {
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      orderBy: {
+        startDate: 'desc',
+      },
     });
-
-    if (!score) throw new NotFoundException(`Score ${id} not found`);
-    return score;
+    if (!currentCycle) {
+      throw new NotFoundException('Nenhum ciclo de avaliação atual encontrado');
+    }
+    return currentCycle;
   }
 
   async update(id: string, updateScoreDto: UpdateScoreDto) {

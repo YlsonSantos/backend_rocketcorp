@@ -218,13 +218,6 @@ async function main() {
         reviewDate: new Date('2025-12-21'),
         endDate: new Date('2025-12-31'),
       },
-      {
-        id: 'cycle2025_1teste',
-        name: '2025.1 teste',
-        startDate: new Date('2025-01-01'),
-        reviewDate: new Date('2025-12-21'),
-        endDate: new Date('2025-12-31'),
-      },
     ],
   });
 
