@@ -209,7 +209,7 @@ async function main() {
         name: '2025.1',
         startDate: new Date('2025-06-01'),
         reviewDate: new Date('2025-06-20'),
-        endDate: new Date('2025-06-30'),
+        endDate: new Date('2025-07-30'),
       },
       {
         id: 'cycle2025_2',
