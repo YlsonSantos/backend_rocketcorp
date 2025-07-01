@@ -160,6 +160,13 @@ export class UsersService {
       where: {
         userId: userId,
       },
+      include: {
+        peerScores: {
+          select: {
+            value: true,
+          },
+        },
+      },
     });
 
     if (!evaluations.length) {
@@ -184,6 +191,7 @@ export class UsersService {
             scorePerCycle: score
               ? {
                   selfScore: score.selfScore,
+                  peerScores: score.peerScores.map((p) => p.value),
                   leaderScore: score.leaderScore,
                   finalScore: score.finalScore,
                   feedback: score.feedback,
@@ -273,6 +281,13 @@ export class UsersService {
           where: {
             cycleId: currentCycle.id,
           },
+          include: {
+            peerScores: {
+              select: {
+                value: true,
+              },
+            },
+          },
         },
         position: {
           select: {
@@ -342,6 +357,13 @@ export class UsersService {
           where: {
             cycleId: {
               in: cycleIds,
+            },
+          },
+          include: {
+            peerScores: {
+              select: {
+                value: true,
+              },
             },
           },
         },

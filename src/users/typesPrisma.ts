@@ -56,6 +56,7 @@ export type CycleGroup = {
   evaluations: EvaluationOutput[];
   scorePerCycle?: {
     selfScore: number | null;
+    peerScores: number[] | null;
     leaderScore: number | null;
     finalScore: number | null;
     feedback: string | null;
