@@ -70,6 +70,7 @@ CREATE TABLE "Evaluation" (
 -- CreateTable
 CREATE TABLE "Reference" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "cycleId" TEXT NOT NULL,
     "evaluatorId" TEXT NOT NULL,
     "referencedId" TEXT NOT NULL,
     "theme" TEXT NOT NULL,
@@ -163,6 +164,9 @@ CREATE TABLE "MentorshipEvaluation" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Evaluation_type_evaluatorId_evaluatedId_cycleId_key" ON "Evaluation"("type", "evaluatorId", "evaluatedId", "cycleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Reference_evaluatorId_referencedId_cycleId_key" ON "Reference"("evaluatorId", "referencedId", "cycleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

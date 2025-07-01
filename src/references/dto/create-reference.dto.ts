@@ -2,6 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateReferenceDto {
   @ApiProperty({
+    example: 'cycleId',
+    description: 'ID of the cycle',
+  })
+  cycleId: string;
+
+  @ApiProperty({
     example: 'user-uuid',
     description: 'ID of the referenced user',
   })
