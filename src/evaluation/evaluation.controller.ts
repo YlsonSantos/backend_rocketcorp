@@ -173,7 +173,7 @@ export class EvaluationController {
   async buscarCriteriosPorUsuario(@Param('userId') userId: string) {
     return await this.evaluationService.buscarCriteriosPorUsuario(userId);
   }
-
+  /*
   @Get('criterios/time/:teamId')
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({ summary: 'Buscar critérios de avaliação por equipe' })
@@ -213,7 +213,7 @@ export class EvaluationController {
   @ApiResponse({ status: 404, description: 'Equipe não encontrada' })
   async buscarCriteriosPorEquipe(@Param('teamId') teamId: string) {
     return await this.evaluationService.buscarCriteriosPorEquipe(teamId);
-  }
+  }*/
   // pegar por id do usuário e fazer subconsulta por id do time
   @Get(':id')
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')

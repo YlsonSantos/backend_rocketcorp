@@ -299,7 +299,7 @@ async function main() {
         type: 'GESTAO',
       },
       {
-        id: 'criterio13',
+        id: '360_evaluation',
         title: '360',
         description: 'Critério para ser usado nas avaliações 360',
         type: 'AV360',
@@ -319,7 +319,7 @@ async function main() {
       { id: 'ca7', criterionId: 'criterio7', positionId: 'pos1' },
       { id: 'ca8', criterionId: 'criterio8', positionId: 'pos1' },
       { id: 'ca9', criterionId: 'criterio9', positionId: 'pos1' },
-      { id: 'ca99', criterionId: 'criterio13', positionId: 'pos1' },
+      { id: 'ca99', criterionId: '360_evaluation', positionId: 'pos1' },
 
       // Posição 2 (sem critérios de Gestão e Liderança)
       { id: 'ca10', criterionId: 'criterio1', positionId: 'pos2' },
@@ -331,7 +331,7 @@ async function main() {
       { id: 'ca16', criterionId: 'criterio7', positionId: 'pos2' },
       { id: 'ca17', criterionId: 'criterio8', positionId: 'pos2' },
       { id: 'ca18', criterionId: 'criterio9', positionId: 'pos2' },
-      { id: '188', criterionId: 'criterio13', positionId: 'pos2' },
+      { id: '188', criterionId: '360_evaluation', positionId: 'pos2' },
 
       // Posição 3 (todos os critérios)
       { id: 'ca19', criterionId: 'criterio1', positionId: 'pos3' },
@@ -346,7 +346,7 @@ async function main() {
       { id: 'ca28', criterionId: 'criterio10', positionId: 'pos3' },
       { id: 'ca29', criterionId: 'criterio11', positionId: 'pos3' },
       { id: 'ca30', criterionId: 'criterio12', positionId: 'pos3' },
-      { id: 'ca929', criterionId: 'criterio13', positionId: 'pos3' },
+      { id: 'ca929', criterionId: '360_evaluation', positionId: 'pos3' },
 
       // Posição 4 (sem critérios de Gestão e Liderança)
       { id: 'ca31', criterionId: 'criterio1', positionId: 'pos4' },
@@ -358,7 +358,7 @@ async function main() {
       { id: 'ca37', criterionId: 'criterio7', positionId: 'pos4' },
       { id: 'ca38', criterionId: 'criterio8', positionId: 'pos4' },
       { id: 'ca39', criterionId: 'criterio9', positionId: 'pos4' },
-      { id: 'ca9922', criterionId: 'criterio13', positionId: 'pos4' },
+      { id: 'ca9922', criterionId: '360_evaluation', positionId: 'pos4' },
 
       // Posição 5 (sem critérios de Gestão e Liderança)
       { id: 'ca40', criterionId: 'criterio1', positionId: 'pos5' },
@@ -370,7 +370,7 @@ async function main() {
       { id: 'ca46', criterionId: 'criterio7', positionId: 'pos5' },
       { id: 'ca47', criterionId: 'criterio8', positionId: 'pos5' },
       { id: 'ca48', criterionId: 'criterio9', positionId: 'pos5' },
-      { id: 'ca1119', criterionId: 'criterio13', positionId: 'pos5' },
+      { id: 'ca1119', criterionId: '360_evaluation', positionId: 'pos5' },
     ],
   });
 

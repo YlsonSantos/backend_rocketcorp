@@ -66,7 +66,6 @@ export class EvaluationCriteriaService {
         assignments: {
           include: {
             position: true,
-            team: true,
           },
         },
       },
@@ -80,7 +79,6 @@ export class EvaluationCriteriaService {
         assignments: {
           include: {
             position: true,
-            team: true,
           },
         },
       },
@@ -109,7 +107,6 @@ export class EvaluationCriteriaService {
           },
           include: {
             position: true,
-            team: true,
           },
         },
       },
@@ -131,7 +128,6 @@ export class EvaluationCriteriaService {
         assignments: {
           include: {
             position: true,
-            team: true,
           },
         },
       },
@@ -210,7 +206,6 @@ export class EvaluationCriteriaService {
     criterionId: string,
     assignmentData: {
       positionId: string;
-      teamId: string;
       isRequired?: boolean;
     },
   ): Promise<CriteriaAssignment> {
@@ -228,7 +223,6 @@ export class EvaluationCriteriaService {
       where: {
         criterionId,
         positionId: assignmentData.positionId,
-        teamId: assignmentData.teamId,
       },
     });
 
@@ -242,12 +236,10 @@ export class EvaluationCriteriaService {
       data: {
         criterionId,
         positionId: assignmentData.positionId,
-        teamId: assignmentData.teamId,
         isRequired: assignmentData.isRequired || false,
       },
       include: {
         position: true,
-        team: true,
       },
     });
   }
@@ -271,7 +263,6 @@ export class EvaluationCriteriaService {
       data: updateData,
       include: {
         position: true,
-        team: true,
       },
     });
   }
@@ -294,7 +285,6 @@ export class EvaluationCriteriaService {
     criterionId: string,
     assignments: Array<{
       positionId: string;
-      teamId: string;
       isRequired?: boolean;
     }>,
   ): Promise<void> {
