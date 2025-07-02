@@ -1,7 +1,13 @@
 import * as xlsx from 'xlsx';
 import { PrismaClient, EvaluationType, CriterionType } from '@prisma/client';
+import { EncryptedPrismaService } from '../encryption/encrypted-prisma.service';
+import { CryptoService } from '../crypto/crypto.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
+const prismaService = new PrismaService();
 const prisma = new PrismaClient();
+const crypto = new CryptoService();
+const encryptedPrisma = new EncryptedPrismaService(prismaService, crypto);
 
 // Função auxiliar para transformar o texto da nota em número
 export function parseNota(notaTexto: string): number | null {
@@ -178,15 +184,13 @@ export async function runAutoAvaliation(filePath: string) {
   });
 
   if (!score) {
-    score = await prisma.scorePerCycle.create({
-      data: {
-        userId: user.id,
-        cycleId: ciclo.id,
-        selfScore: 0,
-        leaderScore: null,
-        finalScore: null,
-        feedback: null,
-      },
+    score = await encryptedPrisma.create('scorePerCycle', {
+      userId: user.id,
+      cycleId: ciclo.id,
+      selfScore: 0,
+      leaderScore: null,
+      finalScore: null,
+      feedback: null,
     });
 
     console.log(
@@ -283,13 +287,11 @@ export async function runAutoAvaliation(filePath: string) {
 
     // Cria resposta
     try {
-      await prisma.evaluationAnswer.create({
-        data: {
-          evaluationId: evaluation.id,
-          criterionId: criterioDb.id,
-          score: nota,
-          justification: justificativa || '',
-        },
+      await encryptedPrisma.create('evaluationAnswer', {
+        evaluationId: evaluation.id,
+        criterionId: criterioDb.id,
+        score: nota,
+        justification: justificativa || '',
       });
     } catch (e) {
       console.error(
@@ -301,13 +303,19 @@ export async function runAutoAvaliation(filePath: string) {
 
   if (countNotas > 0) {
     const media = totalNotas / countNotas;
-    await prisma.scorePerCycle.update({
-      where: { id: score.id },
-      data: { selfScore: media },
-    });
-    console.log(
-      `📊 Média da autoavaliação calculada e salva: ${media.toFixed(2)}`,
-    );
+    if (score) {
+      await encryptedPrisma.update('scorePerCycle', {
+        where: { id: score.id },
+        data: { selfScore: media },
+      });
+      console.log(
+        `📊 Média da autoavaliação calculada e salva: ${media.toFixed(2)}`,
+      );
+    } else {
+      console.warn(
+        '⚠️ Não foi possível atualizar ScorePerCycle: score é null.',
+      );
+    }
   } else {
     console.log(
       '⚠️ Nenhuma nota válida para calcular a média da autoavaliação.',

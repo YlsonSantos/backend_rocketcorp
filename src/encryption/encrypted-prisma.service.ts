@@ -42,11 +42,11 @@ export class EncryptedPrismaService {
   }
 
   async create(model: ModelNames, data: any): Promise<any> {
-    const encrypted = this.encrypt(model, data);
-    const result = await (this.prisma[model] as any).create({
-      data: encrypted,
+    const encryptedData = this.encrypt(model, data);
+
+    return await (this.prisma[model] as any).create({
+      data: encryptedData,
     });
-    return this.decrypt(model, result);
   }
 
   async findUnique(model: ModelNames, args: any): Promise<any> {
