@@ -392,7 +392,6 @@ export class EvaluationService {
 
         const isComplete = await this.validateCompleteness(
           id,
-          avaliacaoExistente.teamId,
           avaliado?.positionId || '',
         );
 
@@ -583,24 +582,13 @@ export class EvaluationService {
 
   async buscarCriteriosPorUsuario(userId: string) {
     try {
-      // Buscar o usuário
+      // Buscar o usuário com a posição
       const usuario = await this.prisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
           name: true,
-        },
-      });
-
-      if (!usuario) {
-        throw new NotFoundException('Usuário não encontrado');
-      }
-
-      // Buscar a equipe do usuário
-      const teamMember = await this.prisma.teamMember.findFirst({
-        where: { userId: userId },
-        include: {
-          team: {
+          position: {
             select: {
               id: true,
               name: true,
@@ -609,13 +597,19 @@ export class EvaluationService {
         },
       });
 
-      if (!teamMember) {
-        throw new NotFoundException('Usuário não pertence a nenhuma equipe');
+      if (!usuario) {
+        throw new NotFoundException('Usuário não encontrado');
       }
 
-      // Buscar critérios da equipe
+      if (!usuario.position) {
+        throw new NotFoundException('Usuário não possui uma posição associada');
+      }
+
+      // Buscar critérios da posição
       const criterios = await this.prisma.criteriaAssignment.findMany({
-        where: { teamId: teamMember.team.id },
+        where: {
+          positionId: usuario.position.id,
+        },
         include: {
           criterion: {
             select: {
@@ -638,9 +632,9 @@ export class EvaluationService {
           id: usuario.id,
           name: usuario.name,
         },
-        team: {
-          id: teamMember.team.id,
-          name: teamMember.team.name,
+        position: {
+          id: usuario.position.id,
+          name: usuario.position.name,
         },
         criteria: criterios.map((item) => item.criterion),
       };
@@ -652,6 +646,7 @@ export class EvaluationService {
     }
   }
 
+  /*
   async buscarCriteriosPorEquipe(teamId: string) {
     try {
       const equipe = await this.prisma.team.findUnique({
@@ -694,7 +689,7 @@ export class EvaluationService {
       }
       throw new BadRequestException('Erro ao buscar critérios da equipe');
     }
-  }
+  }*/
   private async atualizarScorePerCycleParaAvaliacao(
     prisma: any,
     evaluationId: string,
@@ -855,13 +850,11 @@ export class EvaluationService {
 
   private async validateCompleteness(
     evaluationId: string,
-    teamId: string,
     positionId: string,
   ): Promise<boolean> {
     const criteriosObrigatorios = await this.prisma.criteriaAssignment.findMany(
       {
         where: {
-          teamId,
           positionId,
         },
         include: {
@@ -925,7 +918,6 @@ export class EvaluationService {
     // Buscar critérios atribuídos à equipe e posição do usuário
     const criterios = await this.prisma.criteriaAssignment.findMany({
       where: {
-        teamId: equipe.id,
         positionId: posicao.id,
       },
       include: {
