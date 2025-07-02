@@ -229,36 +229,154 @@ async function main() {
 
   await prisma.evaluationCriterion.createMany({
     data: [
+      // COMPORTAMENTO
       {
-        id: 'crit1',
-        title: 'Trabalho em Equipe',
-        description: 'Colaboração com a equipe.',
-        type: 'HABILIDADES',
+        id: 'criterio1',
+        title: 'Sentimento de Dono',
+        description: 'Sentimento de Dono',
+        type: 'COMPORTAMENTO',
       },
       {
-        id: 'crit2',
-        title: 'Proatividade',
-        description: 'Iniciativa sem ser solicitado.',
-        type: 'VALORES',
+        id: 'criterio2',
+        title: 'Resiliência nas adversidades',
+        description: 'Resiliência nas adversidades',
+        type: 'COMPORTAMENTO',
       },
       {
-        id: 'crit3',
-        title: 'Cumprimento de Metas',
-        description: 'Alcançar objetivos estabelecidos.',
-        type: 'METAS',
+        id: 'criterio3',
+        title: 'Organização no Trabalho',
+        description: 'Organização no Trabalho',
+        type: 'COMPORTAMENTO',
+      },
+      {
+        id: 'criterio4',
+        title: 'Capacidade de aprender',
+        description: 'Capacidade de aprender',
+        type: 'COMPORTAMENTO',
+      },
+      {
+        id: 'criterio5',
+        title: 'Ser "team player"',
+        description: 'Ser "team player"',
+        type: 'COMPORTAMENTO',
+      },
+      // EXECUCAO
+      {
+        id: 'criterio6',
+        title: 'Entregar com qualidade',
+        description: 'Entregar com qualidade',
+        type: 'EXECUCAO',
+      },
+      {
+        id: 'criterio7',
+        title: 'Atender aos prazos',
+        description: 'Atender aos prazos',
+        type: 'EXECUCAO',
+      },
+      {
+        id: 'criterio8',
+        title: 'Fazer mais com menos',
+        description: 'Fazer mais com menos',
+        type: 'EXECUCAO',
+      },
+      {
+        id: 'criterio9',
+        title: 'Pensar fora da caixa',
+        description: 'Pensar fora da caixa',
+        type: 'EXECUCAO',
+      },
+      // GESTAO
+      {
+        id: 'criterio10',
+        title: 'Gente',
+        description: 'Gente',
+        type: 'GESTAO',
+      },
+      {
+        id: 'criterio11',
+        title: 'Resultados',
+        description: 'Resultados',
+        type: 'GESTAO',
+      },
+      {
+        id: 'criterio12',
+        title: 'Evolução da Rocket Corp',
+        description: 'Evolução da Rocket Corp',
+        type: 'GESTAO',
+      },
+      {
+        id: 'criterio13',
+        title: '360',
+        description: 'Critério para ser usado nas avaliações 360',
+        type: 'AV360',
       },
     ],
   });
 
   await prisma.criteriaAssignment.createMany({
     data: [
-      { id: 'ca1', criterionId: 'crit1', teamId: 'team1', positionId: 'pos1' },
-      { id: 'ca2', criterionId: 'crit2', teamId: 'team1', positionId: 'pos2' },
-      { id: 'ca3', criterionId: 'crit3', teamId: 'team1', positionId: 'pos4' },
+      // Posição 1 (sem critérios de Gestão e Liderança)
+      { id: 'ca1', criterionId: 'criterio1', positionId: 'pos1' },
+      { id: 'ca2', criterionId: 'criterio2', positionId: 'pos1' },
+      { id: 'ca3', criterionId: 'criterio3', positionId: 'pos1' },
+      { id: 'ca4', criterionId: 'criterio4', positionId: 'pos1' },
+      { id: 'ca5', criterionId: 'criterio5', positionId: 'pos1' },
+      { id: 'ca6', criterionId: 'criterio6', positionId: 'pos1' },
+      { id: 'ca7', criterionId: 'criterio7', positionId: 'pos1' },
+      { id: 'ca8', criterionId: 'criterio8', positionId: 'pos1' },
+      { id: 'ca9', criterionId: 'criterio9', positionId: 'pos1' },
+      { id: 'ca99', criterionId: 'criterio13', positionId: 'pos1' },
 
-      { id: 'ca4', criterionId: 'crit1', teamId: 'team2', positionId: 'pos1' },
-      { id: 'ca5', criterionId: 'crit2', teamId: 'team2', positionId: 'pos5' },
-      { id: 'ca6', criterionId: 'crit3', teamId: 'team2', positionId: 'pos4' },
+      // Posição 2 (sem critérios de Gestão e Liderança)
+      { id: 'ca10', criterionId: 'criterio1', positionId: 'pos2' },
+      { id: 'ca11', criterionId: 'criterio2', positionId: 'pos2' },
+      { id: 'ca12', criterionId: 'criterio3', positionId: 'pos2' },
+      { id: 'ca13', criterionId: 'criterio4', positionId: 'pos2' },
+      { id: 'ca14', criterionId: 'criterio5', positionId: 'pos2' },
+      { id: 'ca15', criterionId: 'criterio6', positionId: 'pos2' },
+      { id: 'ca16', criterionId: 'criterio7', positionId: 'pos2' },
+      { id: 'ca17', criterionId: 'criterio8', positionId: 'pos2' },
+      { id: 'ca18', criterionId: 'criterio9', positionId: 'pos2' },
+      { id: '188', criterionId: 'criterio13', positionId: 'pos2' },
+
+      // Posição 3 (todos os critérios)
+      { id: 'ca19', criterionId: 'criterio1', positionId: 'pos3' },
+      { id: 'ca20', criterionId: 'criterio2', positionId: 'pos3' },
+      { id: 'ca21', criterionId: 'criterio3', positionId: 'pos3' },
+      { id: 'ca22', criterionId: 'criterio4', positionId: 'pos3' },
+      { id: 'ca23', criterionId: 'criterio5', positionId: 'pos3' },
+      { id: 'ca24', criterionId: 'criterio6', positionId: 'pos3' },
+      { id: 'ca25', criterionId: 'criterio7', positionId: 'pos3' },
+      { id: 'ca26', criterionId: 'criterio8', positionId: 'pos3' },
+      { id: 'ca27', criterionId: 'criterio9', positionId: 'pos3' },
+      { id: 'ca28', criterionId: 'criterio10', positionId: 'pos3' },
+      { id: 'ca29', criterionId: 'criterio11', positionId: 'pos3' },
+      { id: 'ca30', criterionId: 'criterio12', positionId: 'pos3' },
+      { id: 'ca929', criterionId: 'criterio13', positionId: 'pos3' },
+
+      // Posição 4 (sem critérios de Gestão e Liderança)
+      { id: 'ca31', criterionId: 'criterio1', positionId: 'pos4' },
+      { id: 'ca32', criterionId: 'criterio2', positionId: 'pos4' },
+      { id: 'ca33', criterionId: 'criterio3', positionId: 'pos4' },
+      { id: 'ca34', criterionId: 'criterio4', positionId: 'pos4' },
+      { id: 'ca35', criterionId: 'criterio5', positionId: 'pos4' },
+      { id: 'ca36', criterionId: 'criterio6', positionId: 'pos4' },
+      { id: 'ca37', criterionId: 'criterio7', positionId: 'pos4' },
+      { id: 'ca38', criterionId: 'criterio8', positionId: 'pos4' },
+      { id: 'ca39', criterionId: 'criterio9', positionId: 'pos4' },
+      { id: 'ca9922', criterionId: 'criterio13', positionId: 'pos4' },
+
+      // Posição 5 (sem critérios de Gestão e Liderança)
+      { id: 'ca40', criterionId: 'criterio1', positionId: 'pos5' },
+      { id: 'ca41', criterionId: 'criterio2', positionId: 'pos5' },
+      { id: 'ca42', criterionId: 'criterio3', positionId: 'pos5' },
+      { id: 'ca43', criterionId: 'criterio4', positionId: 'pos5' },
+      { id: 'ca44', criterionId: 'criterio5', positionId: 'pos5' },
+      { id: 'ca45', criterionId: 'criterio6', positionId: 'pos5' },
+      { id: 'ca46', criterionId: 'criterio7', positionId: 'pos5' },
+      { id: 'ca47', criterionId: 'criterio8', positionId: 'pos5' },
+      { id: 'ca48', criterionId: 'criterio9', positionId: 'pos5' },
+      { id: 'ca1119', criterionId: 'criterio13', positionId: 'pos5' },
     ],
   });
 
@@ -364,147 +482,149 @@ async function main() {
     ],
   });
 
-  await encryptedPrisma.createMany('evaluationAnswer', [
-    // Avaliação eval1 (Carlos -> Alice)
-    {
-      id: 'ans1',
-      evaluationId: 'eval1',
-      criterionId: 'crit1',
-      score: 4,
-      justification: 'Colaborou muito bem com o time.',
-    },
-    {
-      id: 'ans2',
-      evaluationId: 'eval1',
-      criterionId: 'crit2',
-      score: 5,
-      justification: 'Sempre proativa e com iniciativa.',
-    },
-    {
-      id: 'ans111',
-      evaluationId: 'eval11',
-      criterionId: 'crit1',
-      score: 4,
-      justification: 'Colaborou muito bem com o time.',
-    },
-    {
-      id: 'ans21',
-      evaluationId: 'eval11',
-      criterionId: 'crit2',
-      score: 5,
-      justification: 'Sempre proativa e com iniciativa.',
-    },
+  await prisma.evaluationAnswer.createMany({
+    data: [
+      // Avaliação eval1 (Carlos -> Alice)
+      {
+        id: 'ans1',
+        evaluationId: 'eval1',
+        criterionId: 'criterio1',
+        score: 4,
+        justification: 'Colaborou muito bem com o time.',
+      },
+      {
+        id: 'ans2',
+        evaluationId: 'eval1',
+        criterionId: 'criterio2',
+        score: 5,
+        justification: 'Sempre proativa e com iniciativa.',
+      },
+      {
+        id: 'ans111',
+        evaluationId: 'eval11',
+        criterionId: 'criterio1',
+        score: 4,
+        justification: 'Colaborou muito bem com o time.',
+      },
+      {
+        id: 'ans21',
+        evaluationId: 'eval11',
+        criterionId: 'criterio2',
+        score: 5,
+        justification: 'Sempre proativa e com iniciativa.',
+      },
 
-    // Avaliação eval2 (Alice autoavaliação)
-    {
-      id: 'ans3',
-      evaluationId: 'eval2',
-      criterionId: 'crit1',
-      score: 3,
-      justification: 'Acredito que posso melhorar a colaboração.',
-    },
-    {
-      id: 'ans4',
-      evaluationId: 'eval2',
-      criterionId: 'crit2',
-      score: 4,
-      justification: 'Costumo tomar iniciativa em projetos.',
-    },
-    // Avaliação ciclo2 (Alice autoavaliação)
-    {
-      id: 'ans33',
-      evaluationId: 'eval22',
-      criterionId: 'crit1',
-      score: 3,
-      justification: 'Acredito que posso melhorar a colaboração.',
-    },
-    {
-      id: 'ans44',
-      evaluationId: 'eval22',
-      criterionId: 'crit2',
-      score: 4,
-      justification: 'Costumo tomar iniciativa em projetos.',
-    },
-    // Avaliação ciclo3 (Alice autoavaliação)
-    {
-      id: 'ans35',
-      evaluationId: 'eval223',
-      criterionId: 'crit1',
-      score: 3,
-      justification: 'Acredito que posso melhorar a colaboração.',
-    },
-    {
-      id: 'ans45',
-      evaluationId: 'eval223',
-      criterionId: 'crit2',
-      score: 4,
-      justification: 'Costumo tomar iniciativa em projetos.',
-    },
+      // Avaliação eval2 (Alice autoavaliação)
+      {
+        id: 'ans3',
+        evaluationId: 'eval2',
+        criterionId: 'criterio1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans4',
+        evaluationId: 'eval2',
+        criterionId: 'criterio2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo2 (Alice autoavaliação)
+      {
+        id: 'ans33',
+        evaluationId: 'eval22',
+        criterionId: 'criterio1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans44',
+        evaluationId: 'eval22',
+        criterionId: 'criterio2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
+      // Avaliação ciclo3 (Alice autoavaliação)
+      {
+        id: 'ans35',
+        evaluationId: 'eval223',
+        criterionId: 'criterio1',
+        score: 3,
+        justification: 'Acredito que posso melhorar a colaboração.',
+      },
+      {
+        id: 'ans45',
+        evaluationId: 'eval223',
+        criterionId: 'criterio2',
+        score: 4,
+        justification: 'Costumo tomar iniciativa em projetos.',
+      },
 
-    // Avaliação eval3 (Bruno -> Daniela)
-    {
-      id: 'ans5',
-      evaluationId: 'eval3',
-      criterionId: 'crit1',
-      score: 4,
-      justification: 'Excelente trabalho em equipe.',
-    },
-    {
-      id: 'ans6',
-      evaluationId: 'eval3',
-      criterionId: 'crit3',
-      score: 3,
-      justification: 'Metas alcançadas parcialmente.',
-    },
+      // Avaliação eval3 (Bruno -> Daniela)
+      {
+        id: 'ans5',
+        evaluationId: 'eval3',
+        criterionId: 'criterio1',
+        score: 4,
+        justification: 'Excelente trabalho em equipe.',
+      },
+      {
+        id: 'ans6',
+        evaluationId: 'eval3',
+        criterionId: 'criterio3',
+        score: 3,
+        justification: 'Metas alcançadas parcialmente.',
+      },
 
-    // Avaliação eval4 (Helena -> Fabiana)
-    {
-      id: 'ans7',
-      evaluationId: 'eval4',
-      criterionId: 'crit1',
-      score: 5,
-      justification: 'Ótima colaboração no time Beta.',
-    },
-    {
-      id: 'ans8',
-      evaluationId: 'eval4',
-      criterionId: 'crit2',
-      score: 4,
-      justification: 'Sempre pronta para agir.',
-    },
+      // Avaliação eval4 (Helena -> Fabiana)
+      {
+        id: 'ans7',
+        evaluationId: 'eval4',
+        criterionId: 'criterio1',
+        score: 5,
+        justification: 'Ótima colaboração no time Beta.',
+      },
+      {
+        id: 'ans8',
+        evaluationId: 'eval4',
+        criterionId: 'criterio2',
+        score: 4,
+        justification: 'Sempre pronta para agir.',
+      },
 
-    // Avaliação eval5 (Fabiana autoavaliação)
-    {
-      id: 'ans9',
-      evaluationId: 'eval5',
-      criterionId: 'crit1',
-      score: 4,
-      justification: 'Acredito que sou colaborativa.',
-    },
-    {
-      id: 'ans10',
-      evaluationId: 'eval5',
-      criterionId: 'crit2',
-      score: 5,
-      justification: 'Tenho muita iniciativa.',
-    },
+      // Avaliação eval5 (Fabiana autoavaliação)
+      {
+        id: 'ans9',
+        evaluationId: 'eval5',
+        criterionId: 'criterio1',
+        score: 4,
+        justification: 'Acredito que sou colaborativa.',
+      },
+      {
+        id: 'ans10',
+        evaluationId: 'eval5',
+        criterionId: 'criterio2',
+        score: 5,
+        justification: 'Tenho muita iniciativa.',
+      },
 
-    // Avaliação eval6 (Gabriel -> Julia)
-    {
-      id: 'ans11',
-      evaluationId: 'eval6',
-      criterionId: 'crit1',
-      score: 3,
-      justification: 'Boa colaboração, pode melhorar.',
-    },
-    {
-      id: 'ans12',
-      evaluationId: 'eval6',
-      criterionId: 'crit3',
-      score: 4,
-      justification: 'Alcançou a maioria das metas.',
-    },
-  ]);
+      // Avaliação eval6 (Gabriel -> Julia)
+      {
+        id: 'ans11',
+        evaluationId: 'eval6',
+        criterionId: 'criterio1',
+        score: 3,
+        justification: 'Boa colaboração, pode melhorar.',
+      },
+      {
+        id: 'ans12',
+        evaluationId: 'eval6',
+        criterionId: 'criterio3',
+        score: 4,
+        justification: 'Alcançou a maioria das metas.',
+      },
+    ],
+  });
 
   await encryptedPrisma.createMany('reference', [
     {

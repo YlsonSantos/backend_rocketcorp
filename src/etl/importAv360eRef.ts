@@ -35,7 +35,7 @@ export async function runAv360eRef(filePath: string) {
 
   // === 2. Pegando ou criando o critério padrão ===
   let criterio = await prisma.evaluationCriterion.findFirst({
-    where: { title: { contains: 'Feedback 360' } },
+    where: { title: { contains: '360' } },
   });
 
   if (!criterio) {
@@ -43,7 +43,7 @@ export async function runAv360eRef(filePath: string) {
       data: {
         title: 'Feedback 360',
         description: 'Critério padrão de avaliação 360',
-        type: 'HABILIDADES',
+        type: 'AV360',
       },
     });
     console.log('✅ Critério "Feedback 360" criado.');
