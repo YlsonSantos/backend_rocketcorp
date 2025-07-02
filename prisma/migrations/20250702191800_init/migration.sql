@@ -13,11 +13,9 @@ CREATE TABLE "EvaluationAnswer" (
 CREATE TABLE "CriteriaAssignment" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "criterionId" TEXT NOT NULL,
-    "teamId" TEXT NOT NULL,
     "positionId" TEXT NOT NULL,
     "isRequired" BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT "CriteriaAssignment_criterionId_fkey" FOREIGN KEY ("criterionId") REFERENCES "EvaluationCriterion" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "CriteriaAssignment_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "CriteriaAssignment_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "Position" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 

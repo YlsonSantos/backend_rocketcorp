@@ -250,7 +250,7 @@ export async function runAutoAvaliation(filePath: string) {
           data: {
             title: criterioOriginal,
             description: descricao,
-            type: CriterionType.HABILIDADES,
+            type: CriterionType.FROMETL,
           },
         });
         console.log(`✅ Critério "${criterioOriginal}" criado.`);
@@ -264,7 +264,6 @@ export async function runAutoAvaliation(filePath: string) {
     const existingAssignment = await prisma.criteriaAssignment.findFirst({
       where: {
         criterionId: criterioDb.id,
-        teamId: team.id,
         positionId: user.positionId,
       },
     });
@@ -273,7 +272,6 @@ export async function runAutoAvaliation(filePath: string) {
       await prisma.criteriaAssignment.create({
         data: {
           criterionId: criterioDb.id,
-          teamId: team.id,
           positionId: user.positionId,
           isRequired: false,
         },

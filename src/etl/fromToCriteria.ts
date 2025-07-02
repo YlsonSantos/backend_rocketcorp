@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { PrismaClient } from '@prisma/client';
+import { CriterionType, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -40,12 +40,31 @@ export async function runFromToCriteria(filePath: string) {
       where: { title: novo },
     });
 
+    const tipoPorTitulo: Record<string, CriterionType> = {
+      'Sentimento de Dono': CriterionType.COMPORTAMENTO,
+      'Resiliência nas adversidades': CriterionType.COMPORTAMENTO,
+      'Organização no Trabalho': CriterionType.COMPORTAMENTO,
+      'Capacidade de aprender': CriterionType.COMPORTAMENTO,
+      'Ser "team player"': CriterionType.COMPORTAMENTO,
+
+      'Entregar com qualidade': CriterionType.EXECUCAO,
+      'Atender aos prazos': CriterionType.EXECUCAO,
+      'Fazer mais com menos': CriterionType.EXECUCAO,
+      'Pensar fora da caixa': CriterionType.EXECUCAO,
+
+      'Gente': CriterionType.GESTAO,
+      'Resultados': CriterionType.GESTAO,
+      'Evolução da Rocket Corp': CriterionType.GESTAO,
+    };
+
+    const tipo = tipoPorTitulo[novo] ?? CriterionType.FROMETL; // fallback
+
     if (!criterioNovo) {
       criterioNovo = await prisma.evaluationCriterion.create({
         data: {
           title: novo,
           description: `Criado automaticamente a partir de "${antigo}"`,
-          type: criterioAntigo.type, // herda o tipo do antigo
+          type: tipo, // herda o tipo do antigo
         },
       });
 

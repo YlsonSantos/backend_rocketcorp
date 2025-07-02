@@ -27,12 +27,10 @@ model EvaluationAnswer {
 model CriteriaAssignment {
   id          String   @id @default(uuid())
   criterionId String
-  teamId      String
   positionId  String
   isRequired  Boolean  @default(false)
 
   criterion   EvaluationCriterion @relation(fields: [criterionId], references: [id])
-  team        Team      @relation(fields: [teamId], references: [id])
   position    Position  @relation(fields: [positionId], references: [id])
 }
 
@@ -60,7 +58,6 @@ model Team {
   name         String
   members      TeamMember[]
   evaluations  Evaluation[]
-  criteriaAssignments CriteriaAssignment[]
 }
 
 model Position {
@@ -221,9 +218,11 @@ model MentorshipEvaluation {
 }
 
 enum CriterionType {
-  HABILIDADES
-  VALORES
-  METAS
+  GESTAO
+  EXECUCAO
+  COMPORTAMENTO
+  AV360
+  FROMETL
 }
 
 enum EvaluationType {
