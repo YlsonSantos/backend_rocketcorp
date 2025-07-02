@@ -241,6 +241,12 @@ async function main() {
         description: 'Alcançar objetivos estabelecidos.',
         type: 'METAS',
       },
+      {
+        id: '360_evaluation',
+        title: 'Avaliação 360',
+        description: 'Critério específico para avaliações 360 graus.',
+        type: 'HABILIDADES',
+      },
     ],
   });
 

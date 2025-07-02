@@ -814,14 +814,7 @@ export class EvaluationService {
           'Avaliação por pares não pode ser uma auto-avaliação',
         );
       }
-      const isSubordinate = avaliador.subordinates?.some(
-        (sub: any) => sub.id === evaluatedId,
-      );
-      if (isSubordinate || avaliador.managerId === evaluatedId) {
-        throw new BadRequestException(
-          'Avaliação por pares não deve haver relação hierárquica direta',
-        );
-      }
+      // Permitir relações hierárquicas em avaliações 360
       return;
     }
 
