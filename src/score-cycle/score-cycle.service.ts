@@ -75,6 +75,7 @@ export class ScoreService {
         throw new Error('Não há ciclos disponíveis (abertos ou encerrados).');
       }
     }
+    return currentCycle;
   }
 
   async update(id: string, updateScoreDto: UpdateScoreDto) {
