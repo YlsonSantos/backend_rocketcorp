@@ -51,7 +51,7 @@ export class ScoreService {
 
   async findNewest() {
     const now = new Date();
-    const currentCycle = await this.prisma.evaluationCycle.findFirst({
+    let currentCycle = await this.prisma.evaluationCycle.findFirst({
       where: {
         startDate: { lte: now },
         endDate: { gte: now },
@@ -60,10 +60,21 @@ export class ScoreService {
         startDate: 'desc',
       },
     });
+
     if (!currentCycle) {
-      throw new NotFoundException('Nenhum ciclo de avaliação atual encontrado');
+      currentCycle = await this.prisma.evaluationCycle.findFirst({
+        where: {
+          endDate: { lt: now },
+        },
+        orderBy: {
+          endDate: 'desc',
+        },
+      });
+
+      if (!currentCycle) {
+        throw new Error('Não há ciclos disponíveis (abertos ou encerrados).');
+      }
     }
-    return currentCycle;
   }
 
   async update(id: string, updateScoreDto: UpdateScoreDto) {
