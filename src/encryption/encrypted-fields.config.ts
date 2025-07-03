@@ -1,7 +1,8 @@
 export const encryptedFieldsMap = {
-  evaluationAnswer: ['justification'],
-  reference: ['justification', 'theme'],
-  genaiInsight: ['summary', 'discrepancies', 'brutalFacts'],
-  scorePerCycle: ['feedback'],
-  mentorshipEvaluation: ['feedback'],
+  User: ['name', 'email', 'password'],
+  EvaluationAnswer: ['justification'],
+  Reference: ['justification', 'theme'],
+  GenaiInsight: ['summary', 'discrepancies', 'brutalFacts'],
+  ScorePerCycle: ['feedback'],
+  MentorshipEvaluation: ['feedback'],
 };

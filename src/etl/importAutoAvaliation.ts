@@ -1,13 +1,8 @@
 import * as xlsx from 'xlsx';
-import { PrismaClient, EvaluationType, CriterionType } from '@prisma/client';
-import { EncryptedPrismaService } from '../encryption/encrypted-prisma.service';
-import { CryptoService } from '../crypto/crypto.service';
+import { EvaluationType, CriterionType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const prismaService = new PrismaService();
-const prisma = new PrismaClient();
-const crypto = new CryptoService();
-const encryptedPrisma = new EncryptedPrismaService(prismaService, crypto);
+const prisma = new PrismaService();
 
 // Função auxiliar para transformar o texto da nota em número
 export function parseNota(notaTexto: string): number | null {
@@ -118,6 +113,10 @@ export async function runAutoAvaliation(filePath: string) {
     });
   }
 
+  if (!user) {
+    throw new Error('Erro inesperado: usuário não foi criado');
+  }
+
   // === 5. Cria ou encontra o time ===
   let team = await prisma.team.findFirst({
     where: { name: nomeProjeto },
@@ -184,13 +183,15 @@ export async function runAutoAvaliation(filePath: string) {
   });
 
   if (!score) {
-    score = await encryptedPrisma.create('scorePerCycle', {
-      userId: user.id,
-      cycleId: ciclo.id,
-      selfScore: 0,
-      leaderScore: null,
-      finalScore: null,
-      feedback: null,
+    score = await prisma.scorePerCycle.create({
+      data: {
+        userId: user.id,
+        cycleId: ciclo.id,
+        selfScore: 0,
+        leaderScore: null,
+        finalScore: null,
+        feedback: null,
+      },
     });
 
     console.log(
@@ -285,11 +286,13 @@ export async function runAutoAvaliation(filePath: string) {
 
     // Cria resposta
     try {
-      await encryptedPrisma.create('evaluationAnswer', {
-        evaluationId: evaluation.id,
-        criterionId: criterioDb.id,
-        score: nota,
-        justification: justificativa || '',
+      await prisma.evaluationAnswer.create({
+        data: {
+          evaluationId: evaluation.id,
+          criterionId: criterioDb.id,
+          score: nota,
+          justification: justificativa || '',
+        },
       });
     } catch (e) {
       console.error(
@@ -302,7 +305,7 @@ export async function runAutoAvaliation(filePath: string) {
   if (countNotas > 0) {
     const media = totalNotas / countNotas;
     if (score) {
-      await encryptedPrisma.update('scorePerCycle', {
+      await prisma.scorePerCycle.update({
         where: { id: score.id },
         data: { selfScore: media },
       });
