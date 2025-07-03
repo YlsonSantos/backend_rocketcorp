@@ -133,12 +133,6 @@ export class UsersService {
             },
           },
         },
-        team: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         answers: {
           include: {
             criterion: {
@@ -211,7 +205,6 @@ export class UsersService {
             name: evaluation.evaluated.name,
             position: evaluation.evaluated.position.name,
           },
-          team: evaluation.team,
           answers: evaluation.answers.map((answer) => ({
             criterion: answer.criterion.title,
             score: answer.score,
