@@ -1,14 +1,9 @@
 import * as xlsx from 'xlsx';
-import { PrismaClient, EvaluationType } from '@prisma/client';
+import { EvaluationType } from '@prisma/client';
 import { parseNota } from './importAutoAvaliation';
-import { EncryptedPrismaService } from '../encryption/encrypted-prisma.service';
-import { CryptoService } from '../crypto/crypto.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
-const prismaService = new PrismaService();
-const prisma = new PrismaClient();
-const crypto = new CryptoService();
-const encryptedPrisma = new EncryptedPrismaService(prismaService, crypto);
+const prisma = new PrismaService();
 
 export async function runAv360eRef(filePath: string) {
   const workbook = xlsx.readFile(filePath);
@@ -174,11 +169,13 @@ export async function runAv360eRef(filePath: string) {
       },
     });
 
-    await encryptedPrisma.create('evaluationAnswer', {
-      evaluationId: evaluation.id,
-      criterionId: criterio.id,
-      score: nota,
-      justification: justificativa || '',
+    await prisma.evaluationAnswer.create({
+      data: {
+        evaluationId: evaluation.id,
+        criterionId: criterio.id,
+        score: nota,
+        justification: justificativa || '',
+      },
     });
 
     if (nota !== null) {
@@ -261,12 +258,14 @@ export async function runAv360eRef(filePath: string) {
       }
 
       // Cria referência
-      await encryptedPrisma.create('reference', {
-        cycleId: ciclo.id,
-        evaluatorId: avaliador.id,
-        referencedId: referenciado.id,
-        theme: 'Referência técnica/comportamental',
-        justification: justificativa,
+      await prisma.reference.create({
+        data: {
+          cycleId: ciclo.id,
+          evaluatorId: avaliador.id,
+          referencedId: referenciado.id,
+          theme: 'Referência técnica/comportamental',
+          justification: justificativa,
+        },
       });
 
       console.log(

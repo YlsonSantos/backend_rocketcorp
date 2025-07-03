@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ScoreService } from './score-cycle.service';
 import { ScoreCycleController } from './score-cycle.controller';
-import { EncryptionModule } from '../encryption/encryption.module';
+import { CryptoModule } from '../crypto/crypto.module';
 
 @Module({
-  imports: [EncryptionModule],
+  imports: [CryptoModule],
   controllers: [ScoreCycleController],
   providers: [ScoreService],
 })

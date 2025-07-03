@@ -1,17 +1,13 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMentoringDto } from './dto/create-mentoring.dto';
-import { EncryptedPrismaService } from '../encryption/encrypted-prisma.service';
 
 @Injectable()
 export class MentoringService {
-  constructor(
-    private prisma: PrismaService,
-    private encryptedPrisma: EncryptedPrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
   async create(dto: CreateMentoringDto) {
     try {
-      return await this.encryptedPrisma.create('mentorshipEvaluation', {
+      return await this.prisma.mentorshipEvaluation.create({
         data: {
           mentorId: dto.mentorId,
           menteeId: dto.menteeId,
@@ -31,31 +27,25 @@ export class MentoringService {
   }
 
   async findAll() {
-    const results = await this.encryptedPrisma.findMany(
-      'mentorshipEvaluation',
-      {
-        include: {
-          mentor: true,
-          mentee: true,
-          cycle: true,
-        },
+    const results = await this.prisma.mentorshipEvaluation.findMany({
+      include: {
+        mentor: true,
+        mentee: true,
+        cycle: true,
       },
-    );
+    });
     return results;
   }
 
   async findOne(id: string) {
-    const evaluation = await this.encryptedPrisma.findUnique(
-      'mentorshipEvaluation',
-      {
-        where: { id },
-        include: {
-          mentor: true,
-          mentee: true,
-          cycle: true,
-        },
+    const evaluation = await this.prisma.mentorshipEvaluation.findUnique({
+      where: { id },
+      include: {
+        mentor: true,
+        mentee: true,
+        cycle: true,
       },
-    );
+    });
 
     if (!evaluation) {
       throw new Error('Avaliação de mentoria não encontrada');
@@ -64,10 +54,9 @@ export class MentoringService {
   }
 
   async remove(id: string) {
-    const evaluation = await this.encryptedPrisma.findUnique(
-      'mentorshipEvaluation',
-      { where: { id } },
-    );
+    const evaluation = await this.prisma.mentorshipEvaluation.findUnique({
+      where: { id },
+    });
     if (!evaluation) {
       throw new Error('Avaliação de mentoria não encontrada');
     }

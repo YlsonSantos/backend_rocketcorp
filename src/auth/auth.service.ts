@@ -17,9 +17,13 @@ export class AuthService {
         mentor: { select: { id: true } },
       },
     });
-    if (user && user.password === loginUserDto.password) {
+
+    if (!user) return null;
+
+    if (user.password === loginUserDto.password) {
       return user;
     }
+
     return null;
   }
 
