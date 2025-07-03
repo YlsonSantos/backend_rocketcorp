@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateEvaluationCriterionDto } from './dto/create-evaluation-criterion.dto';
+import { CreateEvaluationCriterionDto, UpdateEvaluationCriterionBulkDto } from './dto/create-evaluation-criterion.dto';
 import { UpdateEvaluationCriterionDto } from './dto/update-evaluation-criterion.dto';
 import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
 import { EvaluationCriterion, CriteriaAssignment } from '@prisma/client';
@@ -275,6 +275,33 @@ export class EvaluationCriteriaService {
     await this.prisma.criteriaAssignment.delete({
       where: { id: assignmentId },
     });
+  }
+
+  async createBulk(
+    createDtos: CreateEvaluationCriterionDto[],
+  ): Promise<EvaluationCriterion[]> {
+    const results: EvaluationCriterion[] = [];
+
+    for (const createDto of createDtos) {
+      const criterion = await this.create(createDto);
+      results.push(criterion);
+    }
+
+    return results;
+  }
+
+  async updateBulk(
+    updateDtos: UpdateEvaluationCriterionBulkDto[],
+  ): Promise<EvaluationCriterion[]> {
+    const results: EvaluationCriterion[] = [];
+
+    for (const updateDto of updateDtos) {
+      const { id, ...criterionData } = updateDto;
+      const criterion = await this.update(id, criterionData as any);
+      results.push(criterion);
+    }
+
+    return results;
   }
 
   private async createAssignments(

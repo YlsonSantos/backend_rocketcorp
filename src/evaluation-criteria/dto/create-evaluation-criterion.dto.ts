@@ -84,4 +84,55 @@ export class CreateEvaluationCriterionDto {
   @Type(() => CriteriaAssignmentDto)
   @IsOptional()
   assignments?: CriteriaAssignmentDto[];
+}
+
+export class UpdateEvaluationCriterionBulkDto {
+  @ApiProperty({
+    description: 'ID do critério (obrigatório para atualização)',
+    example: 'criterion-uuid',
+  })
+  @IsUUID('4', { message: 'ID deve ser um UUID válido' })
+  @IsNotEmpty({ message: 'ID é obrigatório para atualização' })
+  id: string;
+
+  @ApiProperty({
+    description: 'Título do critério de avaliação',
+    example: 'Comunicação Efetiva',
+    required: false,
+  })
+  @IsString({ message: 'Título deve ser uma string' })
+  @IsOptional()
+  title?: string;
+
+  @ApiProperty({
+    description: 'Descrição detalhada do critério',
+    example: 'Capacidade de comunicar ideias de forma clara e eficaz',
+    required: false,
+  })
+  @IsString({ message: 'Descrição deve ser uma string' })
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Tipo do critério',
+    enum: CriterionType,
+    example: 'GESTAO',
+    required: false,
+  })
+  @IsEnum(CriterionType, {
+    message: 'Tipo deve ser GESTAO, EXECUCAO, COMPORTAMENTO, AV360 ou FROMETL',
+  })
+  @IsOptional()
+  type?: CriterionType;
+
+  @ApiProperty({
+    description: 'Atribuições do critério para posições',
+    type: [CriteriaAssignmentDto],
+    required: false,
+  })
+  @IsArray({ message: 'Atribuições deve ser um array' })
+  @ValidateNested({ each: true })
+  @Type(() => CriteriaAssignmentDto)
+  @IsOptional()
+  assignments?: CriteriaAssignmentDto[];
 } 

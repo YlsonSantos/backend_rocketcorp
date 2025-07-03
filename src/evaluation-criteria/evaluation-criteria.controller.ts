@@ -23,7 +23,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { EvaluationCriteriaService } from './evaluation-criteria.service';
-import { CreateEvaluationCriterionDto } from './dto/create-evaluation-criterion.dto';
+import { CreateEvaluationCriterionDto, UpdateEvaluationCriterionBulkDto } from './dto/create-evaluation-criterion.dto';
 import { UpdateEvaluationCriterionDto } from './dto/update-evaluation-criterion.dto';
 import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
 import { EvaluationCriterion } from './entities/evaluation-criterion.entity';
@@ -306,5 +306,60 @@ export class EvaluationCriteriaController {
     @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
   ): Promise<void> {
     return await this.evaluationCriteriaService.removeAssignment(assignmentId);
+  }
+
+  @Post('bulk')
+  @Roles('RH')
+  @ApiOperation({
+    summary: 'Criar múltiplos critérios de avaliação de uma vez',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Critérios criados com sucesso',
+    type: [EvaluationCriterion],
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Requisição inválida - falha na validação',
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido - permissões insuficientes',
+  })
+  @HttpCode(HttpStatus.CREATED)
+  async createBulk(
+    @Body() createDtos: CreateEvaluationCriterionDto[],
+  ): Promise<PrismaEvaluationCriterion[]> {
+    return await this.evaluationCriteriaService.createBulk(createDtos);
+  }
+
+  @Patch('bulk')
+  @Roles('RH')
+  @ApiOperation({
+    summary: 'Atualizar múltiplos critérios de avaliação de uma vez',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Critérios atualizados com sucesso',
+    type: [EvaluationCriterion],
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Requisição inválida - falha na validação',
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido - permissões insuficientes',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Um ou mais critérios não encontrados',
+  })
+  async updateBulk(
+    @Body() updateDtos: UpdateEvaluationCriterionBulkDto[],
+  ): Promise<PrismaEvaluationCriterion[]> {
+    return await this.evaluationCriteriaService.updateBulk(updateDtos);
   }
 }
