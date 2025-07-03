@@ -9,7 +9,7 @@ export class QueryEvaluationCriteriaDto {
     required: false,
   })
   @IsEnum(CriterionType, {
-    message: 'Tipo deve ser HABILIDADES, VALORES ou METAS',
+    message: 'Tipo deve ser GESTAO, EXECUCAO, COMPORTAMENTO, AV360 ou FROMETL',
   })
   @IsOptional()
   type?: CriterionType;
@@ -20,7 +20,7 @@ export class QueryEvaluationCriteriaDto {
     required: false,
   })
   @IsEnum(TrackType, {
-    message: 'Track deve ser DESENVOLVIMENTO, DESIGN ou FINANCEIRO',
+    message: 'Track deve ser DESENVOLVIMENTO, DESIGN, FINANCEIRO, COMITE ou RH',
   })
   @IsOptional()
   track?: TrackType;
@@ -32,12 +32,4 @@ export class QueryEvaluationCriteriaDto {
   @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
   @IsOptional()
   positionId?: string;
-
-  @ApiProperty({
-    description: 'Filtrar por ID da equipe',
-    required: false,
-  })
-  @IsUUID('4', { message: 'ID da equipe deve ser um UUID válido' })
-  @IsOptional()
-  teamId?: string;
 } 

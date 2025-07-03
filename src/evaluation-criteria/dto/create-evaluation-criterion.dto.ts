@@ -25,14 +25,6 @@ export class CriteriaAssignmentDto {
   positionId: string;
 
   @ApiProperty({
-    description: 'ID da equipe',
-    example: 'team-uuid',
-  })
-  @IsUUID('4', { message: 'ID da equipe deve ser um UUID válido' })
-  @IsNotEmpty({ message: 'ID da equipe é obrigatório' })
-  teamId: string;
-
-  @ApiProperty({
     description: 'Se o critério é obrigatório para esta atribuição',
     example: false,
     default: false,
@@ -62,10 +54,10 @@ export class CreateEvaluationCriterionDto {
   @ApiProperty({
     description: 'Tipo do critério',
     enum: CriterionType,
-    example: 'HABILIDADES',
+    example: 'GESTAO',
   })
   @IsEnum(CriterionType, {
-    message: 'Tipo deve ser HABILIDADES, VALORES ou METAS',
+    message: 'Tipo deve ser GESTAO, EXECUCAO, COMPORTAMENTO, AV360 ou FROMETL',
   })
   @IsNotEmpty({ message: 'Tipo é obrigatório' })
   type: CriterionType;
@@ -83,7 +75,7 @@ export class CreateEvaluationCriterionDto {
   weight?: number;
 
   @ApiProperty({
-    description: 'Atribuições do critério para posições e equipes',
+    description: 'Atribuições do critério para posições',
     type: [CriteriaAssignmentDto],
     required: false,
   })

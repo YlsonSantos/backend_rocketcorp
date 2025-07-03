@@ -157,7 +157,7 @@ export class EvaluationController {
               description: { type: 'string' },
               type: {
                 type: 'string',
-                enum: ['HABILIDADES', 'VALORES', 'METAS'],
+                enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
               },
             },
           },
@@ -201,7 +201,7 @@ export class EvaluationController {
               description: { type: 'string' },
               type: {
                 type: 'string',
-                enum: ['HABILIDADES', 'VALORES', 'METAS'],
+                enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
               },
             },
           },
@@ -326,7 +326,7 @@ export class EvaluationController {
               description: { type: 'string' },
               type: {
                 type: 'string',
-                enum: ['HABILIDADES', 'VALORES', 'METAS'],
+                enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
               },
             },
           },
@@ -340,28 +340,16 @@ export class EvaluationController {
             endDate: { type: 'string', format: 'date-time' },
           },
         },
-        existingEvaluation: {
-          type: 'object',
-          nullable: true,
-          properties: {
-            id: { type: 'string' },
-            completed: { type: 'boolean' },
-            answers: { type: 'array' },
-            createdAt: { type: 'string', format: 'date-time' },
-          },
-        },
+        hasSelfEvaluation: { type: 'boolean' },
       },
     },
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
+    status: 404,
+    description: 'Usuário não encontrado ou não pertence a nenhuma equipe',
   })
-  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async buscarCriteriosParaAutoavaliacao(@Param('userId') userId: string) {
-    return await this.evaluationService.buscarCriteriosParaAutoavaliacao(
-      userId,
-    );
+    return await this.evaluationService.buscarCriteriosParaAutoavaliacao(userId);
   }
 }

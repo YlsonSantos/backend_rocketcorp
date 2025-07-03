@@ -23,7 +23,7 @@ export class EvaluationCriterion {
   @ApiProperty({
     description: 'Tipo do critério',
     enum: CriterionType,
-    example: 'HABILIDADES',
+    example: 'GESTAO',
   })
   type: CriterionType;
 

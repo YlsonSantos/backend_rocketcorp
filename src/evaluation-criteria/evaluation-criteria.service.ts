@@ -32,7 +32,7 @@ export class EvaluationCriteriaService {
   async findAll(
     query: QueryEvaluationCriteriaDto = {},
   ): Promise<EvaluationCriterion[]> {
-    const { track, positionId, teamId, type } = query;
+    const { track, positionId, type } = query;
 
     const where: any = {};
 
@@ -40,17 +40,13 @@ export class EvaluationCriteriaService {
       where.type = type;
     }
 
-    if (track || positionId || teamId) {
+    if (track || positionId) {
       where.assignments = {
         some: {},
       };
 
       if (positionId) {
         where.assignments.some.positionId = positionId;
-      }
-
-      if (teamId) {
-        where.assignments.some.teamId = teamId;
       }
 
       if (track) {
@@ -228,7 +224,7 @@ export class EvaluationCriteriaService {
 
     if (existingAssignment) {
       throw new ConflictException(
-        'Esta atribuição já existe para o critério, posição e equipe especificados',
+        'Esta atribuição já existe para o critério e posição especificados',
       );
     }
 

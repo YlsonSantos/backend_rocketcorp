@@ -76,15 +76,14 @@ export class EvaluationCriteriaController {
   @ApiQuery({
     name: 'type',
     required: false,
-    enum: ['HABILIDADES', 'VALORES', 'METAS'],
+    enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
   })
   @ApiQuery({
     name: 'track',
     required: false,
-    enum: ['DESENVOLVIMENTO', 'DESIGN', 'FINANCEIRO'],
+    enum: ['DESENVOLVIMENTO', 'DESIGN', 'FINANCEIRO', 'COMITE', 'RH'],
   })
   @ApiQuery({ name: 'positionId', required: false })
-  @ApiQuery({ name: 'teamId', required: false })
   @ApiResponse({
     status: 200,
     description: 'Lista de critérios recuperada com sucesso',
@@ -130,7 +129,7 @@ export class EvaluationCriteriaController {
   @ApiOperation({ summary: 'Buscar critérios por track' })
   @ApiParam({
     name: 'track',
-    description: 'Track (DESENVOLVIMENTO, DESIGN, FINANCEIRO)',
+    description: 'Track (DESENVOLVIMENTO, DESIGN, FINANCEIRO, COMITE, RH)',
     type: 'string',
   })
   @ApiResponse({
@@ -249,7 +248,6 @@ export class EvaluationCriteriaController {
     @Body()
     assignmentData: {
       positionId: string;
-      teamId: string;
       isRequired?: boolean;
     },
   ): Promise<PrismaCriteriaAssignment> {
@@ -290,13 +288,13 @@ export class EvaluationCriteriaController {
 
   @Delete('assignments/:assignmentId')
   @Roles('RH')
-  @ApiOperation({ summary: 'Remover atribuição' })
+  @ApiOperation({ summary: 'Deletar atribuição' })
   @ApiParam({
     name: 'assignmentId',
     description: 'ID da atribuição',
     type: 'string',
   })
-  @ApiResponse({ status: 204, description: 'Atribuição removida com sucesso' })
+  @ApiResponse({ status: 204, description: 'Atribuição deletada com sucesso' })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({
     status: 403,

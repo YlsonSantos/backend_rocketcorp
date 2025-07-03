@@ -657,8 +657,22 @@ export class EvaluationService {
         throw new NotFoundException('Equipe não encontrada');
       }
 
+      // Como não há relação direta entre equipe e critérios no schema atual,
+      // seria necessário buscar critérios através das posições dos membros da equipe
       const criterios = await this.prisma.criteriaAssignment.findMany({
-        where: { teamId: teamId },
+        where: {
+          position: {
+            users: {
+              some: {
+                teamMemberships: {
+                  some: {
+                    teamId: teamId,
+                  },
+                },
+              },
+            },
+          },
+        },
         include: {
           criterion: {
             select: {

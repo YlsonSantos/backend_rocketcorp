@@ -14,12 +14,6 @@ export class CriteriaAssignment {
   criterionId: string;
 
   @ApiProperty({
-    description: 'ID da equipe',
-    example: 'team-uuid',
-  })
-  teamId: string;
-
-  @ApiProperty({
     description: 'ID da posição',
     example: 'position-uuid',
   })
@@ -39,14 +33,5 @@ export class CriteriaAssignment {
     id: string;
     name: string;
     track: string;
-  };
-
-  @ApiProperty({
-    description: 'Dados da equipe',
-    required: false,
-  })
-  team?: {
-    id: string;
-    name: string;
   };
 } 
