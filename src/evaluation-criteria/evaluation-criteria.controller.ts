@@ -3,9 +3,8 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
   Delete,
+  Param,
   ParseUUIDPipe,
   UseGuards,
   UsePipes,
@@ -23,18 +22,15 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { EvaluationCriteriaService } from './evaluation-criteria.service';
-import { CreateEvaluationCriterionDto, UpdateEvaluationCriterionBulkDto } from './dto/create-evaluation-criterion.dto';
-import { UpdateEvaluationCriterionDto } from './dto/update-evaluation-criterion.dto';
 import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
 import { EvaluationCriterion } from './entities/evaluation-criterion.entity';
-import { CriteriaAssignment } from './entities/criteria-assignment.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import {
   EvaluationCriterion as PrismaEvaluationCriterion,
-  CriteriaAssignment as PrismaCriteriaAssignment,
 } from '@prisma/client';
+import { UpsertEvaluationCriteriaDto } from './dto/upsert-evaluation-criteria.dto';
 
 @ApiTags('critérios de avaliação')
 @Controller('criterios-avaliacao')
@@ -46,17 +42,43 @@ export class EvaluationCriteriaController {
     private readonly evaluationCriteriaService: EvaluationCriteriaService,
   ) {}
 
-  @Post()
+  @Post('upsert')
   @Roles('RH')
-  @ApiOperation({ summary: 'Criar um novo critério de avaliação' })
-  @ApiResponse({
-    status: 201,
-    description: 'Critério criado com sucesso',
-    type: EvaluationCriterion,
+  @ApiOperation({ 
+    summary: 'Criar e atualizar critérios de avaliação simultaneamente',
+    description: 'Permite criar novos critérios e atualizar existentes em uma única operação. Critérios sem mudanças são identificados e reportados separadamente.'
+  })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Operação de upsert concluída com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Upsert operation completed' },
+        summary: {
+          type: 'object',
+          properties: {
+            created: { type: 'number', example: 2, description: 'Critérios criados' },
+            updated: { type: 'number', example: 3, description: 'Critérios atualizados' },
+            unchanged: { type: 'number', example: 1, description: 'Critérios sem mudanças' },
+            errors: { type: 'number', example: 0, description: 'Erros encontrados' }
+          }
+        },
+        details: {
+          type: 'object',
+          properties: {
+            created: { type: 'array', items: { $ref: '#/components/schemas/EvaluationCriterion' } },
+            updated: { type: 'array', items: { $ref: '#/components/schemas/EvaluationCriterion' } },
+            unchanged: { type: 'array', items: { $ref: '#/components/schemas/EvaluationCriterion' } },
+            errors: { type: 'array', items: { type: 'object' } }
+          }
+        }
+      }
+    }
   })
   @ApiResponse({
     status: 400,
-    description: 'Requisição inválida - falha na validação',
+    description: 'Requisição inválida - falha na validação dos dados',
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({
@@ -64,10 +86,8 @@ export class EvaluationCriteriaController {
     description: 'Proibido - permissões insuficientes',
   })
   @HttpCode(HttpStatus.CREATED)
-  async create(
-    @Body() createDto: CreateEvaluationCriterionDto,
-  ): Promise<PrismaEvaluationCriterion> {
-    return await this.evaluationCriteriaService.create(createDto);
+  async upsertCriteria(@Body() upsertDto: UpsertEvaluationCriteriaDto) {
+    return this.evaluationCriteriaService.upsertCriteria(upsertDto);
   }
 
   @Get()
@@ -100,101 +120,6 @@ export class EvaluationCriteriaController {
     return await this.evaluationCriteriaService.findAll(query);
   }
 
-  @Get('position/:positionId')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Buscar critérios por posição' })
-  @ApiParam({
-    name: 'positionId',
-    description: 'ID da posição',
-    type: 'string',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Critérios da posição recuperados com sucesso',
-    type: [EvaluationCriterion],
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  async findByPosition(
-    @Param('positionId', ParseUUIDPipe) positionId: string,
-  ): Promise<PrismaEvaluationCriterion[]> {
-    return await this.evaluationCriteriaService.findByPosition(positionId);
-  }
-
-  @Get('track/:track')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Buscar critérios por track' })
-  @ApiParam({
-    name: 'track',
-    description: 'Track (DESENVOLVIMENTO, DESIGN, FINANCEIRO, COMITE, RH)',
-    type: 'string',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Critérios do track recuperados com sucesso',
-    type: [EvaluationCriterion],
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  async findByTrack(
-    @Param('track') track: string,
-  ): Promise<PrismaEvaluationCriterion[]> {
-    return await this.evaluationCriteriaService.findByTrack(track);
-  }
-
-  @Get(':id')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Buscar critério por ID' })
-  @ApiParam({ name: 'id', description: 'ID do critério', type: 'string' })
-  @ApiResponse({
-    status: 200,
-    description: 'Critério recuperado com sucesso',
-    type: EvaluationCriterion,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Requisição inválida - UUID inválido',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({ status: 404, description: 'Critério não encontrado' })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<PrismaEvaluationCriterion> {
-    return await this.evaluationCriteriaService.findOne(id);
-  }
-
-  @Patch(':id')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Atualizar critério por ID' })
-  @ApiParam({ name: 'id', description: 'ID do critério', type: 'string' })
-  @ApiResponse({
-    status: 200,
-    description: 'Critério atualizado com sucesso',
-    type: EvaluationCriterion,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Requisição inválida - falha na validação',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @ApiResponse({ status: 404, description: 'Critério não encontrado' })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateDto: UpdateEvaluationCriterionDto,
-  ): Promise<PrismaEvaluationCriterion> {
-    return await this.evaluationCriteriaService.update(id, updateDto);
-  }
-
   @Delete(':id')
   @Roles('RH')
   @ApiOperation({ summary: 'Deletar critério por ID' })
@@ -217,149 +142,5 @@ export class EvaluationCriteriaController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return await this.evaluationCriteriaService.remove(id);
-  }
-
-  @Post(':criterionId/assignments')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Criar atribuição para um critério' })
-  @ApiParam({
-    name: 'criterionId',
-    description: 'ID do critério',
-    type: 'string',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Atribuição criada com sucesso',
-    type: CriteriaAssignment,
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @ApiResponse({ status: 404, description: 'Critério não encontrado' })
-  @ApiResponse({
-    status: 409,
-    description: 'Conflito - atribuição já existe',
-  })
-  @HttpCode(HttpStatus.CREATED)
-  async createAssignment(
-    @Param('criterionId', ParseUUIDPipe) criterionId: string,
-    @Body()
-    assignmentData: {
-      positionId: string;
-      isRequired?: boolean;
-    },
-  ): Promise<PrismaCriteriaAssignment> {
-    return await this.evaluationCriteriaService.createAssignment(
-      criterionId,
-      assignmentData,
-    );
-  }
-
-  @Patch('assignments/:assignmentId')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Atualizar atribuição' })
-  @ApiParam({
-    name: 'assignmentId',
-    description: 'ID da atribuição',
-    type: 'string',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Atribuição atualizada com sucesso',
-    type: CriteriaAssignment,
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @ApiResponse({ status: 404, description: 'Atribuição não encontrada' })
-  async updateAssignment(
-    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
-    @Body() updateData: { isRequired?: boolean },
-  ): Promise<PrismaCriteriaAssignment> {
-    return await this.evaluationCriteriaService.updateAssignment(
-      assignmentId,
-      updateData,
-    );
-  }
-
-  @Delete('assignments/:assignmentId')
-  @Roles('RH')
-  @ApiOperation({ summary: 'Deletar atribuição' })
-  @ApiParam({
-    name: 'assignmentId',
-    description: 'ID da atribuição',
-    type: 'string',
-  })
-  @ApiResponse({ status: 204, description: 'Atribuição deletada com sucesso' })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @ApiResponse({ status: 404, description: 'Atribuição não encontrada' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async removeAssignment(
-    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
-  ): Promise<void> {
-    return await this.evaluationCriteriaService.removeAssignment(assignmentId);
-  }
-
-  @Post('bulk')
-  @Roles('RH')
-  @ApiOperation({
-    summary: 'Criar múltiplos critérios de avaliação de uma vez',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Critérios criados com sucesso',
-    type: [EvaluationCriterion],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Requisição inválida - falha na validação',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @HttpCode(HttpStatus.CREATED)
-  async createBulk(
-    @Body() createDtos: CreateEvaluationCriterionDto[],
-  ): Promise<PrismaEvaluationCriterion[]> {
-    return await this.evaluationCriteriaService.createBulk(createDtos);
-  }
-
-  @Patch('bulk')
-  @Roles('RH')
-  @ApiOperation({
-    summary: 'Atualizar múltiplos critérios de avaliação de uma vez',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Critérios atualizados com sucesso',
-    type: [EvaluationCriterion],
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Requisição inválida - falha na validação',
-  })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({
-    status: 403,
-    description: 'Proibido - permissões insuficientes',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Um ou mais critérios não encontrados',
-  })
-  async updateBulk(
-    @Body() updateDtos: UpdateEvaluationCriterionBulkDto[],
-  ): Promise<PrismaEvaluationCriterion[]> {
-    return await this.evaluationCriteriaService.updateBulk(updateDtos);
   }
 }
