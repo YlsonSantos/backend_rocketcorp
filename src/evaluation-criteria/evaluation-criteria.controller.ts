@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -86,7 +87,9 @@ export class EvaluationCriteriaController {
     description: 'Proibido - permissões insuficientes',
   })
   @HttpCode(HttpStatus.CREATED)
-  async upsertCriteria(@Body() upsertDto: UpsertEvaluationCriteriaDto) {
+  async upsertCriteria(@Body() upsertDto: UpsertEvaluationCriteriaDto, @Req() req: any) {
+    console.log('User object in upsert:', req.user);
+    console.log('User role:', req.user?.role);
     return this.evaluationCriteriaService.upsertCriteria(upsertDto);
   }
 
