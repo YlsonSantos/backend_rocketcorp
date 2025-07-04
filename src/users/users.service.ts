@@ -310,6 +310,10 @@ export class UsersService {
             cycleId: currentCycle.id,
           },
           select: {
+            selfScore: true,
+            leaderScore: true,
+            finalScore: true,
+            feedback: true,
             peerScores: {
               select: {
                 value: true,
