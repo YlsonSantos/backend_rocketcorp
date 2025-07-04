@@ -12,6 +12,7 @@ import { Evaluation360Module } from './evaluation/evaluation-360.module';
 import { AuditModule } from './audit/audit.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EtlModule } from './etl/etl.module';
+import { PositionsModule } from './positions/positions.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { EtlModule } from './etl/etl.module';
     GenaiModule,
     AuditModule,
     EtlModule,
+    PositionsModule,
   ],
 })
 export class AppModule {}

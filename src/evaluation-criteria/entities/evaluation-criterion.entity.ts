@@ -23,7 +23,7 @@ export class EvaluationCriterion {
   @ApiProperty({
     description: 'Tipo do critério',
     enum: CriterionType,
-    example: 'HABILIDADES',
+    example: 'GESTAO',
   })
   type: CriterionType;
 
@@ -38,4 +38,4 @@ export class EvaluationCriterion {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt?: Date;
-} 
+}

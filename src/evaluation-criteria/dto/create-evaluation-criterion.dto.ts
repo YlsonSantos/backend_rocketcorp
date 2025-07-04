@@ -25,14 +25,6 @@ export class CriteriaAssignmentDto {
   positionId: string;
 
   @ApiProperty({
-    description: 'ID da equipe',
-    example: 'team-uuid',
-  })
-  @IsUUID('4', { message: 'ID da equipe deve ser um UUID válido' })
-  @IsNotEmpty({ message: 'ID da equipe é obrigatório' })
-  teamId: string;
-
-  @ApiProperty({
     description: 'Se o critério é obrigatório para esta atribuição',
     example: false,
     default: false,
@@ -62,10 +54,10 @@ export class CreateEvaluationCriterionDto {
   @ApiProperty({
     description: 'Tipo do critério',
     enum: CriterionType,
-    example: 'HABILIDADES',
+    example: 'GESTAO',
   })
   @IsEnum(CriterionType, {
-    message: 'Tipo deve ser HABILIDADES, VALORES ou METAS',
+    message: 'Tipo deve ser GESTAO, EXECUCAO, COMPORTAMENTO, AV360 ou FROMETL',
   })
   @IsNotEmpty({ message: 'Tipo é obrigatório' })
   type: CriterionType;
@@ -83,7 +75,27 @@ export class CreateEvaluationCriterionDto {
   weight?: number;
 
   @ApiProperty({
-    description: 'Atribuições do critério para posições e equipes',
+    description: 'ID da posição para criar associação automática',
+    example: 'position-uuid',
+    required: false,
+  })
+  @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
+  @IsOptional()
+  positionId?: string;
+
+  @ApiProperty({
+    description:
+      'Se o critério é obrigatório para a posição (usado apenas com positionId)',
+    example: false,
+    default: false,
+    required: false,
+  })
+  @IsBoolean({ message: 'Campo isRequired deve ser um valor booleano' })
+  @IsOptional()
+  isRequired?: boolean;
+
+  @ApiProperty({
+    description: 'Atribuições do critério para posições',
     type: [CriteriaAssignmentDto],
     required: false,
   })
@@ -92,4 +104,55 @@ export class CreateEvaluationCriterionDto {
   @Type(() => CriteriaAssignmentDto)
   @IsOptional()
   assignments?: CriteriaAssignmentDto[];
-} 
+}
+
+export class UpdateEvaluationCriterionBulkDto {
+  @ApiProperty({
+    description: 'ID do critério (obrigatório para atualização)',
+    example: 'criterion-uuid',
+  })
+  @IsUUID('4', { message: 'ID deve ser um UUID válido' })
+  @IsNotEmpty({ message: 'ID é obrigatório para atualização' })
+  id: string;
+
+  @ApiProperty({
+    description: 'Título do critério de avaliação',
+    example: 'Comunicação Efetiva',
+    required: false,
+  })
+  @IsString({ message: 'Título deve ser uma string' })
+  @IsOptional()
+  title?: string;
+
+  @ApiProperty({
+    description: 'Descrição detalhada do critério',
+    example: 'Capacidade de comunicar ideias de forma clara e eficaz',
+    required: false,
+  })
+  @IsString({ message: 'Descrição deve ser uma string' })
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Tipo do critério',
+    enum: CriterionType,
+    example: 'GESTAO',
+    required: false,
+  })
+  @IsEnum(CriterionType, {
+    message: 'Tipo deve ser GESTAO, EXECUCAO, COMPORTAMENTO, AV360 ou FROMETL',
+  })
+  @IsOptional()
+  type?: CriterionType;
+
+  @ApiProperty({
+    description: 'Atribuições do critério para posições',
+    type: [CriteriaAssignmentDto],
+    required: false,
+  })
+  @IsArray({ message: 'Atribuições deve ser um array' })
+  @ValidateNested({ each: true })
+  @Type(() => CriteriaAssignmentDto)
+  @IsOptional()
+  assignments?: CriteriaAssignmentDto[];
+}

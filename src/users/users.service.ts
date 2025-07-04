@@ -137,12 +137,6 @@ export class UsersService {
             },
           },
         },
-        team: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         answers: {
           include: {
             criterion: {
@@ -228,7 +222,6 @@ export class UsersService {
             name: evaluation.evaluated.name,
             position: evaluation.evaluated.position.name,
           },
-          team: evaluation.team,
           answers: evaluation.answers.map((answer) => ({
             criterion: answer.criterion.title,
             score: answer.score,
@@ -301,22 +294,27 @@ export class UsersService {
     }
 
     const users = await this.prisma.user.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        managerId: true,
+        mentorId: true,
+        position: {
+          select: {
+            name: true,
+          },
+        },
         scorePerCycle: {
           where: {
             cycleId: currentCycle.id,
           },
-          include: {
+          select: {
             peerScores: {
               select: {
                 value: true,
               },
             },
-          },
-        },
-        position: {
-          select: {
-            name: true,
           },
         },
       },

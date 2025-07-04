@@ -23,7 +23,7 @@ export class AuditInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
     const startTime = Date.now();
 
-    // Extract user information from JWT token
+    // Extract user information from JWT token - handle case where user might not be authenticated yet
     const user = request.user as any;
     const actorId = user?.userId || user?.id || 'anonymous';
 
@@ -39,6 +39,12 @@ export class AuditInterceptor implements NestInterceptor {
 
     // Skip audit for certain endpoints (health checks, etc.)
     if (this.shouldSkipAudit(request)) {
+      return next.handle();
+    }
+
+    // Skip audit if user is not authenticated (for endpoints that require auth)
+    if (!user && request.url !== '/auth/login') {
+      // If no user and not login endpoint, skip audit to avoid interference
       return next.handle();
     }
 
@@ -150,6 +156,8 @@ export class AuditInterceptor implements NestInterceptor {
       '/metrics',
       '/favicon.ico',
       '/api', // Swagger documentation
+      '/auth/login', // Skip audit for login endpoint
+      '/auth/test-role', // Skip audit for test endpoint
     ];
 
     return skipPaths.some((path) => request.url.startsWith(path));
