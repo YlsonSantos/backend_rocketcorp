@@ -75,6 +75,25 @@ export class CreateEvaluationCriterionDto {
   weight?: number;
 
   @ApiProperty({
+    description: 'ID da posição para criar associação automática',
+    example: 'position-uuid',
+    required: false,
+  })
+  @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
+  @IsOptional()
+  positionId?: string;
+
+  @ApiProperty({
+    description: 'Se o critério é obrigatório para a posição (usado apenas com positionId)',
+    example: false,
+    default: false,
+    required: false,
+  })
+  @IsBoolean({ message: 'Campo isRequired deve ser um valor booleano' })
+  @IsOptional()
+  isRequired?: boolean;
+
+  @ApiProperty({
     description: 'Atribuições do critério para posições',
     type: [CriteriaAssignmentDto],
     required: false,

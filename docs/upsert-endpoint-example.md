@@ -5,6 +5,17 @@ O endpoint `/evaluation-criteria/upsert` permite criar novos critérios e atuali
 
 **Nota**: Esta é a única forma de criar e atualizar critérios na aplicação. Endpoints individuais de POST e PATCH foram removidos para simplificar a API.
 
+## Novidades na Versão Atualizada
+
+### Criação Automática de Associações
+- Ao criar um critério, você pode especificar um `positionId` para criar automaticamente a associação entre o critério e a posição
+- Se a associação já existir, ela será atualizada se necessário (ex: mudança no campo `isRequired`)
+- Você ainda pode usar o campo `assignments` para múltiplas associações
+
+### Melhorias na Validação
+- Validação de UUID mais robusta no endpoint DELETE
+- Tratamento de erros melhorado com transações para garantir consistência de dados
+
 ## Endpoints Disponíveis
 
 ### 1. Upsert (Criar/Atualizar)
@@ -38,10 +49,19 @@ interface CreateEvaluationCriterionDto {
   title: string;
   description: string;
   type: 'GESTAO' | 'EXECUCAO' | 'COMPORTAMENTO' | 'AV360' | 'FROMETL';
+  weight?: number;                    // Opcional (1-10)
+  positionId?: string;                // NOVO: ID da posição para associação automática
+  isRequired?: boolean;               // NOVO: Se o critério é obrigatório para a posição
+  assignments?: CriteriaAssignmentDto[]; // Opcional: múltiplas associações
 }
 
 interface UpdateCriterionForUpsertDto extends CreateEvaluationCriterionDto {
   id: string;  // ID do critério existente
+}
+
+interface CriteriaAssignmentDto {
+  positionId: string;
+  isRequired?: boolean;
 }
 ```
 
@@ -80,19 +100,23 @@ const upsertCriteria = async (criteriaData: {
   }
 };
 
-// Exemplo de uso
+// Exemplo de uso com positionId (NOVO)
 const handleSaveAllCriteria = async () => {
   const criteriaToUpsert = {
     create: [
       {
         title: 'Novo Critério Técnico',
         description: 'Descrição do novo critério',
-        type: 'GESTAO'
+        type: 'GESTAO',
+        positionId: 'position-uuid-1',  // Associação automática
+        isRequired: true
       },
       {
         title: 'Novo Critério Comportamental',
         description: 'Descrição do novo critério',
-        type: 'COMPORTAMENTO'
+        type: 'COMPORTAMENTO',
+        positionId: 'position-uuid-2',  // Associação automática
+        isRequired: false
       }
     ],
     update: [
@@ -124,6 +148,27 @@ const handleSaveAllCriteria = async () => {
     alert('Erro na operação');
   }
 };
+
+// Exemplo com múltiplas associações (método tradicional)
+const handleSaveWithMultipleAssignments = async () => {
+  const criteriaToUpsert = {
+    create: [
+      {
+        title: 'Critério Multi-Posição',
+        description: 'Critério aplicável a múltiplas posições',
+        type: 'EXECUCAO',
+        assignments: [
+          { positionId: 'position-uuid-1', isRequired: true },
+          { positionId: 'position-uuid-2', isRequired: false },
+          { positionId: 'position-uuid-3', isRequired: true }
+        ]
+      }
+    ],
+    update: []
+  };
+
+  await upsertCriteria(criteriaToUpsert);
+};
 ```
 
 ### Exemplo com Formulário Dinâmico
@@ -134,13 +179,21 @@ const [criteria, setCriteria] = useState<Array<{
   title: string;
   description: string;
   type: CriterionType;
+  positionId?: string;
+  isRequired?: boolean;
   isNew?: boolean;
 }>>([]);
 
 const handleSaveAll = async () => {
   const createCriteria = criteria
     .filter(c => c.isNew)
-    .map(({ title, description, type }) => ({ title, description, type }));
+    .map(({ title, description, type, positionId, isRequired }) => ({ 
+      title, 
+      description, 
+      type, 
+      positionId, 
+      isRequired 
+    }));
 
   const updateCriteria = criteria
     .filter(c => !c.isNew && c.id)
@@ -207,10 +260,66 @@ const handleSaveAll = async () => {
 ```json
 {
   "statusCode": 400,
-  "message": "Upsert operation failed: Validation error",
+  "message": "Upsert operation failed: [detalhes do erro]",
   "error": "Bad Request"
 }
 ```
+
+## Comportamento das Associações
+
+### Ao Criar Critério com positionId
+1. O critério é criado
+2. Uma associação é automaticamente criada com a posição especificada
+3. Se a associação já existir, ela é atualizada se necessário
+
+### Ao Criar Critério com assignments
+1. O critério é criado
+2. Múltiplas associações são criadas conforme especificado
+3. Associações duplicadas são tratadas graciosamente
+
+### Ao Deletar Critério
+1. O sistema verifica se há respostas de avaliação associadas
+2. Se houver respostas, a operação é bloqueada (erro 409)
+3. Se não houver respostas, todas as associações são removidas
+4. O critério é deletado
+5. Tudo é feito em uma transação para garantir consistência
+
+## Validações
+
+### UUID
+- Todos os IDs devem ser UUIDs válidos (versão 4)
+- Validação rigorosa no endpoint DELETE
+
+### Campos Obrigatórios
+- `title`: string não vazia
+- `description`: string não vazia  
+- `type`: um dos valores válidos (GESTAO, EXECUCAO, COMPORTAMENTO, AV360, FROMETL)
+
+### Campos Opcionais
+- `weight`: número entre 1 e 10
+- `positionId`: UUID válido (se fornecido)
+- `isRequired`: boolean (padrão: false)
+- `assignments`: array de objetos com positionId e isRequired
+
+## Tratamento de Erros
+
+### Erro 400 - Bad Request
+- Dados inválidos na requisição
+- UUID inválido
+- Erro interno durante a operação
+
+### Erro 401 - Unauthorized
+- Token JWT inválido ou ausente
+
+### Erro 403 - Forbidden
+- Usuário sem permissão RH
+
+### Erro 404 - Not Found
+- Critério não encontrado (DELETE)
+
+### Erro 409 - Conflict
+- Tentativa de deletar critério com respostas associadas
+- Conflito de dados durante a operação
 
 ## Vantagens da API Simplificada
 

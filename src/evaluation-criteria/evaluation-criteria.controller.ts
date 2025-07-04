@@ -130,7 +130,7 @@ export class EvaluationCriteriaController {
   @ApiResponse({ status: 204, description: 'Critério deletado com sucesso' })
   @ApiResponse({
     status: 400,
-    description: 'Requisição inválida - UUID inválido',
+    description: 'Requisição inválida - UUID inválido ou erro interno',
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({
@@ -143,7 +143,7 @@ export class EvaluationCriteriaController {
     description: 'Conflito - critério possui respostas associadas',
   })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async remove(@Param('id', new ParseUUIDPipe({ version: '4', errorHttpStatusCode: 400 })) id: string): Promise<void> {
     return await this.evaluationCriteriaService.remove(id);
   }
 }

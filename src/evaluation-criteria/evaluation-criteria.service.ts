@@ -21,12 +21,21 @@ export class EvaluationCriteriaService {
   async create(
     createDto: CreateEvaluationCriterionDto,
   ): Promise<EvaluationCriterion> {
-    const { assignments, ...criterionData } = createDto;
+    const { assignments, positionId, isRequired, ...criterionData } = createDto;
 
     const criterion = await this.prisma.evaluationCriterion.create({
       data: criterionData,
     });
 
+    // Create assignment if positionId is provided
+    if (positionId) {
+      await this.createAssignment(criterion.id, {
+        positionId,
+        isRequired: isRequired || false,
+      });
+    }
+
+    // Create assignments if provided
     if (assignments && assignments.length > 0) {
       await this.createAssignments(criterion.id, assignments);
     }
@@ -173,34 +182,46 @@ export class EvaluationCriteriaService {
   }
 
   async remove(id: string): Promise<void> {
-    // Check if criterion exists
-    const criterion = await this.prisma.evaluationCriterion.findUnique({
-      where: { id },
-      include: {
-        answers: true,
-      },
-    });
+    try {
+      // Check if criterion exists
+      const criterion = await this.prisma.evaluationCriterion.findUnique({
+        where: { id },
+        include: {
+          answers: true,
+        },
+      });
 
-    if (!criterion) {
-      throw new NotFoundException('Critério de avaliação não encontrado');
-    }
+      if (!criterion) {
+        throw new NotFoundException('Critério de avaliação não encontrado');
+      }
 
-    // Check if criterion has associated answers
-    if (criterion.answers.length > 0) {
-      throw new ConflictException(
-        'Não é possível deletar um critério que possui respostas de avaliação associadas',
+      // Check if criterion has associated answers
+      if (criterion.answers.length > 0) {
+        throw new ConflictException(
+          'Não é possível deletar um critério que possui respostas de avaliação associadas',
+        );
+      }
+
+      // Use transaction to ensure data consistency
+      await this.prisma.$transaction(async (prisma) => {
+        // Delete assignments first
+        await prisma.criteriaAssignment.deleteMany({
+          where: { criterionId: id },
+        });
+
+        // Delete criterion
+        await prisma.evaluationCriterion.delete({
+          where: { id },
+        });
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Erro ao deletar critério: ${error.message}`,
       );
     }
-
-    // Delete assignments first
-    await this.prisma.criteriaAssignment.deleteMany({
-      where: { criterionId: id },
-    });
-
-    // Delete criterion
-    await this.prisma.evaluationCriterion.delete({
-      where: { id },
-    });
   }
 
   async createAssignment(
@@ -228,9 +249,20 @@ export class EvaluationCriteriaService {
     });
 
     if (existingAssignment) {
-      throw new ConflictException(
-        'Esta atribuição já existe para o critério e posição especificados',
-      );
+      // If assignment exists, update it if isRequired changed
+      if (existingAssignment.isRequired !== assignmentData.isRequired) {
+        return this.prisma.criteriaAssignment.update({
+          where: { id: existingAssignment.id },
+          data: {
+            isRequired: assignmentData.isRequired || false,
+          },
+          include: {
+            position: true,
+          },
+        });
+      }
+      // Return existing assignment if no changes needed
+      return existingAssignment;
     }
 
     return this.prisma.criteriaAssignment.create({
