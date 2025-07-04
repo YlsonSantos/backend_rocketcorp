@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateEvaluationAnswerDto } from './create-evaluation-answer.dto';
@@ -6,7 +13,7 @@ import { CreateEvaluationAnswerDto } from './create-evaluation-answer.dto';
 export class AvaliarSubordinadoDto {
   @ApiProperty({
     description: 'ID do subordinado a ser avaliado',
-    example: 'user1'
+    example: 'user1',
   })
   @IsString()
   @IsNotEmpty()
@@ -14,7 +21,7 @@ export class AvaliarSubordinadoDto {
 
   @ApiProperty({
     description: 'ID do ciclo de avaliação',
-    example: 'cycle2025_1'
+    example: 'cycle2025_1',
   })
   @IsString()
   @IsNotEmpty()
@@ -22,7 +29,7 @@ export class AvaliarSubordinadoDto {
 
   @ApiProperty({
     description: 'Respostas da avaliação',
-    type: [CreateEvaluationAnswerDto]
+    type: [CreateEvaluationAnswerDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -32,7 +39,7 @@ export class AvaliarSubordinadoDto {
   @ApiProperty({
     description: 'Se a avaliação está completa',
     example: true,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()

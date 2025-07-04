@@ -52,8 +52,8 @@ export async function runFromToCriteria(filePath: string) {
       'Fazer mais com menos': CriterionType.EXECUCAO,
       'Pensar fora da caixa': CriterionType.EXECUCAO,
 
-      'Gente': CriterionType.GESTAO,
-      'Resultados': CriterionType.GESTAO,
+      Gente: CriterionType.GESTAO,
+      Resultados: CriterionType.GESTAO,
       'Evolução da Rocket Corp': CriterionType.GESTAO,
     };
 

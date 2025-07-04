@@ -12,7 +12,7 @@ export class AuditService {
   async log(auditEvent: AuditEventDto): Promise<void> {
     try {
       this.logger.debug(`Starting audit log for event: ${auditEvent.eventId}`);
-      
+
       // Check if user exists, if not use a fallback
       let userId = auditEvent.actorId;
 
@@ -39,7 +39,9 @@ export class AuditService {
         }
       }
 
-      this.logger.debug(`Attempting to save audit log to database with userId: ${userId}`);
+      this.logger.debug(
+        `Attempting to save audit log to database with userId: ${userId}`,
+      );
 
       // Log to database
       const savedAuditLog = await this.prisma.auditLog.create({
@@ -62,7 +64,9 @@ export class AuditService {
         },
       });
 
-      this.logger.debug(`Successfully saved audit log to database: ${savedAuditLog.id}`);
+      this.logger.debug(
+        `Successfully saved audit log to database: ${savedAuditLog.id}`,
+      );
 
       // Also log to console for development/debugging
       this.logger.log(
