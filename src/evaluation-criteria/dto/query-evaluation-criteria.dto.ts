@@ -32,4 +32,4 @@ export class QueryEvaluationCriteriaDto {
   @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
   @IsOptional()
   positionId?: string;
-} 
+}

@@ -10,23 +10,23 @@ export class UpdateCriterionForUpsertDto extends CreateEvaluationCriterionDto {
 }
 
 export class UpsertEvaluationCriteriaDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Lista de novos critérios para criar',
     type: [CreateEvaluationCriterionDto],
     example: [
       {
         title: 'Novo Critério Técnico',
         description: 'Descrição do novo critério',
-        type: 'TECHNICAL'
-      }
-    ]
+        type: 'TECHNICAL',
+      },
+    ],
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateEvaluationCriterionDto)
   create: CreateEvaluationCriterionDto[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Lista de critérios existentes para atualizar',
     type: [UpdateCriterionForUpsertDto],
     example: [
@@ -34,9 +34,9 @@ export class UpsertEvaluationCriteriaDto {
         id: 'existing-criterion-id',
         title: 'Critério Atualizado',
         description: 'Nova descrição',
-        type: 'BEHAVIORAL'
-      }
-    ]
+        type: 'BEHAVIORAL',
+      },
+    ],
   })
   @IsArray()
   @ValidateNested({ each: true })

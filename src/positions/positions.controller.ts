@@ -20,7 +20,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { TrackType } from '@prisma/client';
-import { FindByTrackDto } from './dto/find-by-track.dto';
 
 @ApiTags('posições')
 @Controller('positions')
@@ -142,4 +141,4 @@ export class PositionsController {
   async findOne(@Param('id') id: string) {
     return await this.positionsService.findOne(id);
   }
-} 
+}

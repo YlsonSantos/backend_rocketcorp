@@ -217,7 +217,13 @@ export class EvaluationController {
               description: { type: 'string' },
               type: {
                 type: 'string',
-                enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
+                enum: [
+                  'GESTAO',
+                  'EXECUCAO',
+                  'COMPORTAMENTO',
+                  'AV360',
+                  'FROMETL',
+                ],
               },
             },
           },
@@ -386,7 +392,13 @@ export class EvaluationController {
               description: { type: 'string' },
               type: {
                 type: 'string',
-                enum: ['GESTAO', 'EXECUCAO', 'COMPORTAMENTO', 'AV360', 'FROMETL'],
+                enum: [
+                  'GESTAO',
+                  'EXECUCAO',
+                  'COMPORTAMENTO',
+                  'AV360',
+                  'FROMETL',
+                ],
               },
             },
           },
@@ -410,6 +422,8 @@ export class EvaluationController {
     description: 'Usuário não encontrado ou não pertence a nenhuma equipe',
   })
   async buscarCriteriosParaAutoavaliacao(@Param('userId') userId: string) {
-    return await this.evaluationService.buscarCriteriosParaAutoavaliacao(userId);
+    return await this.evaluationService.buscarCriteriosParaAutoavaliacao(
+      userId,
+    );
   }
 }

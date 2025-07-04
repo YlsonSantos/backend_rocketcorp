@@ -34,4 +34,4 @@ export class CriteriaAssignment {
     name: string;
     track: string;
   };
-} 
+}

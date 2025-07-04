@@ -8,4 +8,4 @@ import { PrismaService } from '../../prisma/prisma.service';
   providers: [EvaluationCriteriaService, PrismaService],
   exports: [EvaluationCriteriaService],
 })
-export class EvaluationCriteriaModule {} 
+export class EvaluationCriteriaModule {}

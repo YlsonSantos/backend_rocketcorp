@@ -84,7 +84,8 @@ export class CreateEvaluationCriterionDto {
   positionId?: string;
 
   @ApiProperty({
-    description: 'Se o critério é obrigatório para a posição (usado apenas com positionId)',
+    description:
+      'Se o critério é obrigatório para a posição (usado apenas com positionId)',
     example: false,
     default: false,
     required: false,
@@ -154,4 +155,4 @@ export class UpdateEvaluationCriterionBulkDto {
   @Type(() => CriteriaAssignmentDto)
   @IsOptional()
   assignments?: CriteriaAssignmentDto[];
-} 
+}

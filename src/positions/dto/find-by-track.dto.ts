@@ -12,4 +12,4 @@ export class FindByTrackDto {
     message: 'Track deve ser DESENVOLVIMENTO, DESIGN, FINANCEIRO, COMITE ou RH',
   })
   track: TrackType;
-} 
+}

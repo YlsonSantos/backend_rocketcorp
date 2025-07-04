@@ -76,9 +76,7 @@ export class PositionsService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException(
-        `Erro ao buscar posição: ${error.message}`,
-      );
+      throw new BadRequestException(`Erro ao buscar posição: ${error.message}`);
     }
   }
-} 
+}

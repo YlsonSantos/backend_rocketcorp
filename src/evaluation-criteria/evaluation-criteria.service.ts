@@ -215,7 +215,10 @@ export class EvaluationCriteriaService {
         });
       });
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
       throw new BadRequestException(
@@ -379,11 +382,12 @@ export class EvaluationCriteriaService {
         for (const updateDto of update) {
           try {
             const { id, ...updateData } = updateDto;
-            
+
             // Check if criterion exists and get current data
-            const existingCriterion = await this.prisma.evaluationCriterion.findUnique({
-              where: { id },
-            });
+            const existingCriterion =
+              await this.prisma.evaluationCriterion.findUnique({
+                where: { id },
+              });
 
             if (!existingCriterion) {
               results.errors.push({
@@ -395,7 +399,7 @@ export class EvaluationCriteriaService {
             }
 
             // Check if there are actual changes
-            const hasChanges = 
+            const hasChanges =
               existingCriterion.title !== updateData.title ||
               existingCriterion.description !== updateData.description ||
               existingCriterion.type !== updateData.type;
