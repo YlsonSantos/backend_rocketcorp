@@ -325,9 +325,21 @@ export class UsersService {
       },
     });
 
+    const decryptedUsers = users.map((user) => {
+      const decryptedScores = user.scorePerCycle.map((score) => ({
+        ...score,
+        feedback: score.feedback ? this.crypto.decrypt(score.feedback) : null,
+      }));
+
+      return {
+        ...user,
+        scorePerCycle: decryptedScores,
+      };
+    });
+
     return {
       ciclo_atual_ou_ultimo: currentCycle,
-      usuarios: users,
+      usuarios: decryptedUsers,
     };
   }
 
