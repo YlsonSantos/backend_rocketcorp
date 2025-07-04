@@ -269,22 +269,27 @@ export class UsersService {
     }
 
     const users = await this.prisma.user.findMany({
-      include: {
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        managerId: true,
+        mentorId: true,
+        position: {
+          select: {
+            name: true,
+          },
+        },
         scorePerCycle: {
           where: {
             cycleId: currentCycle.id,
           },
-          include: {
+          select: {
             peerScores: {
               select: {
                 value: true,
               },
             },
-          },
-        },
-        position: {
-          select: {
-            name: true,
           },
         },
       },
