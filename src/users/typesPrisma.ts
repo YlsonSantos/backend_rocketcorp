@@ -34,10 +34,6 @@ export interface EvaluationOutput {
     name: string;
     position: string;
   };
-  team: {
-    id: string;
-    name: string;
-  };
   selfScore?: number | null;
   finalScore?: number | null;
   answers: {

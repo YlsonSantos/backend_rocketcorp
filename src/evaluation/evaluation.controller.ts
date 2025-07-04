@@ -40,6 +40,66 @@ export class EvaluationController {
   @Post()
   @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
   @ApiOperation({ summary: 'Criar uma nova avaliação' })
+  @ApiBody({
+    type: CreateEvaluationDto,
+    description: 'Dados da avaliação',
+    examples: {
+      autoavaliacao: {
+        summary: 'Autoavaliação com respostas explícitas',
+        description:
+          'Exemplo de autoavaliação com múltiplos critérios e respostas',
+        value: {
+          type: 'AUTO',
+          cycleId: 'cycle2025_1',
+          evaluatorId: 'user1',
+          evaluatedId: 'user1',
+          completed: true,
+          answers: [
+            {
+              criterionId: 'comunicacao',
+              score: 4,
+              justification:
+                'Consegui me comunicar bem com a equipe durante os projetos',
+            },
+            {
+              criterionId: 'lideranca',
+              score: 3,
+              justification: 'Liderei algumas iniciativas, mas posso melhorar',
+            },
+            {
+              criterionId: 'trabalho_equipe',
+              score: 5,
+              justification:
+                'Excelente colaboração com todos os membros da equipe',
+            },
+          ],
+        },
+      },
+      avaliacaoLider: {
+        summary: 'Avaliação de líder',
+        description: 'Exemplo de avaliação onde um líder avalia um subordinado',
+        value: {
+          type: 'LIDER',
+          cycleId: 'cycle2025_1',
+          evaluatorId: 'leader1',
+          evaluatedId: 'user1',
+          completed: true,
+          answers: [
+            {
+              criterionId: 'comunicacao',
+              score: 4,
+              justification: 'Demonstra boa comunicação nas reuniões',
+            },
+            {
+              criterionId: 'entrega',
+              score: 5,
+              justification: 'Sempre entrega no prazo com alta qualidade',
+            },
+          ],
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 201,
     description: 'Avaliação criada com sucesso',
