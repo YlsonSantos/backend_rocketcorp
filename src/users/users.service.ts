@@ -3,10 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 import { CycleGroup, EvaluationOutput } from './typesPrisma';
+import { CryptoService } from '../crypto/crypto.service'; // ajuste o caminho conforme necessário
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly crypto: CryptoService,
+  ) {}
   /*
   create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
@@ -150,6 +154,19 @@ export class UsersService {
       },
     });
 
+    // ✅ Descriptografar campos aninhados manualmente
+    for (const evalItem of evaluations) {
+      if (evalItem.evaluated) {
+        evalItem.evaluated = this.crypto.deepDecrypt(
+          evalItem.evaluated,
+          'User',
+        );
+      }
+      evalItem.answers = evalItem.answers.map((a) =>
+        this.crypto.deepDecrypt(a, 'EvaluationAnswer'),
+      );
+    }
+
     const scores = await this.prisma.scorePerCycle.findMany({
       where: {
         userId: userId,
@@ -222,7 +239,7 @@ export class UsersService {
   }
 
   async findAutoavaliationByUserId(userId: string) {
-    return await this.prisma.evaluation.findMany({
+    const evaluations = await this.prisma.evaluation.findMany({
       where: {
         evaluatedId: userId,
         type: 'AUTO',
@@ -237,6 +254,14 @@ export class UsersService {
         cycle: true,
       },
     });
+
+    for (const evalItem of evaluations) {
+      evalItem.answers = evalItem.answers.map((answer) =>
+        this.crypto.deepDecrypt(answer, 'EvaluationAnswer'),
+      );
+    }
+
+    return evaluations;
   }
 
   async findAllCurrentCycle() {
@@ -368,9 +393,25 @@ export class UsersService {
       },
     });
 
+    const decryptedSubordinates = subordinates.map((s) => {
+      const decryptedUser = this.crypto.deepDecrypt(s, 'User');
+
+      const decryptedScorePerCycle = decryptedUser.scorePerCycle?.map(
+        (score: any) => ({
+          ...score,
+          feedback: this.crypto.decrypt(score.feedback),
+        }),
+      );
+
+      return {
+        ...decryptedUser,
+        scorePerCycle: decryptedScorePerCycle,
+      };
+    });
+
     return {
       ciclo_atual_ou_ultimo: recentCycles,
-      usuarios: subordinates,
+      usuarios: decryptedSubordinates,
     };
   }
 }

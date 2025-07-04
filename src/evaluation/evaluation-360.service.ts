@@ -7,12 +7,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateEvaluation360Dto } from './dto/create-evaluation-360.dto';
 import { EvaluationService } from './evaluation.service';
 import { Evaluation } from '@prisma/client';
+import { CryptoService } from '../crypto/crypto.service';
 
 @Injectable()
 export class Evaluation360Service {
   constructor(
     private readonly prisma: PrismaService,
     private readonly evaluationService: EvaluationService,
+    private readonly crypto: CryptoService,
   ) {}
 
   async buscarMembrosEquipe(userId: string) {
@@ -87,7 +89,7 @@ export class Evaluation360Service {
 
           return {
             id: membro.user.id,
-            name: membro.user.name,
+            name: this.crypto.decrypt(membro.user.name), // 🔓 Descriptografa o nome
             position: membro.user.position,
             hasEvaluation: !!avaliacaoExistente,
             evaluationStatus: avaliacaoExistente

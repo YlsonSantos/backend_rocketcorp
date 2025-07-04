@@ -1,5 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
+
+const prisma = new PrismaService();
 
 async function main() {
   await prisma.position.createMany({
@@ -14,137 +16,141 @@ async function main() {
     ],
   });
 
-  await prisma.user.createMany({
-    data: [
-      // Anonymous user for audit logs
-      {
-        id: 'anonymous',
-        name: 'Anonymous User',
-        email: 'anonymous@system.com',
-        password: 'system',
-        role: 'COLABORADOR',
-        positionId: 'pos1',
-        managerId: null,
-      },
-      // Team Alpha
-      {
-        id: 'user1',
-        name: 'Alice Silva',
-        email: 'alice@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos1',
-        managerId: 'user3',
-        mentorId: 'user2',
-      },
-      {
-        id: 'user2',
-        name: 'Bruno Costa',
-        email: 'bruno@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos2',
-        managerId: 'user3',
-      },
-      {
-        id: 'user3',
-        name: 'Carlos Dias',
-        email: 'carlos@example.com',
-        password: '123',
-        role: 'LIDER',
-        positionId: 'pos3',
-        managerId: null,
-      },
-      {
-        id: 'user4',
-        name: 'Daniela Martins',
-        email: 'daniela@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos4',
-        managerId: 'user3',
-      },
-      {
-        id: 'user5',
-        name: 'Eduardo Silva',
-        email: 'eduardo@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos1',
-        managerId: 'user3',
-        mentorId: 'user4',
-      },
+  const dataUser = [
+    // Anonymous user for audit logs
+    {
+      id: 'anonymous',
+      name: 'Anonymous User',
+      email: 'anonymous@system.com',
+      password: 'system',
+      role: Role.COLABORADOR,
+      positionId: 'pos1',
+      managerId: null,
+    },
+    // Team Alpha
+    {
+      id: 'user3',
+      name: 'Carlos Dias',
+      email: 'carlos@example.com',
+      password: '123',
+      role: Role.LIDER,
+      positionId: 'pos3',
+      managerId: null,
+    },
+    {
+      id: 'user2',
+      name: 'Bruno Costa',
+      email: 'bruno@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos2',
+      managerId: 'user3',
+    },
+    {
+      id: 'user1',
+      name: 'Alice Silva',
+      email: 'alice@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos1',
+      managerId: 'user3',
+      mentorId: 'user2',
+    },
+    {
+      id: 'user4',
+      name: 'Daniela Martins',
+      email: 'daniela@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos4',
+      managerId: 'user3',
+    },
+    {
+      id: 'user5',
+      name: 'Eduardo Silva',
+      email: 'eduardo@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos1',
+      managerId: 'user3',
+      mentorId: 'user4',
+    },
 
-      // Team Beta
-      {
-        id: 'user6',
-        name: 'Fabiana Souza',
-        email: 'fabiana@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos1',
-        managerId: 'user8',
-      },
-      {
-        id: 'user7',
-        name: 'Gabriel Rocha',
-        email: 'gabriel@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos5',
-        managerId: 'user8',
-        mentorId: 'user6',
-      },
-      {
-        id: 'user8',
-        name: 'Helena Pereira',
-        email: 'helena@example.com',
-        password: '123',
-        role: 'LIDER',
-        positionId: 'pos3',
-        managerId: null,
-      },
-      {
-        id: 'user9',
-        name: 'Igor Lima',
-        email: 'igor@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos4',
-        managerId: 'user8',
-      },
-      {
-        id: 'user10',
-        name: 'Julia Castro',
-        email: 'julia@example.com',
-        password: '123',
-        role: 'COLABORADOR',
-        positionId: 'pos2',
-        managerId: 'user8',
-        mentorId: 'user9',
-      },
-      {
-        id: 'user11',
-        name: 'Ylson Santos',
-        email: 'ylson@example.com',
-        password: '123',
-        role: 'COMITE',
-        positionId: 'pos6',
-        managerId: null,
-        mentorId: null,
-      },
-      {
-        id: 'user12',
-        name: 'Ana Laura',
-        email: 'analaura@example.com',
-        password: '123',
-        role: 'RH',
-        positionId: 'pos7',
-        managerId: null,
-        mentorId: null,
-      },
-    ],
-  });
+    // Team Beta
+    {
+      id: 'user8',
+      name: 'Helena Pereira',
+      email: 'helena@example.com',
+      password: '123',
+      role: Role.LIDER,
+      positionId: 'pos3',
+      managerId: null,
+    },
+    {
+      id: 'user6',
+      name: 'Fabiana Souza',
+      email: 'fabiana@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos1',
+      managerId: 'user8',
+    },
+    {
+      id: 'user7',
+      name: 'Gabriel Rocha',
+      email: 'gabriel@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos5',
+      managerId: 'user8',
+      mentorId: 'user6',
+    },
+    {
+      id: 'user9',
+      name: 'Igor Lima',
+      email: 'igor@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos4',
+      managerId: 'user8',
+    },
+    {
+      id: 'user10',
+      name: 'Julia Castro',
+      email: 'julia@example.com',
+      password: '123',
+      role: Role.COLABORADOR,
+      positionId: 'pos2',
+      managerId: 'user8',
+      mentorId: 'user9',
+    },
+    {
+      id: 'user11',
+      name: 'Ylson Santos',
+      email: 'ylson@example.com',
+      password: '123',
+      role: Role.COMITE,
+      positionId: 'pos6',
+      managerId: null,
+      mentorId: null,
+    },
+    {
+      id: 'user12',
+      name: 'Ana Laura',
+      email: 'analaura@example.com',
+      password: '123',
+      role: Role.RH,
+      positionId: 'pos7',
+      managerId: null,
+      mentorId: null,
+    },
+  ];
+
+  for (const user of dataUser) {
+    await prisma.user.create({
+      data: user,
+    });
+  }
 
   await prisma.team.createMany({
     data: [
@@ -476,178 +482,186 @@ async function main() {
     ],
   });
 
-  await prisma.evaluationAnswer.createMany({
-    data: [
-      // Avaliação eval1 (Carlos -> Alice)
-      {
-        id: 'ans1',
-        evaluationId: 'eval1',
-        criterionId: 'criterio1',
-        score: 4,
-        justification: 'Colaborou muito bem com o time.',
-      },
-      {
-        id: 'ans2',
-        evaluationId: 'eval1',
-        criterionId: 'criterio2',
-        score: 5,
-        justification: 'Sempre proativa e com iniciativa.',
-      },
-      {
-        id: 'ans111',
-        evaluationId: 'eval11',
-        criterionId: 'criterio1',
-        score: 4,
-        justification: 'Colaborou muito bem com o time.',
-      },
-      {
-        id: 'ans21',
-        evaluationId: 'eval11',
-        criterionId: 'criterio2',
-        score: 5,
-        justification: 'Sempre proativa e com iniciativa.',
-      },
+  const dataEvaluationAnswer = [
+    // Avaliação eval1 (Carlos -> Alice)
+    {
+      id: 'ans1',
+      evaluationId: 'eval1',
+      criterionId: 'criterio1',
+      score: 4,
+      justification: 'Colaborou muito bem com o time.',
+    },
+    {
+      id: 'ans2',
+      evaluationId: 'eval1',
+      criterionId: 'criterio2',
+      score: 5,
+      justification: 'Sempre proativa e com iniciativa.',
+    },
+    {
+      id: 'ans111',
+      evaluationId: 'eval11',
+      criterionId: 'criterio1',
+      score: 4,
+      justification: 'Colaborou muito bem com o time.',
+    },
+    {
+      id: 'ans21',
+      evaluationId: 'eval11',
+      criterionId: 'criterio2',
+      score: 5,
+      justification: 'Sempre proativa e com iniciativa.',
+    },
 
-      // Avaliação eval2 (Alice autoavaliação)
-      {
-        id: 'ans3',
-        evaluationId: 'eval2',
-        criterionId: 'criterio1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans4',
-        evaluationId: 'eval2',
-        criterionId: 'criterio2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
-      // Avaliação ciclo2 (Alice autoavaliação)
-      {
-        id: 'ans33',
-        evaluationId: 'eval22',
-        criterionId: 'criterio1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans44',
-        evaluationId: 'eval22',
-        criterionId: 'criterio2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
-      // Avaliação ciclo3 (Alice autoavaliação)
-      {
-        id: 'ans35',
-        evaluationId: 'eval223',
-        criterionId: 'criterio1',
-        score: 3,
-        justification: 'Acredito que posso melhorar a colaboração.',
-      },
-      {
-        id: 'ans45',
-        evaluationId: 'eval223',
-        criterionId: 'criterio2',
-        score: 4,
-        justification: 'Costumo tomar iniciativa em projetos.',
-      },
+    // Avaliação eval2 (Alice autoavaliação)
+    {
+      id: 'ans3',
+      evaluationId: 'eval2',
+      criterionId: 'criterio1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans4',
+      evaluationId: 'eval2',
+      criterionId: 'criterio2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
+    // Avaliação ciclo2 (Alice autoavaliação)
+    {
+      id: 'ans33',
+      evaluationId: 'eval22',
+      criterionId: 'criterio1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans44',
+      evaluationId: 'eval22',
+      criterionId: 'criterio2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
+    // Avaliação ciclo3 (Alice autoavaliação)
+    {
+      id: 'ans35',
+      evaluationId: 'eval223',
+      criterionId: 'criterio1',
+      score: 3,
+      justification: 'Acredito que posso melhorar a colaboração.',
+    },
+    {
+      id: 'ans45',
+      evaluationId: 'eval223',
+      criterionId: 'criterio2',
+      score: 4,
+      justification: 'Costumo tomar iniciativa em projetos.',
+    },
 
-      // Avaliação eval3 (Bruno -> Daniela)
-      {
-        id: 'ans5',
-        evaluationId: 'eval3',
-        criterionId: 'criterio1',
-        score: 4,
-        justification: 'Excelente trabalho em equipe.',
-      },
-      {
-        id: 'ans6',
-        evaluationId: 'eval3',
-        criterionId: 'criterio3',
-        score: 3,
-        justification: 'Metas alcançadas parcialmente.',
-      },
+    // Avaliação eval3 (Bruno -> Daniela)
+    {
+      id: 'ans5',
+      evaluationId: 'eval3',
+      criterionId: 'criterio1',
+      score: 4,
+      justification: 'Excelente trabalho em equipe.',
+    },
+    {
+      id: 'ans6',
+      evaluationId: 'eval3',
+      criterionId: 'criterio3',
+      score: 3,
+      justification: 'Metas alcançadas parcialmente.',
+    },
 
-      // Avaliação eval4 (Helena -> Fabiana)
-      {
-        id: 'ans7',
-        evaluationId: 'eval4',
-        criterionId: 'criterio1',
-        score: 5,
-        justification: 'Ótima colaboração no time Beta.',
-      },
-      {
-        id: 'ans8',
-        evaluationId: 'eval4',
-        criterionId: 'criterio2',
-        score: 4,
-        justification: 'Sempre pronta para agir.',
-      },
+    // Avaliação eval4 (Helena -> Fabiana)
+    {
+      id: 'ans7',
+      evaluationId: 'eval4',
+      criterionId: 'criterio1',
+      score: 5,
+      justification: 'Ótima colaboração no time Beta.',
+    },
+    {
+      id: 'ans8',
+      evaluationId: 'eval4',
+      criterionId: 'criterio2',
+      score: 4,
+      justification: 'Sempre pronta para agir.',
+    },
 
-      // Avaliação eval5 (Fabiana autoavaliação)
-      {
-        id: 'ans9',
-        evaluationId: 'eval5',
-        criterionId: 'criterio1',
-        score: 4,
-        justification: 'Acredito que sou colaborativa.',
-      },
-      {
-        id: 'ans10',
-        evaluationId: 'eval5',
-        criterionId: 'criterio2',
-        score: 5,
-        justification: 'Tenho muita iniciativa.',
-      },
+    // Avaliação eval5 (Fabiana autoavaliação)
+    {
+      id: 'ans9',
+      evaluationId: 'eval5',
+      criterionId: 'criterio1',
+      score: 4,
+      justification: 'Acredito que sou colaborativa.',
+    },
+    {
+      id: 'ans10',
+      evaluationId: 'eval5',
+      criterionId: 'criterio2',
+      score: 5,
+      justification: 'Tenho muita iniciativa.',
+    },
 
-      // Avaliação eval6 (Gabriel -> Julia)
-      {
-        id: 'ans11',
-        evaluationId: 'eval6',
-        criterionId: 'criterio1',
-        score: 3,
-        justification: 'Boa colaboração, pode melhorar.',
-      },
-      {
-        id: 'ans12',
-        evaluationId: 'eval6',
-        criterionId: 'criterio3',
-        score: 4,
-        justification: 'Alcançou a maioria das metas.',
-      },
-    ],
-  });
+    // Avaliação eval6 (Gabriel -> Julia)
+    {
+      id: 'ans11',
+      evaluationId: 'eval6',
+      criterionId: 'criterio1',
+      score: 3,
+      justification: 'Boa colaboração, pode melhorar.',
+    },
+    {
+      id: 'ans12',
+      evaluationId: 'eval6',
+      criterionId: 'criterio3',
+      score: 4,
+      justification: 'Alcançou a maioria das metas.',
+    },
+  ];
 
-  await prisma.reference.createMany({
-    data: [
-      {
-        id: 'ref1',
-        cycleId: 'cycle2025_1',
-        evaluatorId: 'user1',
-        referencedId: 'user2',
-        theme: 'Ajuda constante',
-        justification: 'Bruno ajudou em um bug crítico',
-      },
-      {
-        id: 'ref2',
-        cycleId: 'cycle2025_1',
-        evaluatorId: 'user6',
-        referencedId: 'user7',
-        theme: 'Design inovador',
-        justification: 'Gabriel trouxe ótimas ideias para UX',
-      },
-      {
-        id: 'ref3',
-        cycleId: 'cycle2025_1',
-        evaluatorId: 'user3',
-        referencedId: 'user5',
-        theme: 'Entregas pontuais',
-        justification: 'Eduardo sempre entrega no prazo',
-      },
-    ],
-  });
+  for (const answer of dataEvaluationAnswer) {
+    await prisma.evaluationAnswer.create({
+      data: answer,
+    });
+  }
+
+  const references = [
+    {
+      id: 'ref1',
+      cycleId: 'cycle2025_1',
+      evaluatorId: 'user1',
+      referencedId: 'user2',
+      theme: 'Ajuda constante',
+      justification: 'Bruno ajudou em um bug crítico',
+    },
+    {
+      id: 'ref2',
+      cycleId: 'cycle2025_1',
+      evaluatorId: 'user6',
+      referencedId: 'user7',
+      theme: 'Design inovador',
+      justification: 'Gabriel trouxe ótimas ideias para UX',
+    },
+    {
+      id: 'ref3',
+      cycleId: 'cycle2025_1',
+      evaluatorId: 'user3',
+      referencedId: 'user5',
+      theme: 'Entregas pontuais',
+      justification: 'Eduardo sempre entrega no prazo',
+    },
+  ];
+
+  for (const ref of references) {
+    await prisma.reference.create({
+      data: ref,
+    });
+  }
 
   await prisma.genaiInsight.createMany({
     data: [
@@ -669,6 +683,7 @@ async function main() {
       },
     ],
   });
+
   await prisma.mentorshipEvaluation.createMany({
     data: [
       {

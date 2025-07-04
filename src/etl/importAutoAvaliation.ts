@@ -1,7 +1,8 @@
 import * as xlsx from 'xlsx';
-import { PrismaClient, EvaluationType, CriterionType } from '@prisma/client';
+import { EvaluationType, CriterionType } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaService();
 
 // Função auxiliar para transformar o texto da nota em número
 export function parseNota(notaTexto: string): number | null {
@@ -110,6 +111,10 @@ export async function runAutoAvaliation(filePath: string) {
         positionId: position.id,
       },
     });
+  }
+
+  if (!user) {
+    throw new Error('Erro inesperado: usuário não foi criado');
   }
 
   // === 5. Cria ou encontra o time ===
@@ -299,13 +304,19 @@ export async function runAutoAvaliation(filePath: string) {
 
   if (countNotas > 0) {
     const media = totalNotas / countNotas;
-    await prisma.scorePerCycle.update({
-      where: { id: score.id },
-      data: { selfScore: media },
-    });
-    console.log(
-      `📊 Média da autoavaliação calculada e salva: ${media.toFixed(2)}`,
-    );
+    if (score) {
+      await prisma.scorePerCycle.update({
+        where: { id: score.id },
+        data: { selfScore: media },
+      });
+      console.log(
+        `📊 Média da autoavaliação calculada e salva: ${media.toFixed(2)}`,
+      );
+    } else {
+      console.warn(
+        '⚠️ Não foi possível atualizar ScorePerCycle: score é null.',
+      );
+    }
   } else {
     console.log(
       '⚠️ Nenhuma nota válida para calcular a média da autoavaliação.',

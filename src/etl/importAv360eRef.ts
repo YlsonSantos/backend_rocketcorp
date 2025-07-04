@@ -1,8 +1,9 @@
 import * as xlsx from 'xlsx';
-import { PrismaClient, EvaluationType } from '@prisma/client';
+import { EvaluationType } from '@prisma/client';
 import { parseNota } from './importAutoAvaliation';
+import { PrismaService } from '../../prisma/prisma.service';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaService();
 
 export async function runAv360eRef(filePath: string) {
   const workbook = xlsx.readFile(filePath);

@@ -10,8 +10,8 @@ export class ReferencesService {
   async create(createReferenceDto: CreateReferenceDto, evaluatorId: string) {
     return this.prisma.reference.create({
       data: {
-        evaluatorId,
         ...createReferenceDto,
+        evaluatorId,
       },
     });
   }
@@ -21,7 +21,9 @@ export class ReferencesService {
   }
 
   async findOne(id: string) {
-    return this.prisma.reference.findUnique({ where: { id } });
+    return this.prisma.reference.findUnique({
+      where: { id },
+    });
   }
 
   async update(id: string, updateReferenceDto: UpdateReferenceDto) {

@@ -7,10 +7,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateScoreDto } from './dto/create-score-cycle.dto';
 import { UpdateScoreDto } from './dto/update-score-cycle.dto';
 import { Prisma } from '@prisma/client';
+import { CryptoService } from '../crypto/crypto.service'; // ajuste o caminho conforme necessário
 
 @Injectable()
 export class ScoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly crypto: CryptoService,
+  ) {}
 
   async create(createScoreDto: CreateScoreDto) {
     const { peerScores, ...scoreData } = createScoreDto;
@@ -100,7 +104,13 @@ export class ScoreService {
       include: { peerScores: true },
     });
 
-    return updatedScore;
+    return {
+      ...updatedScore,
+      feedback:
+        updatedScore.feedback != null
+          ? this.crypto.decrypt(updatedScore.feedback)
+          : null,
+    };
   }
 
   async remove(id: string) {

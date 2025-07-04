@@ -5,7 +5,6 @@ import { CreateMentoringDto } from './dto/create-mentoring.dto';
 @Injectable()
 export class MentoringService {
   constructor(private prisma: PrismaService) {}
-
   async create(dto: CreateMentoringDto) {
     try {
       return await this.prisma.mentorshipEvaluation.create({
@@ -28,13 +27,14 @@ export class MentoringService {
   }
 
   async findAll() {
-    return this.prisma.mentorshipEvaluation.findMany({
+    const results = await this.prisma.mentorshipEvaluation.findMany({
       include: {
         mentor: true,
         mentee: true,
         cycle: true,
       },
     });
+    return results;
   }
 
   async findOne(id: string) {
@@ -50,7 +50,6 @@ export class MentoringService {
     if (!evaluation) {
       throw new Error('Avaliação de mentoria não encontrada');
     }
-
     return evaluation;
   }
 
@@ -58,13 +57,9 @@ export class MentoringService {
     const evaluation = await this.prisma.mentorshipEvaluation.findUnique({
       where: { id },
     });
-
     if (!evaluation) {
       throw new Error('Avaliação de mentoria não encontrada');
     }
-
-    return this.prisma.mentorshipEvaluation.delete({
-      where: { id },
-    });
+    return this.prisma.mentorshipEvaluation.delete({ where: { id } });
   }
 }
