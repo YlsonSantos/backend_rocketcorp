@@ -310,6 +310,7 @@ export class UsersService {
             cycleId: currentCycle.id,
           },
           select: {
+            id: true,
             selfScore: true,
             leaderScore: true,
             finalScore: true,
