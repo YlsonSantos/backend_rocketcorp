@@ -142,6 +142,7 @@ export class UsersService {
             criterion: {
               select: {
                 title: true,
+                type: true,
               },
             },
           },
@@ -224,6 +225,7 @@ export class UsersService {
           },
           answers: evaluation.answers.map((answer) => ({
             criterion: answer.criterion.title,
+            type: answer.criterion.type,
             score: answer.score,
             justification: answer.justification,
           })),
