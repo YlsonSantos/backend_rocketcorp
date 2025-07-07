@@ -131,6 +131,8 @@ model User {
 
   mentorEvaluations   MentorshipEvaluation[] @relation("MentorEvaluation")
   menteeEvaluations   MentorshipEvaluation[] @relation("MenteeEvaluation")
+
+  surveyResponses SurveyResponse[]
 }
 
 model AuditLog {
@@ -168,7 +170,7 @@ model EvaluationCycle {
   scores        ScorePerCycle[]
 
   mentorshipEvaluations MentorshipEvaluation[]
-
+  surveys Survey[]
 }
 
 model ScorePerCycle {
@@ -215,6 +217,66 @@ model MentorshipEvaluation {
   cycle       EvaluationCycle @relation(fields: [cycleId], references: [id])
 
   @@unique([mentorId, menteeId, cycleId])
+}
+
+model Survey {
+  id            String          @id @default(uuid())
+  cycleId       String
+  title         String
+  description   String?
+  createdAt     DateTime        @default(now())
+
+  cycle         EvaluationCycle @relation(fields: [cycleId], references: [id])
+  questions     SurveyQuestion[]
+  responses     SurveyResponse[]
+
+  @@index([cycleId])
+}
+
+model SurveyQuestion {
+  id        String   @id @default(uuid())
+  surveyId  String
+  text      String   // texto da pergunta
+  type      QuestionType
+
+  survey    Survey   @relation(fields: [surveyId], references: [id])
+  answers   SurveyAnswer[]
+
+  @@index([surveyId])
+}
+
+model SurveyResponse {
+  id        String   @id @default(uuid())
+  surveyId  String
+  // userId pode ser nulo para garantir anonimato
+  userId    String?  
+  createdAt DateTime @default(now())
+
+  survey    Survey   @relation(fields: [surveyId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+
+  answers   SurveyAnswer[]
+  
+  @@index([surveyId])
+}
+
+model SurveyAnswer {
+  id           String          @id @default(uuid())
+  responseId   String
+  questionId   String
+  answerText   String?         // resposta textual
+  answerScore  Float?          // resposta numérica (se aplicável)
+
+  response     SurveyResponse  @relation(fields: [responseId], references: [id])
+  question     SurveyQuestion  @relation(fields: [questionId], references: [id])
+
+  @@index([responseId])
+  @@index([questionId])
+}
+
+enum QuestionType {
+  TEXT
+  NUMBER
 }
 
 enum CriterionType {

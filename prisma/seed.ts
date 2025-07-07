@@ -1,5 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
+import { QuestionType } from '@prisma/client';
 
 const prisma = new PrismaService();
 
@@ -873,6 +874,52 @@ async function main() {
       },
     });
   }
+
+  await prisma.survey.create({
+    data: {
+      id: 'survey2025_1',
+      cycleId: 'cycle2025_1',
+      title: 'Pesquisa de Clima Semestral',
+      description:
+        'Pesquisa rápida para avaliação do clima organizacional no 2º semestre de 2025',
+      questions: {
+        create: [
+          {
+            id: 'q1',
+            text: 'Você se sente valorizado na empresa?',
+            type: QuestionType.NUMBER,
+          },
+          {
+            id: 'q2',
+            text: 'Quais aspectos podemos melhorar?',
+            type: QuestionType.TEXT,
+          },
+        ],
+      },
+    },
+    include: { questions: true },
+  });
+
+  // Criar uma resposta anônima para essa survey
+  await prisma.surveyResponse.create({
+    data: {
+      id: 'response1',
+      surveyId: 'survey2025_1',
+      userId: null, // anônimo
+      answers: {
+        create: [
+          {
+            questionId: 'q1',
+            answerScore: 4, // respondeu 4 para a primeira pergunta
+          },
+          {
+            questionId: 'q2',
+            answerText: 'Gostaria de mais comunicação interna.',
+          },
+        ],
+      },
+    },
+  });
 }
 
 main()
