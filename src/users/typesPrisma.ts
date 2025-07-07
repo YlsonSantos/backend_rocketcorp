@@ -40,6 +40,7 @@ export interface EvaluationOutput {
     criterion: string;
     score: number;
     justification: string;
+    type: string
   }[];
 }
 
