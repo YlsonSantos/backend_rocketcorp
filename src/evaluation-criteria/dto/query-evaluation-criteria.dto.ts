@@ -26,10 +26,9 @@ export class QueryEvaluationCriteriaDto {
   track?: TrackType;
 
   @ApiProperty({
-    description: 'Filtrar por ID da posição',
+    description: 'Filtrar por ID da posição (aceita UUID ou string)',
     required: false,
   })
-  @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
   @IsOptional()
   positionId?: string;
 }

@@ -17,10 +17,10 @@ import { CriterionType } from '@prisma/client';
 
 export class CriteriaAssignmentDto {
   @ApiProperty({
-    description: 'ID da posição',
+    description: 'ID da posição (aceita UUID ou string)',
     example: 'position-uuid',
   })
-  @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
+  @IsString({ message: 'ID da posição deve ser uma string' })
   @IsNotEmpty({ message: 'ID da posição é obrigatório' })
   positionId: string;
 
@@ -75,11 +75,11 @@ export class CreateEvaluationCriterionDto {
   weight?: number;
 
   @ApiProperty({
-    description: 'ID da posição para criar associação automática',
+    description: 'ID da posição para criar associação automática (aceita UUID ou string)',
     example: 'position-uuid',
     required: false,
   })
-  @IsUUID('4', { message: 'ID da posição deve ser um UUID válido' })
+  @IsString({ message: 'ID da posição deve ser uma string' })
   @IsOptional()
   positionId?: string;
 
