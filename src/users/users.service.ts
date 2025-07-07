@@ -241,11 +241,28 @@ export class UsersService {
   }
 
   async findAutoavaliationByUserId(userId: string) {
+    const now = new Date();
+
+    // Buscar ciclo atual
+    const currentCycle = await this.prisma.evaluationCycle.findFirst({
+      where: {
+        startDate: { lte: now },
+        endDate: { gte: now },
+      },
+      orderBy: { startDate: 'desc' }, // Garante pegar o mais recente, se houver vários
+    });
+
+    if (!currentCycle) {
+      throw new Error('Nenhum ciclo atual encontrado');
+    }
+
+    // Buscar autoavaliação do ciclo atual
     const evaluations = await this.prisma.evaluation.findMany({
       where: {
         evaluatedId: userId,
         type: 'AUTO',
         completed: true,
+        cycleId: currentCycle.id,
       },
       include: {
         answers: {
@@ -257,13 +274,49 @@ export class UsersService {
       },
     });
 
-    for (const evalItem of evaluations) {
-      evalItem.answers = evalItem.answers.map((answer) =>
-        this.crypto.deepDecrypt(answer, 'EvaluationAnswer'),
-      );
+    if (evaluations.length > 0) {
+      for (const evalItem of evaluations) {
+        evalItem.answers = evalItem.answers.map((answer) =>
+          this.crypto.deepDecrypt(answer, 'EvaluationAnswer'),
+        );
+      }
+
+      return evaluations;
     }
 
-    return evaluations;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        positionId: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const assignedCriteria = await this.prisma.criteriaAssignment.findMany({
+      where: {
+        positionId: user.positionId,
+        criterion: {
+          // Filtra critérios que não são FROMETL
+          NOT: {
+            type: 'FROMETL',
+          },
+        },
+      },
+      include: {
+        criterion: true,
+      },
+    });
+
+    // Estrutura para retorno alternativo
+    return {
+      message: 'Sem autoavaliações registradas',
+      assignedCriteria: assignedCriteria.map(
+        (assignment) => assignment.criterion,
+      ),
+    };
   }
 
   async findAllCurrentCycle() {

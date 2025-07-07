@@ -106,6 +106,43 @@ export async function runFromToCriteria(filePath: string) {
         },
       });
 
+      const evaluation = await prisma.evaluation.findUnique({
+        where: { id: resposta.evaluationId },
+        include: {
+          evaluated: {
+            select: {
+              positionId: true,
+            },
+          },
+        },
+      });
+
+      if (evaluation?.evaluated?.positionId) {
+        const positionId = evaluation.evaluated.positionId;
+
+        // Verifica se já existe o vínculo entre critério novo e essa posição
+        const jaExisteAssignment = await prisma.criteriaAssignment.findFirst({
+          where: {
+            positionId,
+            criterionId: criterioNovo.id,
+          },
+        });
+
+        if (!jaExisteAssignment) {
+          await prisma.criteriaAssignment.create({
+            data: {
+              positionId,
+              criterionId: criterioNovo.id,
+              isRequired: false, // ou true, dependendo da lógica desejada
+            },
+          });
+
+          console.log(
+            `✅ Critério "${criterioNovo.title}" atribuído à posição ${positionId}`,
+          );
+        }
+      }
+
       // Deleta a resposta antiga
       await prisma.evaluationAnswer.delete({
         where: { id: resposta.id },
