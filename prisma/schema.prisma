@@ -128,6 +128,7 @@ model User {
   referencesReceived  Reference[] @relation("RefReferenced")
   scorePerCycle       ScorePerCycle[]
   genaiInsights       GenaiInsight[]
+  goals               Goal[]
 
   mentorEvaluations   MentorshipEvaluation[] @relation("MentorEvaluation")
   menteeEvaluations   MentorshipEvaluation[] @relation("MenteeEvaluation")
@@ -219,6 +220,28 @@ model MentorshipEvaluation {
   @@unique([mentorId, menteeId, cycleId])
 }
 
+model Goal {
+  id         String   @id @default(uuid())
+  userId     String
+  title      String
+  type       GoalType
+  actions    GoalAction[]
+  createdAt  DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GoalAction {
+  id          String   @id @default(uuid())
+  goalId      String
+  description String
+  deadline    DateTime
+  completed   Boolean   @default(false)
+  createdAt   DateTime @default(now())
+
+  goal       Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
 model Survey {
   id            String          @id @default(uuid())
   cycleId       String
@@ -273,6 +296,11 @@ model SurveyAnswer {
 
   @@index([responseId])
   @@index([questionId])
+}
+
+enum GoalType {
+  OKR
+  PDI
 }
 
 enum QuestionType {

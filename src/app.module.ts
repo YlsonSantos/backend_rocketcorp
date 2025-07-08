@@ -13,6 +13,7 @@ import { AuditModule } from './audit/audit.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EtlModule } from './etl/etl.module';
 import { PositionsModule } from './positions/positions.module';
+import { GoalModule } from './goal/goal.module';
 import { SurveyModule } from './survey/survey.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { SurveyModule } from './survey/survey.module';
     AuditModule,
     EtlModule,
     PositionsModule,
+    GoalModule,
     SurveyModule,
   ],
 })
