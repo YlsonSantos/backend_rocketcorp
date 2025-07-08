@@ -13,6 +13,7 @@ import { AuditModule } from './audit/audit.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EtlModule } from './etl/etl.module';
 import { PositionsModule } from './positions/positions.module';
+import { GoalModule } from './goal/goal.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PositionsModule } from './positions/positions.module';
     AuditModule,
     EtlModule,
     PositionsModule,
+    GoalModule,
   ],
 })
 export class AppModule {}
