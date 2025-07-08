@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CreateGoalActionDto } from './dto/create-goal-action.dto';
+import { UpdateGoalActionDto } from './dto/update-goal-action.dto';
 
 @Injectable()
 export class GoalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createGoalDto: CreateGoalDto, userId: string) {
+  async createGoal(createGoalDto: CreateGoalDto, userId: string) {
     const goal = await this.prisma.goal.create({
       data: {
         title: createGoalDto.title,
@@ -31,14 +33,24 @@ export class GoalService {
       where: {
         userId,
       },
-      include: {
-        actions: true,
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        actions: {
+          select: {
+            id: true,
+            description: true,
+            deadline: true,
+            completed: true,
+          },
+        },
       },
     });
     return goals;
   }
 
-  async update(id: string, updateGoalDto: UpdateGoalDto) {
+  async updateGoal(id: string, updateGoalDto: UpdateGoalDto) {
     const goalExists = await this.prisma.goal.findUnique({
       where: { id },
     });
@@ -58,7 +70,7 @@ export class GoalService {
     return goal;
   }
 
-  async remove(id: string) {
+  async removeGoal(id: string) {
     const goalExists = await this.prisma.goal.findUnique({
       where: { id },
     });
@@ -72,5 +84,62 @@ export class GoalService {
     });
 
     return goal;
+  }
+
+  async createGoalAction(createGoalActionDto: CreateGoalActionDto, id: string) {
+    const goalExists = await this.prisma.goal.findUnique({
+      where: { id },
+    });
+
+    if (!goalExists) {
+      throw new NotFoundException('Goal not found');
+    }
+
+    const goalAction = await this.prisma.goalAction.create({
+      data: {
+        description: createGoalActionDto.description,
+        deadline: createGoalActionDto.deadline,
+        goalId: id,
+      },
+    });
+
+    return goalAction;
+  }
+
+  async updateGoalAction(updateGoalActionDto: UpdateGoalActionDto, id: string) {
+    const goalActionExists = await this.prisma.goalAction.findUnique({
+      where: { id },
+    });
+
+    if (!goalActionExists) {
+      throw new NotFoundException('Goal action not found');
+    }
+
+    const goalAction = await this.prisma.goalAction.update({
+      where: { id },
+      data: {
+        description: updateGoalActionDto.description,
+        deadline: updateGoalActionDto.deadline,
+        completed: updateGoalActionDto.completed,
+      },
+    });
+
+    return goalAction;
+  }
+
+  async removeGoalAction(id: string) {
+    const goalActionExists = await this.prisma.goalAction.findUnique({
+      where: { id },
+    });
+
+    if (!goalActionExists) {
+      throw new NotFoundException('Goal action not found');
+    }
+
+    const goalAction = await this.prisma.goalAction.delete({
+      where: { id },
+    });
+
+    return goalAction;
   }
 }

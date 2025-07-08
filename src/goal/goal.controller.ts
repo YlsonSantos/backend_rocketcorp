@@ -12,10 +12,12 @@ import {
 import { GoalService } from './goal.service';
 import { CreateGoalDto } from './dto/create-goal.dto';
 import { UpdateGoalDto } from './dto/update-goal.dto';
+import { CreateGoalActionDto } from './dto/create-goal-action.dto';
+import { UpdateGoalActionDto } from './dto/update-goal-action.dto';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Goal } from './entities/goal.entity';
+import { Goal, GoalAction } from './entities/goal.entity';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -44,9 +46,9 @@ export class GoalController {
     type: Goal,
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
-  create(@Body() createGoalDto: CreateGoalDto, @Req() req: any) {
+  createGoal(@Body() createGoalDto: CreateGoalDto, @Req() req: any) {
     const userId = req.user.userId;
-    return this.goalService.create(createGoalDto, userId);
+    return this.goalService.createGoal(createGoalDto, userId);
   }
 
   @Get(':userId')
@@ -72,8 +74,8 @@ export class GoalController {
   @ApiResponse({ status: 200, description: 'Goal atualizado', type: Goal })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 404, description: 'Goal não encontrado' })
-  update(@Param('id') id: string, @Body() updateGoalDto: UpdateGoalDto) {
-    return this.goalService.update(id, updateGoalDto);
+  updateGoal(@Param('id') id: string, @Body() updateGoalDto: UpdateGoalDto) {
+    return this.goalService.updateGoal(id, updateGoalDto);
   }
 
   @Delete(':id')
@@ -83,7 +85,58 @@ export class GoalController {
   @ApiResponse({ status: 200, description: 'Goal removido', type: Goal })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 404, description: 'Goal não encontrado' })
-  remove(@Param('id') id: string) {
-    return this.goalService.remove(id);
+  removeGoal(@Param('id') id: string) {
+    return this.goalService.removeGoal(id);
+  }
+
+  @Post(':id')
+  @Roles('COLABORADOR')
+  @ApiOperation({ summary: 'Cria uma ação para um objetivo.' })
+  @ApiParam({ name: 'id', description: 'ID do goal' })
+  @ApiBody({ type: CreateGoalActionDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Ação criada com sucesso',
+    type: GoalAction,
+  })
+  createGoalAction(
+    @Body() createGoalActionDto: CreateGoalActionDto,
+    @Param('id') id: string,
+  ) {
+    return this.goalService.createGoalAction(createGoalActionDto, id);
+  }
+
+  @Patch(':id/actions')
+  @Roles('COLABORADOR')
+  @ApiOperation({ summary: 'Atualiza uma ação de um objetivo.' })
+  @ApiParam({ name: 'id', description: 'ID do goal' })
+  @ApiBody({ type: UpdateGoalActionDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Ação atualizada com sucesso',
+    type: GoalAction,
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Goal não encontrado' })
+  updateGoalAction(
+    @Body() updateGoalActionDto: UpdateGoalActionDto,
+    @Param('id') id: string,
+  ) {
+    return this.goalService.updateGoalAction(updateGoalActionDto, id);
+  }
+
+  @Delete(':id/actions')
+  @Roles('COLABORADOR')
+  @ApiOperation({ summary: 'Remove uma ação de um objetivo.' })
+  @ApiParam({ name: 'id', description: 'ID do goal' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ação removida com sucesso',
+    type: GoalAction,
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado' })
+  @ApiResponse({ status: 404, description: 'Goal não encontrado' })
+  removeGoalAction(@Param('id') id: string) {
+    return this.goalService.removeGoalAction(id);
   }
 }

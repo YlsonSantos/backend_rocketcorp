@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AuditInterceptor } from './audit/audit.interceptor';
 import { CorrelationIdMiddleware } from './audit/middleware/correlation-id.middleware';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,9 @@ async function bootstrap() {
 
   // Apply global audit interceptor
   app.useGlobalInterceptors(app.get(AuditInterceptor));
+
+  // Enable global validation pipes
+  app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
     .setTitle('RocketCorp API')
