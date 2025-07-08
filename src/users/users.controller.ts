@@ -60,6 +60,15 @@ export class UsersController {
     return this.usersService.findAllSubordinates(id);
   }
 
+  @Get(':id/brutalFacts')
+  @Roles('LIDER')
+  @ApiOperation({
+    summary: 'Lista todos os subordinados de um usuário',
+  })
+  findAllBrutalFacts(@Param('id') id: string) {
+    return this.usersService.findAllBrutalFacts(id);
+  }
+
   @Get(':id/evaluationsPerCycle')
   @Roles('LIDER', 'COLABORADOR')
   @ApiOperation({
