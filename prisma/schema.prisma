@@ -225,6 +225,7 @@ model Survey {
   title         String
   description   String?
   createdAt     DateTime        @default(now())
+  endDate       DateTime 
 
   cycle         EvaluationCycle @relation(fields: [cycleId], references: [id])
   questions     SurveyQuestion[]
@@ -277,6 +278,7 @@ model SurveyAnswer {
 enum QuestionType {
   TEXT
   NUMBER
+  YESORNO
 }
 
 enum CriterionType {

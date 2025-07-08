@@ -2,7 +2,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   ValidateNested,
   IsArray,
 } from 'class-validator';
@@ -15,12 +14,11 @@ export class CreateSurveyQuestionDto {
 
   @IsNotEmpty()
   @IsString()
-  type: 'TEXT' | 'NUMBER'; // ou use enum se preferir
+  type: 'TEXT' | 'NUMBER' | 'YESORNO'; // ou use enum se preferir
 }
 
 export class CreateSurveyDto {
   @IsNotEmpty()
-  @IsUUID()
   cycleId: string;
 
   @IsNotEmpty()
@@ -30,6 +28,9 @@ export class CreateSurveyDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsNotEmpty()
+  endDate: Date;
 
   @IsArray()
   @ValidateNested({ each: true })

@@ -40,11 +40,13 @@ export class SurveyController {
     return this.surveyService.findAll();
   }
 
-  @Get(':id')
+  @Roles('COLABORADOR')
+  @Get(':id/findNewestSurveys')
   findOne(@Param('id') id: string) {
-    return this.surveyService.findOne(id);
+    return this.surveyService.findByCurrentCycle(id);
   }
 
+  @Roles('RH')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.surveyService.delete(id);

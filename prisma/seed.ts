@@ -882,6 +882,7 @@ async function main() {
       title: 'Pesquisa de Clima Semestral',
       description:
         'Pesquisa rápida para avaliação do clima organizacional no 2º semestre de 2025',
+      endDate: new Date('2025-07-30'),
       questions: {
         create: [
           {
@@ -900,17 +901,16 @@ async function main() {
     include: { questions: true },
   });
 
-  // Criar uma resposta anônima para essa survey
   await prisma.surveyResponse.create({
     data: {
       id: 'response1',
       surveyId: 'survey2025_1',
-      userId: null, // anônimo
+      userId: null,
       answers: {
         create: [
           {
             questionId: 'q1',
-            answerScore: 4, // respondeu 4 para a primeira pergunta
+            answerScore: 4,
           },
           {
             questionId: 'q2',
