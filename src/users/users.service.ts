@@ -538,8 +538,17 @@ export class UsersService {
         }),
       );
 
+      const {
+        email: _email,
+        password: _password,
+        positionId: _positionId,
+        managerId: _managerId,
+        mentorId: _mentorId,
+        ...filteredUser
+      } = decryptedUser;
+
       return {
-        ...decryptedUser,
+        ...filteredUser,
         scorePerCycle: decryptedScorePerCycle,
       };
     });
