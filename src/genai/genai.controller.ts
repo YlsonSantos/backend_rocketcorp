@@ -344,4 +344,11 @@ export class GenaiController {
   async testarConexao() {
     return await this.genaiService.testarConexaoGemini();
   }
+
+  // ========== GERAR RESUMO ESPECÍFICO PARA PESQUISA DE SATISFAÇÃO ==========
+  @Get('generate-insight/:id')
+  @Roles('RH', 'LIDER')
+  async gerarInsight(@Param('id') surveyId: string) {
+    return this.genaiService.gerarResumoSurvey(surveyId);
+  }
 }

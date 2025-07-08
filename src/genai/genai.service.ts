@@ -109,7 +109,7 @@ export class GenaiService {
           cycleId: cycleId,
           evaluatedId: evaluatedId,
           summary: insights.summary,
-          discrepancies: '', 
+          discrepancies: '',
           brutalFacts: insights.brutalFacts,
         },
       });
@@ -1639,5 +1639,62 @@ REGRAS CRÍTICAS:
       }
       throw new BadRequestException('Erro ao buscar evolução do colaborador');
     }
+  }
+
+  async gerarResumoSurvey(surveyId: string) {
+    const survey = await this.prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: {
+        questions: true,
+        responses: {
+          include: {
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException('Survey não encontrada.');
+    }
+
+    // Montar prompt completo com todos os dados
+    const prompt = `
+  Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
+
+  Título: ${survey.title}
+  Descrição: ${survey.description || 'Sem descrição'}
+  Número de respostas: ${survey.responses.length}
+
+  Perguntas e Respostas:
+  ${survey.questions
+    .map((q, i) => {
+      const respostas = survey.responses
+        .flatMap((r) => r.answers)
+        .filter((a) => a.questionId === q.id);
+
+      const respostasFormatadas = respostas
+        .map((a, idx) => {
+          if (q.type === 'NUMBER')
+            return `  - Resposta ${idx + 1}: ${a.answerScore}`;
+          return `  - Resposta ${idx + 1}: ${a.answerText}`;
+        })
+        .join('\n');
+
+      return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
+    })
+    .join('\n')}
+  `;
+    console.log('Prompt gerado para o Gemini:', prompt);
+
+    // Chamada para o Gemini
+    const result = await this.model.generateContent([prompt]);
+    const response = await result.response;
+    const resumo = await response.text();
+
+    return {
+      surveyTitle: survey.title,
+      resumo,
+    };
   }
 }
