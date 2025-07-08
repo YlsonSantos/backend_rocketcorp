@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { SurveyService } from './survey.service';
 import { CreateSurveyDto } from './dto/create-survey.dto';
@@ -14,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UpdateSurveyDto } from './dto/update-survey.dto';
 
 @ApiTags('Surveys')
 @Controller('survey')
@@ -26,6 +28,18 @@ export class SurveyController {
   @Roles('RH')
   create(@Body() createSurveyDto: CreateSurveyDto) {
     return this.surveyService.createSurvey(createSurveyDto);
+  }
+
+  @Post(':id/setActive')
+  @Roles('RH')
+  setActive(@Param('id') id: string) {
+    return this.surveyService.setActive(id);
+  }
+
+  @Patch(':id')
+  @Roles('RH')
+  update(@Param('id') id: string, @Body() updateSurveyDto: UpdateSurveyDto) {
+    return this.surveyService.update(id, updateSurveyDto);
   }
 
   @Roles('COLABORADOR')

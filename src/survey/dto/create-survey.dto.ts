@@ -4,6 +4,7 @@ import {
   IsString,
   ValidateNested,
   IsArray,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -31,6 +32,9 @@ export class CreateSurveyDto {
 
   @IsNotEmpty()
   endDate: Date;
+
+  @IsBoolean()
+  active: boolean = false;
 
   @IsArray()
   @ValidateNested({ each: true })
