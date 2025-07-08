@@ -486,4 +486,88 @@ export class UsersService {
       usuarios: decryptedSubordinates,
     };
   }
+
+  async findAllBrutalFacts(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teamMemberships: {
+          include: {
+            team: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const teams = user.teamMemberships.map((tm) => tm.team);
+
+    const subordinates = await this.prisma.user.findMany({
+      where: {
+        managerId: userId,
+        teamMemberships: {
+          some: {
+            teamId: { in: teams.map((team) => team.id) },
+          },
+        },
+      },
+      include: {
+        position: true,
+        scorePerCycle: {
+          include: {
+            peerScores: {
+              select: {
+                value: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const decryptedSubordinates = subordinates.map((s) => {
+      const decryptedUser = this.crypto.deepDecrypt(s, 'User');
+
+      const decryptedScorePerCycle = decryptedUser.scorePerCycle?.map(
+        (score: any) => ({
+          ...score,
+          feedback: this.crypto.decrypt(score.feedback),
+        }),
+      );
+
+      const {
+        email: _email,
+        password: _password,
+        positionId: _positionId,
+        managerId: _managerId,
+        mentorId: _mentorId,
+        ...filteredUser
+      } = decryptedUser;
+
+      return {
+        ...filteredUser,
+        scorePerCycle: decryptedScorePerCycle,
+      };
+    });
+
+    const allCycleIds = [
+      ...new Set(
+        subordinates.flatMap((s) => s.scorePerCycle.map((spc) => spc.cycleId)),
+      ),
+    ];
+
+    const allCycles = await this.prisma.evaluationCycle.findMany({
+      where: {
+        id: { in: allCycleIds },
+      },
+    });
+
+    return {
+      ciclos: allCycles,
+      usuarios: decryptedSubordinates,
+    };
+  }
 }

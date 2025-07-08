@@ -160,6 +160,47 @@ CREATE TABLE "MentorshipEvaluation" (
     CONSTRAINT "MentorshipEvaluation_cycleId_fkey" FOREIGN KEY ("cycleId") REFERENCES "EvaluationCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
+-- CreateTable
+CREATE TABLE "Survey" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "cycleId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endDate" DATETIME NOT NULL,
+    CONSTRAINT "Survey_cycleId_fkey" FOREIGN KEY ("cycleId") REFERENCES "EvaluationCycle" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "SurveyQuestion" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "surveyId" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    CONSTRAINT "SurveyQuestion_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "SurveyResponse" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "surveyId" TEXT NOT NULL,
+    "userId" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "SurveyResponse_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "SurveyResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "SurveyAnswer" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "responseId" TEXT NOT NULL,
+    "questionId" TEXT NOT NULL,
+    "answerText" TEXT,
+    "answerScore" REAL,
+    CONSTRAINT "SurveyAnswer_responseId_fkey" FOREIGN KEY ("responseId") REFERENCES "SurveyResponse" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "SurveyAnswer_questionId_fkey" FOREIGN KEY ("questionId") REFERENCES "SurveyQuestion" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Evaluation_type_evaluatorId_evaluatedId_cycleId_key" ON "Evaluation"("type", "evaluatorId", "evaluatedId", "cycleId");
 
@@ -180,3 +221,18 @@ CREATE INDEX "PeerScore_scorePerCycleId_idx" ON "PeerScore"("scorePerCycleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MentorshipEvaluation_mentorId_menteeId_cycleId_key" ON "MentorshipEvaluation"("mentorId", "menteeId", "cycleId");
+
+-- CreateIndex
+CREATE INDEX "Survey_cycleId_idx" ON "Survey"("cycleId");
+
+-- CreateIndex
+CREATE INDEX "SurveyQuestion_surveyId_idx" ON "SurveyQuestion"("surveyId");
+
+-- CreateIndex
+CREATE INDEX "SurveyResponse_surveyId_idx" ON "SurveyResponse"("surveyId");
+
+-- CreateIndex
+CREATE INDEX "SurveyAnswer_responseId_idx" ON "SurveyAnswer"("responseId");
+
+-- CreateIndex
+CREATE INDEX "SurveyAnswer_questionId_idx" ON "SurveyAnswer"("questionId");

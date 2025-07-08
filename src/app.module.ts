@@ -14,6 +14,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { EtlModule } from './etl/etl.module';
 import { PositionsModule } from './positions/positions.module';
 import { GoalModule } from './goal/goal.module';
+import { SurveyModule } from './survey/survey.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { GoalModule } from './goal/goal.module';
     EtlModule,
     PositionsModule,
     GoalModule,
+    SurveyModule,
   ],
 })
 export class AppModule {}
