@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 import { CycleGroup, EvaluationOutput } from './typesPrisma';
-import { CryptoService } from '../crypto/crypto.service'; // ajuste o caminho conforme necessário
+import { CryptoService } from '../crypto/crypto.service';
 
 @Injectable()
 export class UsersService {
