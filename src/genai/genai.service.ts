@@ -46,6 +46,9 @@ export class GenaiService {
       if (!usuario) {
         throw new NotFoundException('Colaborador não encontrado');
       }
+
+      usuario.name = this.crypto.decrypt(usuario.name);
+
       const resumoExistente = await this.prisma.genaiInsight.findFirst({
         where: {
           cycleId: cycleId,
@@ -54,8 +57,16 @@ export class GenaiService {
       });
 
       if (resumoExistente) {
+        resumoExistente.summary = this.crypto.decrypt(resumoExistente.summary);
+        resumoExistente.discrepancies = this.crypto.decrypt(
+          resumoExistente.discrepancies,
+        );
+        resumoExistente.brutalFacts = this.crypto.decrypt(
+          resumoExistente.brutalFacts,
+        );
         return resumoExistente;
       }
+
       const avaliacoes = await this.prisma.evaluation.findMany({
         where: {
           evaluatedId: evaluatedId,
@@ -83,6 +94,15 @@ export class GenaiService {
           },
         },
       });
+
+      for (const avaliacao of avaliacoes) {
+        for (const answer of avaliacao.answers) {
+          if (answer.justification) {
+            answer.justification = this.crypto.decrypt(answer.justification);
+          }
+        }
+      }
+
       const autoavaliacoes = avaliacoes.filter((av) => av.type === 'AUTO');
       const avaliacoesPares = avaliacoes.filter((av) => av.type === 'PAR');
       const avaliacoesLider = avaliacoes.filter((av) => av.type === 'LIDER');
@@ -98,6 +118,11 @@ export class GenaiService {
           peerScores: true,
         },
       });
+
+      if (scorePerCycle?.feedback) {
+        scorePerCycle.feedback = this.crypto.decrypt(scorePerCycle.feedback);
+      }
+
       const insights = await this.gerarInsightsComIA(
         usuario,
         avaliacoes,
@@ -214,6 +239,23 @@ export class GenaiService {
           'Resumo não encontrado para este colaborador e ciclo',
         );
       }
+      if (resumo.summary) {
+        resumo.summary = this.crypto.decrypt(resumo.summary);
+      }
+      if (resumo.discrepancies) {
+        resumo.discrepancies = this.crypto.decrypt(resumo.discrepancies);
+      }
+      if (resumo.brutalFacts) {
+        resumo.brutalFacts = this.crypto.decrypt(resumo.brutalFacts);
+      }
+
+      // Descriptografar campos do usuário (avaliado)
+      if (resumo.evaluated?.name) {
+        resumo.evaluated.name = this.crypto.decrypt(resumo.evaluated.name);
+      }
+      if (resumo.evaluated?.email) {
+        resumo.evaluated.email = this.crypto.decrypt(resumo.evaluated.email);
+      }
 
       return resumo;
     } catch (error) {
@@ -281,6 +323,7 @@ export class GenaiService {
       throw new InternalServerErrorException('Erro ao gerar resumos em lote');
     }
   }
+
   private async gerarInsightsComIA(
     usuario: any,
     avaliacoes: any[],
@@ -1394,6 +1437,22 @@ REGRAS CRÍTICAS:
         },
       });
 
+      for (const resumo of resumos) {
+        if (resumo.summary) {
+          resumo.summary = await this.crypto.decrypt(resumo.summary);
+        }
+        if (resumo.evaluated?.name) {
+          resumo.evaluated.name = await this.crypto.decrypt(
+            resumo.evaluated.name,
+          );
+        }
+        if (resumo.evaluated?.email) {
+          resumo.evaluated.email = await this.crypto.decrypt(
+            resumo.evaluated.email,
+          );
+        }
+      }
+
       // Buscar scores para complementar os dados do dashboard
       const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
         where: { cycleId: cycleId },
@@ -1493,6 +1552,21 @@ REGRAS CRÍTICAS:
         );
       }
 
+      // Descriptografar campos sensíveis
+      if (resumo.brutalFacts) {
+        resumo.brutalFacts = await this.crypto.decrypt(resumo.brutalFacts);
+      }
+      if (resumo.evaluated?.name) {
+        resumo.evaluated.name = await this.crypto.decrypt(
+          resumo.evaluated.name,
+        );
+      }
+      if (resumo.evaluated?.email) {
+        resumo.evaluated.email = await this.crypto.decrypt(
+          resumo.evaluated.email,
+        );
+      }
+
       // Retornar apenas os brutal facts com contexto
       return {
         id: resumo.id,
@@ -1515,7 +1589,6 @@ REGRAS CRÍTICAS:
 
   async buscarEvolucaoColaborador(userId: string) {
     try {
-      // Buscar insights de todos os ciclos do colaborador
       const insights = await this.prisma.genaiInsight.findMany({
         where: {
           evaluatedId: userId,
@@ -1554,6 +1627,26 @@ REGRAS CRÍTICAS:
         throw new NotFoundException(
           'Nenhum insight encontrado para este colaborador',
         );
+      }
+
+      // Descriptografar campos dos insights e do usuário
+      for (const insight of insights) {
+        if (insight.summary) {
+          insight.summary = await this.crypto.decrypt(insight.summary);
+        }
+        if (insight.brutalFacts) {
+          insight.brutalFacts = await this.crypto.decrypt(insight.brutalFacts);
+        }
+        if (insight.evaluated?.name) {
+          insight.evaluated.name = await this.crypto.decrypt(
+            insight.evaluated.name,
+          );
+        }
+        if (insight.evaluated?.email) {
+          insight.evaluated.email = await this.crypto.decrypt(
+            insight.evaluated.email,
+          );
+        }
       }
 
       // Buscar scores históricos
@@ -1646,36 +1739,36 @@ REGRAS CRÍTICAS:
   }
 
   async gerarResumoSurvey(surveyId: string) {
-  const survey = await this.prisma.survey.findUnique({
-    where: { id: surveyId },
-    include: {
-      questions: true,
-      responses: {
-        include: {
-          answers: true,
+    const survey = await this.prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: {
+        questions: true,
+        responses: {
+          include: {
+            answers: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!survey) {
-    throw new NotFoundException('Survey não encontrada.');
-  }
+    if (!survey) {
+      throw new NotFoundException('Survey não encontrada.');
+    }
 
-  // 🔓 Descriptografar apenas SurveyQuestion e SurveyAnswer
-  const decryptedQuestions = survey.questions.map((q) =>
-    this.crypto.deepDecrypt(q, 'SurveyQuestion'),
-  );
+    // 🔓 Descriptografar apenas SurveyQuestion e SurveyAnswer
+    const decryptedQuestions = survey.questions.map((q) =>
+      this.crypto.deepDecrypt(q, 'SurveyQuestion'),
+    );
 
-  const decryptedResponses = survey.responses.map((response) => ({
-    ...response,
-    answers: response.answers.map((a) =>
-      this.crypto.deepDecrypt(a, 'SurveyAnswer'),
-    ),
-  }));
+    const decryptedResponses = survey.responses.map((response) => ({
+      ...response,
+      answers: response.answers.map((a) =>
+        this.crypto.deepDecrypt(a, 'SurveyAnswer'),
+      ),
+    }));
 
-  // 🔧 Construção do prompt com dados descriptografados
-  const prompt = `
+    // 🔧 Construção do prompt com dados descriptografados
+    const prompt = `
 Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
 
 Título: ${survey.title}
@@ -1702,16 +1795,15 @@ ${decryptedQuestions
   .join('\n')}
 `;
 
-  console.log('Prompt gerado para o Gemini:', prompt);
+    console.log('Prompt gerado para o Gemini:', prompt);
 
-  const result = await this.model.generateContent([prompt]);
-  const response = await result.response;
-  const resumo = await response.text();
+    const result = await this.model.generateContent([prompt]);
+    const response = await result.response;
+    const resumo = await response.text();
 
-  return {
-    surveyTitle: survey.title,
-    resumo,
-  };
-}
-
+    return {
+      surveyTitle: survey.title,
+      resumo,
+    };
+  }
 }
