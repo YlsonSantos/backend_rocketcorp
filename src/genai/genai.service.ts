@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { CryptoService } from '../crypto/crypto.service';
 
 @Injectable()
 export class GenaiService {
   private genAI: GoogleGenerativeAI;
   private model: any;
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly crypto: CryptoService,
+  ) {
     const apiKey = process.env.GEMINI_API_KEY || 'sua-api-key-aqui';
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -42,6 +46,9 @@ export class GenaiService {
       if (!usuario) {
         throw new NotFoundException('Colaborador não encontrado');
       }
+
+      usuario.name = this.crypto.decrypt(usuario.name);
+
       const resumoExistente = await this.prisma.genaiInsight.findFirst({
         where: {
           cycleId: cycleId,
@@ -50,8 +57,16 @@ export class GenaiService {
       });
 
       if (resumoExistente) {
+        resumoExistente.summary = this.crypto.decrypt(resumoExistente.summary);
+        resumoExistente.discrepancies = this.crypto.decrypt(
+          resumoExistente.discrepancies,
+        );
+        resumoExistente.brutalFacts = this.crypto.decrypt(
+          resumoExistente.brutalFacts,
+        );
         return resumoExistente;
       }
+
       const avaliacoes = await this.prisma.evaluation.findMany({
         where: {
           evaluatedId: evaluatedId,
@@ -79,9 +94,33 @@ export class GenaiService {
           },
         },
       });
+
+      for (const avaliacao of avaliacoes) {
+        for (const answer of avaliacao.answers) {
+          if (answer.justification) {
+            answer.justification = this.crypto.decrypt(answer.justification);
+          }
+        }
+      }
+
+
+      // Validar se há dados suficientes para gerar insights
+      if (avaliacoes.length === 0) {
+        throw new NotFoundException(
+          'Não há avaliações concluídas para este colaborador no ciclo especificado',
+        );
+      }
+
       const autoavaliacoes = avaliacoes.filter((av) => av.type === 'AUTO');
       const avaliacoesPares = avaliacoes.filter((av) => av.type === 'PAR');
       const avaliacoesLider = avaliacoes.filter((av) => av.type === 'LIDER');
+
+      // Log para debug dos dados encontrados
+      console.log(`📊 Dados para ${usuario.name} no ciclo ${ciclo.name}:`);
+      console.log(`  - Autoavaliações: ${autoavaliacoes.length}`);
+      console.log(`  - Avaliações de pares: ${avaliacoesPares.length}`);
+      console.log(`  - Avaliações de líder: ${avaliacoesLider.length}`);
+      console.log(`  - Total: ${avaliacoes.length}`);
 
       const scorePerCycle = await this.prisma.scorePerCycle.findUnique({
         where: {
@@ -94,6 +133,11 @@ export class GenaiService {
           peerScores: true,
         },
       });
+
+      if (scorePerCycle?.feedback) {
+        scorePerCycle.feedback = this.crypto.decrypt(scorePerCycle.feedback);
+      }
+
       const insights = await this.gerarInsightsComIA(
         usuario,
         avaliacoes,
@@ -178,7 +222,8 @@ export class GenaiService {
 
   async buscarResumoColaborador(userId: string, cycleId: string) {
     try {
-      const resumo = await this.prisma.genaiInsight.findFirst({
+      // Primeiro, tentar buscar um resumo já existente
+      let resumo = await this.prisma.genaiInsight.findFirst({
         where: {
           evaluatedId: userId,
           cycleId: cycleId,
@@ -205,10 +250,65 @@ export class GenaiService {
         },
       });
 
+      // Se não encontrou, gerar automaticamente
       if (!resumo) {
-        throw new NotFoundException(
-          'Resumo não encontrado para este colaborador e ciclo',
+        console.log(
+          `🔄 Resumo não encontrado para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
         );
+
+        // Gerar o resumo usando o método existente
+        const novoResumo = await this.gerarResumoColaborador(cycleId, userId);
+
+        // Buscar novamente após a geração
+        resumo = await this.prisma.genaiInsight.findFirst({
+          where: {
+            evaluatedId: userId,
+            cycleId: cycleId,
+          },
+          include: {
+            evaluated: {
+              select: {
+                name: true,
+                email: true,
+                role: true,
+                position: {
+                  select: {
+                    name: true,
+                    track: true,
+                  },
+                },
+              },
+            },
+            cycle: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        });
+
+        if (!resumo) {
+          throw new NotFoundException(
+            'Não foi possível gerar resumo para este colaborador e ciclo - dados insuficientes',
+          );
+        }
+      }
+      if (resumo.summary) {
+        resumo.summary = this.crypto.decrypt(resumo.summary);
+      }
+      if (resumo.discrepancies) {
+        resumo.discrepancies = this.crypto.decrypt(resumo.discrepancies);
+      }
+      if (resumo.brutalFacts) {
+        resumo.brutalFacts = this.crypto.decrypt(resumo.brutalFacts);
+      }
+
+      // Descriptografar campos do usuário (avaliado)
+      if (resumo.evaluated?.name) {
+        resumo.evaluated.name = this.crypto.decrypt(resumo.evaluated.name);
+      }
+      if (resumo.evaluated?.email) {
+        resumo.evaluated.email = this.crypto.decrypt(resumo.evaluated.email);
       }
 
       return resumo;
@@ -277,6 +377,7 @@ export class GenaiService {
       throw new InternalServerErrorException('Erro ao gerar resumos em lote');
     }
   }
+
   private async gerarInsightsComIA(
     usuario: any,
     avaliacoes: any[],
@@ -1007,6 +1108,466 @@ REGRAS CRÍTICAS:
 `;
   }
 
+  async gerarResumoSurvey(surveyId: string) {
+    const survey = await this.prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: {
+        questions: true,
+        responses: {
+          include: {
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw new NotFoundException('Survey não encontrada.');
+    }
+
+    // 🔓 Descriptografar apenas SurveyQuestion e SurveyAnswer
+    const decryptedQuestions = survey.questions.map((q) =>
+      this.crypto.deepDecrypt(q, 'SurveyQuestion'),
+    );
+
+    const decryptedResponses = survey.responses.map((response) => ({
+      ...response,
+      answers: response.answers.map((a) =>
+        this.crypto.deepDecrypt(a, 'SurveyAnswer'),
+      ),
+    }));
+
+    // 🔧 Construção do prompt com dados descriptografados
+    const prompt = `
+Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
+
+Título: ${survey.title}
+Descrição: ${survey.description || 'Sem descrição'}
+Número de respostas: ${decryptedResponses.length}
+
+Perguntas e Respostas:
+${decryptedQuestions
+  .map((q, i) => {
+    const respostas = decryptedResponses
+      .flatMap((r) => r.answers)
+      .filter((a) => a.questionId === q.id);
+
+    const respostasFormatadas = respostas
+      .map((a, idx) => {
+        if (q.type === 'NUMBER')
+          return `  - Resposta ${idx + 1}: ${a.answerScore}`;
+        return `  - Resposta ${idx + 1}: ${a.answerText}`;
+      })
+      .join('\n');
+
+    return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
+  })
+  .join('\n')}
+`;
+
+    console.log('Prompt gerado para o Gemini:', prompt);
+
+    const result = await this.model.generateContent([prompt]);
+    const response = await result.response;
+    const resumo = await response.text();
+
+    return {
+      surveyTitle: survey.title,
+      resumo,
+    };
+  }
+
+  async gerarBrutalFactsGestor(cycleId: string) {
+    try {
+      console.log(`🔍 Gerando resumo executivo para ciclo: ${cycleId}`);
+
+      // Buscar informações do ciclo
+      const ciclo = await this.prisma.evaluationCycle.findUnique({
+        where: { id: cycleId },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+        },
+      });
+
+      if (!ciclo) {
+        throw new NotFoundException(`Ciclo ${cycleId} não encontrado`);
+      }
+
+      // Buscar todos os scores do ciclo
+      const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
+        where: { cycleId: cycleId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              position: {
+                select: {
+                  name: true,
+                  track: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          finalScore: 'desc',
+        },
+      });
+
+      // Buscar insights gerados para o ciclo
+      const insights = await this.prisma.genaiInsight.findMany({
+        where: { cycleId: cycleId },
+        include: {
+          evaluated: {
+            select: {
+              name: true,
+              position: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Buscar avaliações do ciclo para análise de cobertura
+      const evaluations = await this.prisma.evaluation.findMany({
+        where: { cycleId: cycleId },
+        select: {
+          evaluatedId: true,
+          type: true,
+          completed: true,
+        },
+      });
+
+      // Calcular estatísticas
+      const totalColaboradores = scoresPerCycle.length;
+      const scoresValidos = scoresPerCycle.filter(
+        (s) => s.finalScore && s.finalScore > 0,
+      );
+      const mediaGeral =
+        scoresValidos.length > 0
+          ? scoresValidos.reduce((sum, s) => sum + (s.finalScore || 0), 0) /
+            scoresValidos.length
+          : 0;
+
+      // Classificar performance
+      const distribuicaoPerformance = {
+        topPerformers: scoresValidos.filter((s) => (s.finalScore || 0) >= 4.5)
+          .length, // 4.5+
+        altaPerformance: scoresValidos.filter(
+          (s) => (s.finalScore || 0) >= 4.0 && (s.finalScore || 0) < 4.5,
+        ).length, // 4.0-4.49
+        performanceMedia: scoresValidos.filter(
+          (s) => (s.finalScore || 0) >= 3.0 && (s.finalScore || 0) < 4.0,
+        ).length, // 3.0-3.99
+        baixaPerformance: scoresValidos.filter(
+          (s) => (s.finalScore || 0) >= 2.0 && (s.finalScore || 0) < 3.0,
+        ).length, // 2.0-2.99
+        criticos: scoresValidos.filter((s) => (s.finalScore || 0) < 2.0).length, // <2.0
+      };
+
+      // Análise de cobertura de avaliações
+      const coberturaAnalise = this.analisarCoberturaAvaliacoes(
+        evaluations,
+        totalColaboradores,
+      );
+
+      // Gerar insights principais para uso interno na geração do resumo
+      const principaisInsights = this.gerarInsightsExecutivos(
+        distribuicaoPerformance,
+        mediaGeral,
+        totalColaboradores,
+        coberturaAnalise,
+        scoresValidos,
+      );
+
+      // Gerar resumo executivo
+      const resumoExecutivo = this.gerarTextoResumoExecutivo(
+        distribuicaoPerformance,
+        mediaGeral,
+        totalColaboradores,
+        ciclo.name,
+        principaisInsights,
+      );
+
+      return {
+        cycleId: ciclo.id,
+        cycleName: ciclo.name,
+        totalColaboradores,
+        mediaGeral: Math.round(mediaGeral * 100) / 100,
+        distribuicaoPerformance,
+        resumoExecutivo,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('❌ Erro ao gerar resumo executivo:', error);
+      throw new BadRequestException('Erro ao gerar resumo executivo do ciclo');
+    }
+  }
+
+  private analisarCoberturaAvaliacoes(
+    evaluations: any[],
+    totalColaboradores: number,
+  ) {
+    const avaliacoesPorColaborador = new Map();
+
+    evaluations.forEach((evaluation) => {
+      if (!avaliacoesPorColaborador.has(evaluation.evaluatedId)) {
+        avaliacoesPorColaborador.set(evaluation.evaluatedId, {
+          auto: false,
+          lider: false,
+          pares: false,
+          total: 0,
+        });
+      }
+
+      const userEvals = avaliacoesPorColaborador.get(evaluation.evaluatedId);
+      if (evaluation.completed) {
+        userEvals.total++;
+        if (evaluation.type === 'AUTO') userEvals.auto = true;
+        if (evaluation.type === 'LIDER') userEvals.lider = true;
+        if (evaluation.type === 'PARES') userEvals.pares = true;
+      }
+    });
+
+    const colaboradoresComAvaliacao = avaliacoesPorColaborador.size;
+    const colaboradoresSemAvaliacao =
+      totalColaboradores - colaboradoresComAvaliacao;
+
+    // Analisar qualidade da cobertura
+    let cobertura360Completa = 0;
+    let coberturaBasica = 0;
+
+    for (const [userId, evals] of avaliacoesPorColaborador) {
+      if (evals.auto && evals.lider && evals.pares) {
+        cobertura360Completa++;
+      } else if (evals.total >= 2) {
+        coberturaBasica++;
+      }
+    }
+
+    return {
+      colaboradoresComAvaliacao,
+      colaboradoresSemAvaliacao,
+      cobertura360Completa,
+      coberturaBasica,
+      percentualCobertura:
+        (colaboradoresComAvaliacao / totalColaboradores) * 100,
+    };
+  }
+
+  private gerarInsightsExecutivos(
+    distribuicao: any,
+    mediaGeral: number,
+    total: number,
+    cobertura: any,
+    scores: any[],
+  ): string[] {
+    const insights = [];
+
+    // Insight sobre top performers
+    if (distribuicao.topPerformers === 0) {
+      insights.push(
+        'Nenhum colaborador atingiu status de top performer (4.5+). Isso indica possível inflação de notas ou problema fundamental de aquisição/desenvolvimento de talentos.',
+      );
+    } else if (distribuicao.topPerformers > total * 0.3) {
+      insights.push(
+        `${distribuicao.topPerformers} colaboradores (${Math.round((distribuicao.topPerformers / total) * 100)}%) são top performers - percentual acima do esperado, revisar critérios de avaliação.`,
+      );
+    } else {
+      insights.push(
+        `${distribuicao.topPerformers} colaboradores (${Math.round((distribuicao.topPerformers / total) * 100)}%) são top performers - distribuição saudável de talentos.`,
+      );
+    }
+
+    // Insight sobre performance geral
+    if (mediaGeral < 2.5) {
+      insights.push(
+        `Média geral crítica (${mediaGeral.toFixed(1)}/5.0) - intervenção imediata necessária em toda a equipe.`,
+      );
+    } else if (mediaGeral < 3.2) {
+      insights.push(
+        `Média geral abaixo do esperado (${mediaGeral.toFixed(1)}/5.0) - plano de desenvolvimento urgente requerido.`,
+      );
+    } else if (mediaGeral >= 4.2) {
+      insights.push(
+        `Média geral excelente (${mediaGeral.toFixed(1)}/5.0) - equipe de alta performance com oportunidades de stretch goals.`,
+      );
+    } else {
+      insights.push(
+        `Média geral adequada (${mediaGeral.toFixed(1)}/5.0) - equipe estável com potencial de crescimento.`,
+      );
+    }
+
+    // Insight sobre distribuição
+    if (distribuicao.criticos > 0) {
+      insights.push(
+        `${distribuicao.criticos} colaboradores em situação crítica (<2.0) - plano de melhoria de performance ou desligamento necessário.`,
+      );
+    }
+
+    if (distribuicao.baixaPerformance > total * 0.4) {
+      insights.push(
+        `${Math.round((distribuicao.baixaPerformance / total) * 100)}% da equipe com baixa performance - problema sistêmico que requer análise de processos, treinamentos e liderança.`,
+      );
+    }
+
+    // Insight sobre cobertura de avaliações
+    if (cobertura.percentualCobertura < 80) {
+      insights.push(
+        `Apenas ${Math.round(cobertura.percentualCobertura)}% dos colaboradores possuem avaliações - dados insuficientes para análise confiável.`,
+      );
+    }
+
+    if (cobertura.cobertura360Completa < total * 0.5) {
+      insights.push(
+        `Apenas ${cobertura.cobertura360Completa} colaboradores têm avaliação 360° completa - implementar processo estruturado de feedback multi-source.`,
+      );
+    }
+
+    return insights;
+  }
+
+  private gerarTextoResumoExecutivo(
+    distribuicao: any,
+    mediaGeral: number,
+    total: number,
+    cycleName: string,
+    insights: string[],
+  ): string {
+    let resumo = `Análise executiva do ciclo ${cycleName} com ${total} colaboradores avaliados. `;
+
+    resumo += `A performance geral da equipe apresenta média de ${mediaGeral.toFixed(1)}/5.0, `;
+
+    if (mediaGeral >= 4.0) {
+      resumo +=
+        'indicando uma equipe de alta performance com oportunidades de maximizar potencial. ';
+    } else if (mediaGeral >= 3.5) {
+      resumo +=
+        'demonstrando performance sólida com espaço para crescimento estruturado. ';
+    } else if (mediaGeral >= 3.0) {
+      resumo +=
+        'sinalizando necessidade de intervenções focadas para elevação de performance. ';
+    } else {
+      resumo +=
+        'evidenciando situação crítica que demanda ação imediata e reestruturação. ';
+    }
+
+    // Adicionar contexto da distribuição
+    if (distribuicao.topPerformers > 0) {
+      resumo += `${distribuicao.topPerformers} colaboradores destacam-se como top performers, `;
+    } else {
+      resumo += 'Ausência de top performers identificados, ';
+    }
+
+    if (distribuicao.criticos > 0) {
+      resumo += `enquanto ${distribuicao.criticos} requerem plano de melhoria crítica. `;
+    } else {
+      resumo += 'sem casos críticos identificados. ';
+    }
+
+    resumo += 'Os dados indicam ';
+
+    if (insights.some((i) => i.includes('problema sistêmico'))) {
+      resumo +=
+        'necessidade de revisão de processos organizacionais e estratégia de desenvolvimento de pessoas.';
+    } else if (insights.some((i) => i.includes('distribuição saudável'))) {
+      resumo +=
+        'distribuição saudável de talentos com oportunidades de otimização e stretch assignments.';
+    } else {
+      resumo +=
+        'oportunidades específicas de desenvolvimento e calibração de critérios avaliativos.';
+    }
+
+    return resumo;
+  }
+
+  private gerarRecomendacoesAcoes(
+    distribuicao: any,
+    mediaGeral: number,
+    cobertura: any,
+  ): string[] {
+    const recomendacoes = [];
+
+    // Recomendações baseadas em performance
+    if (distribuicao.criticos > 0) {
+      recomendacoes.push(
+        'Implementar PIP (Performance Improvement Plan) imediato para colaboradores críticos',
+      );
+      recomendacoes.push(
+        'Definir timeline de 60-90 dias para melhoria ou considerar desligamento',
+      );
+    }
+
+    if (distribuicao.baixaPerformance > distribuicao.performanceMedia) {
+      recomendacoes.push(
+        'Criar programa estruturado de mentoring e coaching para baixa performance',
+      );
+      recomendacoes.push(
+        'Revisar processo de onboarding e treinamentos iniciais',
+      );
+    }
+
+    if (distribuicao.topPerformers > 0) {
+      recomendacoes.push(
+        'Desenvolver plano de retenção e crescimento para top performers',
+      );
+      recomendacoes.push(
+        'Implementar stretch assignments e projetos estratégicos',
+      );
+    } else {
+      recomendacoes.push(
+        'Identificar potenciais high performers e criar plano de aceleração',
+      );
+    }
+
+    // Recomendações baseadas em cobertura
+    if (cobertura.percentualCobertura < 90) {
+      recomendacoes.push(
+        'Garantir 100% de cobertura avaliativa no próximo ciclo',
+      );
+    }
+
+    if (
+      cobertura.cobertura360Completa <
+      cobertura.colaboradoresComAvaliacao * 0.7
+    ) {
+      recomendacoes.push(
+        'Implementar processo obrigatório de feedback 360° para todos os colaboradores',
+      );
+    }
+
+    // Recomendações baseadas na média geral
+    if (mediaGeral < 3.5) {
+      recomendacoes.push(
+        'Realizar diagnóstico organizacional para identificar gaps sistêmicos',
+      );
+      recomendacoes.push('Revisar estrutura de compensação e benefícios');
+    }
+
+    if (mediaGeral > 4.2) {
+      recomendacoes.push(
+        'Revisar critérios avaliativos para evitar inflação de notas',
+      );
+      recomendacoes.push(
+        'Implementar metas mais desafiadoras para manter engajamento',
+      );
+    }
+
+    return recomendacoes;
+  }
+
+  // ========== MÉTODOS AUXILIARES ==========
+
   private gerarInsightsLocal(
     usuario: any,
     avaliacoes: any[],
@@ -1047,23 +1608,25 @@ REGRAS CRÍTICAS:
 
     // Destaques de performance
     if (pontosFortesEFracos.pontosForts.length > 0) {
-      resumo += ` Principais forças identificadas: ${pontosFortesEFracos.pontosForts
-        .map((p: any) => `${p.criterio} (Média: ${p.media.toFixed(1)}/5)`)
-        .join(', ')}.`;
+      resumo += ` Entre seus pontos fortes, destacam-se: ${pontosFortesEFracos.pontosForts
+        .slice(0, 2)
+        .map((p: any) => p.criterio)
+        .join(' e ')}.`;
     }
 
     // Áreas de melhoria
     if (pontosFortesEFracos.pontoesFracos.length > 0) {
-      resumo += ` Áreas de melhoria incluem: ${pontosFortesEFracos.pontoesFracos
-        .map((p: any) => `${p.criterio} (Média: ${p.media.toFixed(1)}/5)`)
-        .join(', ')}.`;
+      resumo += ` Como oportunidades de desenvolvimento, foram identificadas: ${pontosFortesEFracos.pontoesFracos
+        .slice(0, 2)
+        .map((p: any) => p.criterio)
+        .join(' e ')}.`;
     }
 
     // Discrepâncias
     if (discrepancias.discrepancias.length > 0) {
-      resumo += ` Foram identificadas discrepâncias entre as avaliações, sugerindo a necessidade de alinhamento em algumas áreas.`;
+      resumo += ` Há discrepâncias entre as percepções dos avaliadores que requerem atenção.`;
     } else {
-      resumo += ` Não foram identificadas discrepâncias significativas, indicando um bom alinhamento nas percepções de performance.`;
+      resumo += ` As avaliações mostram consistência entre as diferentes perspectivas.`;
     }
 
     return resumo;
@@ -1073,21 +1636,18 @@ REGRAS CRÍTICAS:
     const { discrepancias } = dados;
 
     if (discrepancias.discrepancias.length === 0) {
-      return 'Não há discrepâncias significativas a serem abordadas.';
+      return 'Não há discrepâncias significativas entre as avaliações realizadas.';
     }
 
     return `Discrepâncias identificadas: ${discrepancias.discrepancias
       .map((d: any) => {
-        let descricao = `${d.tipo.replace(/_/g, ' ')}: diferença de ${d.diferenca.toFixed(1)} pontos`;
-        if (d.gravidade === 'alta') {
-          descricao += ' (alta gravidade)';
-        }
-        return descricao;
+        return `${d.tipo.replace(/_/g, ' ')} (diferença de ${d.diferenca.toFixed(1)} pontos)`;
       })
       .join(
         ', ',
       )}. Recomenda-se uma reunião de feedback 360° para alinhamento.`;
   }
+
   private gerarBrutalFacts(dadosEstruturados: any): string {
     const {
       medias,
@@ -1106,60 +1666,47 @@ REGRAS CRÍTICAS:
 
     // 1. Análise de performance baseada em dados disponíveis
     if (medias.geral.media < 2.5) {
-      facts.push(
-        `🚨 PERFORMANCE CRÍTICA: Média ${medias.geral.media.toFixed(1)}/5 requer intervenção imediata - PIP com objetivos específicos e timeline de 60-90 dias.`,
-      );
+      facts.push('Performance crítica - intervenção imediata necessária');
     } else if (medias.geral.media < 3.2) {
       facts.push(
-        `⚠️ PERFORMANCE EM RISCO: Média ${medias.geral.media.toFixed(1)}/5 na zona de atenção - plano de desenvolvimento estruturado necessário.`,
+        'Performance abaixo do esperado - plano de desenvolvimento urgente',
       );
     } else if (medias.geral.media >= 4.5) {
       facts.push(
-        `⭐ HIGH PERFORMER: Média ${medias.geral.media.toFixed(1)}/5 - candidato a projetos estratégicos, mentoring ou promoção.`,
+        'Performance excepcional - candidato a projetos de alto impacto',
       );
     } else if (medias.geral.media >= 4.0) {
-      facts.push(
-        `✅ PERFORMANCE SÓLIDA: Média ${medias.geral.media.toFixed(1)}/5 - focar em development de próximo nível.`,
-      );
+      facts.push('Performance sólida - pronto para novos desafios');
     }
 
     // 2. Análise de consistência e variação
     if (analiseVariacao.consistencia === 'baixa') {
       facts.push(
-        `📊 PERFORMANCE INCONSISTENTE: Desvio padrão ${analiseVariacao.desvioPadrao.toFixed(2)} indica variação situacional - mapear contextos de sucesso para replicar.`,
+        'Inconsistência nas avaliações indica necessidade de calibração de expectativas',
       );
     } else if (
       analiseVariacao.consistencia === 'alta' &&
       medias.geral.media >= 4.0
     ) {
       facts.push(
-        `🎯 PERFORMANCE CONSISTENTE: Baixa variação + alta média indica confiabilidade - pronto para responsabilidades maiores.`,
+        'Consistência alta com performance elevada - talento confiável',
       );
     }
 
     // 3. Análise específica por cobertura de dados
     if (coberturaInfo) {
-      if (!coberturaInfo.tem360 && coberturaInfo.parcial) {
+      if (!coberturaInfo.tem360) {
         facts.push(
-          `📋 DADOS LIMITADOS: Análise baseada em ${coberturaInfo.total}/3 perspectivas - incluir visão 360° no próximo ciclo para insights completos.`,
+          'Avaliação incompleta - implementar feedback 360° para visão abrangente',
         );
       }
     }
 
     // 4. Análise de discrepâncias como brutal fact
     if (analiseDiscrepancias.length > 1) {
-      const discrepanciasAltas = analiseDiscrepancias.filter(
-        (d: any) => d.gravidade === 'alta',
-      ).length;
-      if (discrepanciasAltas > 0) {
-        facts.push(
-          `🎯 DESALINHAMENTO CRÍTICO: ${discrepanciasAltas} discrepância(s) de alta gravidade - calibração urgente necessária.`,
-        );
-      } else {
-        facts.push(
-          `🔍 MÚLTIPLAS DISCREPÂNCIAS: ${analiseDiscrepancias.length} gaps de percepção - sessões de feedback estruturado recomendadas.`,
-        );
-      }
+      facts.push(
+        'Múltiplas discrepâncias de percepção - sessão de alinhamento crítica',
+      );
     } else if (
       analiseDiscrepancias.length === 1 &&
       analiseDiscrepancias[0].gravidade === 'alta'
@@ -1188,9 +1735,7 @@ REGRAS CRÍTICAS:
         limitacoes.limitacoes.find((l: any) => l.tipo === 'ausencia_lider') ||
         limitacoes.limitacoes.find((l: any) => l.tipo === 'ausencia_pares');
       if (limitacaoMajor) {
-        facts.push(
-          `⚠️ BLIND SPOT: ${limitacaoMajor.impacto.toLowerCase()} - pode mascarar issues importantes.`,
-        );
+        facts.push(`⚠️ DADOS LIMITADOS: ${limitacaoMajor.impacto}`);
       }
     }
 
@@ -1198,10 +1743,8 @@ REGRAS CRÍTICAS:
     if (medias.auto && medias.lider) {
       const gapAutoLider = Math.abs(medias.auto.media - medias.lider.media);
       if (gapAutoLider > 1.0) {
-        const tendencia =
-          medias.auto.media > medias.lider.media ? 'superestima' : 'subestima';
         facts.push(
-          `🎭 SELF-AWARENESS: Colaborador ${tendencia} performance em ${gapAutoLider.toFixed(1)} pontos vs líder - impacta development planning.`,
+          `🔄 DESALINHAMENTO: Gap de ${gapAutoLider.toFixed(1)} pontos entre autoavaliação e líder - calibração urgente necessária.`,
         );
       }
     }
@@ -1218,11 +1761,11 @@ REGRAS CRÍTICAS:
     if (facts.length === 0) {
       if (medias.geral.media >= 3.5) {
         facts.push(
-          `✅ BASELINE SÓLIDO: Performance adequada com média ${medias.geral.media.toFixed(1)}/5 - focar em growth específico de competências.`,
+          'Performance equilibrada - focar em desenvolvimento específico para próximo nível',
         );
       } else {
         facts.push(
-          `🔍 ANÁLISE REQUER MAIS DADOS: Performance média ${medias.geral.media.toFixed(1)}/5 - expandir fontes de feedback para insights mais precisos.`,
+          'Necessária análise mais detalhada - dados insuficientes para insights definitivos',
         );
       }
     }
@@ -1390,6 +1933,22 @@ REGRAS CRÍTICAS:
         },
       });
 
+      for (const resumo of resumos) {
+        if (resumo.summary) {
+          resumo.summary = await this.crypto.decrypt(resumo.summary);
+        }
+        if (resumo.evaluated?.name) {
+          resumo.evaluated.name = await this.crypto.decrypt(
+            resumo.evaluated.name,
+          );
+        }
+        if (resumo.evaluated?.email) {
+          resumo.evaluated.email = await this.crypto.decrypt(
+            resumo.evaluated.email,
+          );
+        }
+      }
+
       // Buscar scores para complementar os dados do dashboard
       const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
         where: { cycleId: cycleId },
@@ -1426,17 +1985,10 @@ REGRAS CRÍTICAS:
         // Determinar status baseado nas avaliações
         let status = 'pendente';
         if (completedEvaluations.length > 0) {
-          const hasAuto = completedEvaluations.some((e) => e.type === 'AUTO');
-          const hasPeer = completedEvaluations.some((e) => e.type === 'PAR');
-          const hasLeader = completedEvaluations.some(
-            (e) => e.type === 'LIDER',
-          );
-
-          if (hasAuto && hasPeer && hasLeader) {
-            status = 'completo';
-          } else {
-            status = 'parcial';
-          }
+          status =
+            completedEvaluations.length === userEvaluations.length
+              ? 'completo'
+              : 'parcial';
         }
 
         return {
@@ -1456,7 +2008,8 @@ REGRAS CRÍTICAS:
 
   async buscarBrutalFacts(userId: string, cycleId: string) {
     try {
-      const resumo = await this.prisma.genaiInsight.findFirst({
+      // Primeiro, tentar buscar um resumo já existente
+      let resumo = await this.prisma.genaiInsight.findFirst({
         where: {
           evaluatedId: userId,
           cycleId: cycleId,
@@ -1483,9 +2036,62 @@ REGRAS CRÍTICAS:
         },
       });
 
+      // Se não encontrou, gerar automaticamente
       if (!resumo) {
-        throw new NotFoundException(
-          'Insight não encontrado para este colaborador e ciclo',
+        console.log(
+          `🔄 Brutal facts não encontrados para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
+        );
+
+        // Gerar o resumo usando o método existente
+        const novoResumo = await this.gerarResumoColaborador(cycleId, userId);
+
+        // Buscar novamente após a geração
+        resumo = await this.prisma.genaiInsight.findFirst({
+          where: {
+            evaluatedId: userId,
+            cycleId: cycleId,
+          },
+          include: {
+            evaluated: {
+              select: {
+                name: true,
+                email: true,
+                role: true,
+                position: {
+                  select: {
+                    name: true,
+                    track: true,
+                  },
+                },
+              },
+            },
+            cycle: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        });
+
+        if (!resumo) {
+          throw new NotFoundException(
+            'Não foi possível gerar insights para este colaborador e ciclo - dados insuficientes',
+          );
+        }
+      }
+
+      // Descriptografar campos sensíveis
+      if (resumo.brutalFacts) {
+        resumo.brutalFacts = await this.crypto.decrypt(resumo.brutalFacts);
+      }
+      if (resumo.evaluated?.name) {
+        resumo.evaluated.name = await this.crypto.decrypt(
+          resumo.evaluated.name,
+        );
+      }
+      if (resumo.evaluated?.email) {
+        resumo.evaluated.email = await this.crypto.decrypt(
+          resumo.evaluated.email,
         );
       }
 
@@ -1511,7 +2117,6 @@ REGRAS CRÍTICAS:
 
   async buscarEvolucaoColaborador(userId: string) {
     try {
-      // Buscar insights de todos os ciclos do colaborador
       const insights = await this.prisma.genaiInsight.findMany({
         where: {
           evaluatedId: userId,
@@ -1552,6 +2157,26 @@ REGRAS CRÍTICAS:
         );
       }
 
+      // Descriptografar campos dos insights e do usuário
+      for (const insight of insights) {
+        if (insight.summary) {
+          insight.summary = await this.crypto.decrypt(insight.summary);
+        }
+        if (insight.brutalFacts) {
+          insight.brutalFacts = await this.crypto.decrypt(insight.brutalFacts);
+        }
+        if (insight.evaluated?.name) {
+          insight.evaluated.name = await this.crypto.decrypt(
+            insight.evaluated.name,
+          );
+        }
+        if (insight.evaluated?.email) {
+          insight.evaluated.email = await this.crypto.decrypt(
+            insight.evaluated.email,
+          );
+        }
+      }
+
       // Buscar scores históricos
       const scoresHistoricos = await this.prisma.scorePerCycle.findMany({
         where: {
@@ -1574,30 +2199,31 @@ REGRAS CRÍTICAS:
         },
       });
 
-      // Calcular evolução dos scores
+      // Preparar dados de evolução
       const evolucaoScores = scoresHistoricos.map((score, index) => {
-        const anterior = index > 0 ? scoresHistoricos[index - 1] : null;
-        const scoreAtual = score.finalScore || 0;
-        const scoreAnterior = anterior?.finalScore || 0;
-        const crescimento = anterior ? scoreAtual - scoreAnterior : 0;
+        const scoreAnterior = index > 0 ? scoresHistoricos[index - 1] : null;
+        const crescimento = scoreAnterior
+          ? (score.finalScore || 0) - (scoreAnterior.finalScore || 0)
+          : 0;
+        const crescimentoPercentual =
+          scoreAnterior && scoreAnterior.finalScore
+            ? ((crescimento / scoreAnterior.finalScore) * 100).toFixed(1)
+            : '0.0';
 
         return {
           cycleId: score.cycleId,
           cycleName: score.cycle.name,
           startDate: score.cycle.startDate,
           endDate: score.cycle.endDate,
-          finalScore: scoreAtual,
-          selfScore: score.selfScore,
-          leaderScore: score.leaderScore,
-          crescimento: crescimento,
-          crescimentoPercentual:
-            anterior && scoreAnterior > 0
-              ? ((crescimento / scoreAnterior) * 100).toFixed(1)
-              : '0.0',
+          finalScore: score.finalScore || 0,
+          selfScore: score.selfScore || 0,
+          leaderScore: score.leaderScore || 0,
+          crescimento,
+          crescimentoPercentual,
         };
       });
 
-      // Mapear insights por ciclo
+      // Preparar insights de evolução
       const evolucaoInsights = insights.map((insight) => ({
         cycleId: insight.cycleId,
         cycleName: insight.cycle.name,
@@ -1607,7 +2233,15 @@ REGRAS CRÍTICAS:
         brutalFacts: insight.brutalFacts,
       }));
 
-      // Dados do colaborador
+      // Calcular resumo de evolução
+      const scoreAtual =
+        scoresHistoricos.length > 0
+          ? scoresHistoricos[scoresHistoricos.length - 1].finalScore || 0
+          : 0;
+      const scoreInicial =
+        scoresHistoricos.length > 0 ? scoresHistoricos[0].finalScore || 0 : 0;
+      const crescimentoTotal = scoreAtual - scoreInicial;
+
       const colaborador = insights[0].evaluated;
 
       return {
@@ -1620,17 +2254,12 @@ REGRAS CRÍTICAS:
           track: colaborador.position.track,
         },
         totalCiclos: insights.length,
-        evolucaoScores: evolucaoScores,
-        evolucaoInsights: evolucaoInsights,
+        evolucaoScores,
+        evolucaoInsights,
         resumoEvolucao: {
-          scoreAtual:
-            evolucaoScores[evolucaoScores.length - 1]?.finalScore || null,
-          scoreInicial: evolucaoScores[0]?.finalScore || null,
-          crescimentoTotal:
-            evolucaoScores.length > 1
-              ? (evolucaoScores[evolucaoScores.length - 1]?.finalScore || 0) -
-                (evolucaoScores[0]?.finalScore || 0)
-              : 0,
+          scoreAtual,
+          scoreInicial,
+          crescimentoTotal,
         },
       };
     } catch (error) {
@@ -1658,36 +2287,48 @@ REGRAS CRÍTICAS:
       throw new NotFoundException('Survey não encontrada.');
     }
 
-    // Montar prompt completo com todos os dados
+    // 🔓 Descriptografar apenas SurveyQuestion e SurveyAnswer
+    const decryptedQuestions = survey.questions.map((q) =>
+      this.crypto.deepDecrypt(q, 'SurveyQuestion'),
+    );
+
+    const decryptedResponses = survey.responses.map((response) => ({
+      ...response,
+      answers: response.answers.map((a) =>
+        this.crypto.deepDecrypt(a, 'SurveyAnswer'),
+      ),
+    }));
+
+    // 🔧 Construção do prompt com dados descriptografados
     const prompt = `
-  Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
+Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
 
-  Título: ${survey.title}
-  Descrição: ${survey.description || 'Sem descrição'}
-  Número de respostas: ${survey.responses.length}
+Título: ${survey.title}
+Descrição: ${survey.description || 'Sem descrição'}
+Número de respostas: ${decryptedResponses.length}
 
-  Perguntas e Respostas:
-  ${survey.questions
-    .map((q, i) => {
-      const respostas = survey.responses
-        .flatMap((r) => r.answers)
-        .filter((a) => a.questionId === q.id);
+Perguntas e Respostas:
+${decryptedQuestions
+  .map((q, i) => {
+    const respostas = decryptedResponses
+      .flatMap((r) => r.answers)
+      .filter((a) => a.questionId === q.id);
 
-      const respostasFormatadas = respostas
-        .map((a, idx) => {
-          if (q.type === 'NUMBER')
-            return `  - Resposta ${idx + 1}: ${a.answerScore}`;
-          return `  - Resposta ${idx + 1}: ${a.answerText}`;
-        })
-        .join('\n');
+    const respostasFormatadas = respostas
+      .map((a, idx) => {
+        if (q.type === 'NUMBER')
+          return `  - Resposta ${idx + 1}: ${a.answerScore}`;
+        return `  - Resposta ${idx + 1}: ${a.answerText}`;
+      })
+      .join('\n');
 
-      return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
-    })
-    .join('\n')}
-  `;
+    return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
+  })
+  .join('\n')}
+`;
+
     console.log('Prompt gerado para o Gemini:', prompt);
 
-    // Chamada para o Gemini
     const result = await this.model.generateContent([prompt]);
     const response = await result.response;
     const resumo = await response.text();

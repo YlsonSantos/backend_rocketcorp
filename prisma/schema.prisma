@@ -250,6 +250,7 @@ model Survey {
   description   String?
   createdAt     DateTime        @default(now())
   endDate       DateTime 
+  active        Boolean         
 
   cycle         EvaluationCycle @relation(fields: [cycleId], references: [id])
   questions     SurveyQuestion[]
