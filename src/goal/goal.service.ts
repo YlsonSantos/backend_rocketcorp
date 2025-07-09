@@ -4,10 +4,14 @@ import { UpdateGoalDto } from './dto/update-goal.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateGoalActionDto } from './dto/create-goal-action.dto';
 import { UpdateGoalActionDto } from './dto/update-goal-action.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class GoalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async createGoal(createGoalDto: CreateGoalDto, userId: string) {
     const goal = await this.prisma.goal.create({
@@ -102,6 +106,25 @@ export class GoalService {
         goalId: id,
       },
     });
+
+    // Enviar notificação sobre prazo da ação
+    try {
+      const daysUntilDeadline = Math.ceil(
+        (new Date(createGoalActionDto.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      if (daysUntilDeadline <= 7) {
+        await this.notificationsService.createNotification({
+          userId: goalExists.userId,
+          type: 'GOAL_DEADLINE_APPROACHING',
+          title: 'Prazo de Meta Aproximando',
+          message: `A ação "${createGoalActionDto.description}" da meta "${goalExists.title}" vence em ${daysUntilDeadline} dia(s).`,
+          priority: daysUntilDeadline <= 1 ? 'URGENT' : 'HIGH',
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+    }
 
     return goalAction;
   }

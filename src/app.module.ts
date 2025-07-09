@@ -15,6 +15,7 @@ import { EtlModule } from './etl/etl.module';
 import { PositionsModule } from './positions/positions.module';
 import { GoalModule } from './goal/goal.module';
 import { SurveyModule } from './survey/survey.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SurveyModule } from './survey/survey.module';
     PositionsModule,
     GoalModule,
     SurveyModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
