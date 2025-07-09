@@ -219,41 +219,42 @@ export class GenaiController {
     return await this.genaiService.buscarBrutalFacts(userId, cycleId);
   }
 
-  @Get('brutal-facts/cycle/:cycleId')
+  @Get('brutal-facts/gestor/resumo/cycle/:cycleId')
   @Roles('RH', 'COMITE', 'LIDER')
   @ApiOperation({
-    summary:
-      '[BRUTAL FACTS] Buscar brutal facts de todos os colaboradores de um ciclo',
+    summary: '[BRUTAL FACTS] Resumo executivo para gestores',
     description:
-      'Retorna brutal facts de todos os colaboradores para navegação na tela de brutal facts',
+      'Retorna análise geral do desempenho de todos os colaboradores do ciclo para gestores',
   })
   @ApiParam({ name: 'cycleId', description: 'ID do ciclo de avaliação' })
   @ApiResponse({
     status: 200,
-    description: 'Brutal facts do ciclo recuperados com sucesso',
+    description: 'Resumo executivo recuperado com sucesso',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          evaluatedId: { type: 'string' },
-          evaluatedName: { type: 'string' },
-          evaluatedPosition: { type: 'string' },
-          brutalFacts: { type: 'string' },
+      type: 'object',
+      properties: {
+        cycleId: { type: 'string' },
+        cycleName: { type: 'string' },
+        totalColaboradores: { type: 'number' },
+        mediaGeral: { type: 'number' },
+        distribuicaoPerformance: {
+          type: 'object',
+          properties: {
+            topPerformers: { type: 'number' },
+            altaPerformance: { type: 'number' },
+            performanceMedia: { type: 'number' },
+            baixaPerformance: { type: 'number' },
+            criticos: { type: 'number' },
+          },
         },
+        resumoExecutivo: { type: 'string' },
+        principaisInsights: { type: 'array', items: { type: 'string' } },
+        recomendacoesAcoes: { type: 'array', items: { type: 'string' } },
       },
     },
   })
-  async buscarBrutalFactsCiclo(@Param('cycleId') cycleId: string) {
-    const insights = await this.genaiService.buscarResumosPorCiclo(cycleId);
-    return insights.map((insight) => ({
-      id: insight.id,
-      evaluatedId: insight.evaluatedId,
-      evaluatedName: insight.evaluatedName,
-      evaluatedPosition: insight.evaluatedPosition,
-      brutalFacts: insight.brutalFacts,
-    }));
+  async buscarResumoExecutivoBrutalFacts(@Param('cycleId') cycleId: string) {
+    return await this.genaiService.gerarBrutalFactsGestor(cycleId);
   }
 
   // ========== PERFIL INDIVIDUAL (Colaborador específico) ==========
