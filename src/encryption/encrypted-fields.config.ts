@@ -5,4 +5,7 @@ export const encryptedFieldsMap = {
   GenaiInsight: ['summary', 'discrepancies', 'brutalFacts'],
   ScorePerCycle: ['feedback'],
   MentorshipEvaluation: ['feedback'],
+  SurveyAnswer: ['answerText'],
+  SurveyQuestion: ['text'],
+  Survey: ['title', 'description'],
 };

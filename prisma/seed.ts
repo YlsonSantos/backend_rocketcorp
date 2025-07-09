@@ -884,43 +884,54 @@ async function main() {
         'Pesquisa rápida para avaliação do clima organizacional no 2º semestre de 2025',
       endDate: new Date('2025-07-30'),
       active: true,
-      questions: {
-        create: [
-          {
-            id: 'q1',
-            text: 'Você se sente valorizado na empresa?',
-            type: QuestionType.NUMBER,
-          },
-          {
-            id: 'q2',
-            text: 'Quais aspectos podemos melhorar?',
-            type: QuestionType.TEXT,
-          },
-        ],
-      },
     },
-    include: { questions: true },
   });
+
+  const questions = [
+    {
+      id: 'q1',
+      surveyId: 'survey2025_1',
+      text: 'Você se sente valorizado na empresa?',
+      type: QuestionType.NUMBER,
+    },
+    {
+      id: 'q2',
+      surveyId: 'survey2025_1',
+      text: 'Quais aspectos podemos melhorar?',
+      type: QuestionType.TEXT,
+    },
+  ];
+
+  for (const question of questions) {
+    await prisma.surveyQuestion.create({ data: question });
+  }
 
   await prisma.surveyResponse.create({
     data: {
       id: 'response1',
       surveyId: 'survey2025_1',
       userId: null,
-      answers: {
-        create: [
-          {
-            questionId: 'q1',
-            answerScore: 4,
-          },
-          {
-            questionId: 'q2',
-            answerText: 'Gostaria de mais comunicação interna.',
-          },
-        ],
-      },
     },
   });
+
+  const answers = [
+    {
+      responseId: 'response1',
+      questionId: 'q1',
+      answerScore: 4,
+    },
+    {
+      responseId: 'response1',
+      questionId: 'q2',
+      answerText: 'Gostaria de mais comunicação interna.',
+    },
+  ];
+
+  await Promise.all(
+    answers.map(async (answer) => {
+      await prisma.surveyAnswer.create({ data: answer });
+    }),
+  );
 }
 
 main()

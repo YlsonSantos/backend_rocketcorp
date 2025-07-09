@@ -9,7 +9,6 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateSurveyAnswerDto {
-  @IsUUID()
   questionId: string;
 
   @IsOptional()
@@ -22,11 +21,9 @@ export class CreateSurveyAnswerDto {
 }
 
 export class CreateSurveyResponseDto {
-  @IsUUID()
   surveyId: string;
 
   @IsOptional()
-  @IsUUID()
   userId?: string; // para manter anonimato se necessário
 
   @IsArray()
