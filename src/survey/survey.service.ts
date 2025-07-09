@@ -44,7 +44,6 @@ export class SurveyService {
   async findAll() {
     const surveys = await this.prisma.survey.findMany({
       include: { questions: true },
-      where: { active: true },
     });
 
     // Descriptografar o campo text de cada pergunta
