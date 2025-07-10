@@ -26,11 +26,9 @@ export class GenaiService {
       const ciclo = await this.prisma.evaluationCycle.findUnique({
         where: { id: cycleId },
       });
-
       if (!ciclo) {
         throw new NotFoundException('Ciclo de avaliação não encontrado');
       }
-
       const usuario = await this.prisma.user.findUnique({
         where: { id: evaluatedId },
         include: {
@@ -42,31 +40,9 @@ export class GenaiService {
           },
         },
       });
-
       if (!usuario) {
         throw new NotFoundException('Colaborador não encontrado');
       }
-
-      usuario.name = this.crypto.decrypt(usuario.name);
-
-      const resumoExistente = await this.prisma.genaiInsight.findFirst({
-        where: {
-          cycleId: cycleId,
-          evaluatedId: evaluatedId,
-        },
-      });
-
-      if (resumoExistente) {
-        resumoExistente.summary = this.crypto.decrypt(resumoExistente.summary);
-        resumoExistente.discrepancies = this.crypto.decrypt(
-          resumoExistente.discrepancies,
-        );
-        resumoExistente.brutalFacts = this.crypto.decrypt(
-          resumoExistente.brutalFacts,
-        );
-        return resumoExistente;
-      }
-
       const avaliacoes = await this.prisma.evaluation.findMany({
         where: {
           evaluatedId: evaluatedId,
@@ -94,22 +70,27 @@ export class GenaiService {
           },
         },
       });
+      if (!avaliacoes || avaliacoes.length === 0) {
+        throw new NotFoundException(
+          'Não há avaliações concluídas para este colaborador no ciclo especificado',
+        );
+      }
 
       for (const avaliacao of avaliacoes) {
         for (const answer of avaliacao.answers) {
           if (answer.justification) {
-            answer.justification = this.crypto.decrypt(answer.justification);
+            answer.justification = await this.crypto.decrypt(
+              answer.justification,
+            );
           }
         }
       }
-
       // Validar se há dados suficientes para gerar insights
       if (avaliacoes.length === 0) {
         throw new NotFoundException(
           'Não há avaliações concluídas para este colaborador no ciclo especificado',
         );
       }
-
       const autoavaliacoes = avaliacoes.filter((av) => av.type === 'AUTO');
       const avaliacoesPares = avaliacoes.filter((av) => av.type === 'PAR');
       const avaliacoesLider = avaliacoes.filter((av) => av.type === 'LIDER');
@@ -133,10 +114,6 @@ export class GenaiService {
         },
       });
 
-      if (scorePerCycle?.feedback) {
-        scorePerCycle.feedback = this.crypto.decrypt(scorePerCycle.feedback);
-      }
-
       const insights = await this.gerarInsightsComIA(
         usuario,
         avaliacoes,
@@ -156,6 +133,11 @@ export class GenaiService {
           brutalFacts: insights.brutalFacts,
         },
       });
+      // Descriptografar campos antes de retornar para o frontend
+      novoResumo.summary = await this.crypto.decrypt(novoResumo.summary);
+      novoResumo.brutalFacts = await this.crypto.decrypt(
+        novoResumo.brutalFacts,
+      );
 
       return novoResumo;
     } catch (error) {
@@ -163,7 +145,7 @@ export class GenaiService {
         throw error;
       }
       throw new InternalServerErrorException(
-        'Erro ao gerar resumo do colaborador',
+        `Erro ao gerar resumo do colaborador ${error}`,
       );
     }
   }
@@ -256,8 +238,7 @@ export class GenaiService {
         );
 
         // Gerar o resumo usando o método existente
-        const novoResumo = await this.gerarResumoColaborador(cycleId, userId);
-
+        await this.gerarResumoColaborador(cycleId, userId);
         // Buscar novamente após a geração
         resumo = await this.prisma.genaiInsight.findFirst({
           where: {
@@ -291,15 +272,6 @@ export class GenaiService {
             'Não foi possível gerar resumo para este colaborador e ciclo - dados insuficientes',
           );
         }
-      }
-      if (resumo.summary) {
-        resumo.summary = this.crypto.decrypt(resumo.summary);
-      }
-      if (resumo.discrepancies) {
-        resumo.discrepancies = this.crypto.decrypt(resumo.discrepancies);
-      }
-      if (resumo.brutalFacts) {
-        resumo.brutalFacts = this.crypto.decrypt(resumo.brutalFacts);
       }
 
       // Descriptografar campos do usuário (avaliado)
@@ -1531,7 +1503,7 @@ REGRAS CRÍTICAS:
 
   private gerarSummary(dados: any) {
     const { usuario, medias, discrepancias, pontosFortesEFracos } = dados;
-
+    console.log('Gerando resumo contextualizado...' + dados);
     // Resumo contextualizado
     let resumo = `${usuario.nome} é um profissional na posição de ${usuario.posicao}, atuando na equipe ${usuario.equipe}. `;
     resumo += `No último ciclo avaliativo, participou de avaliações que destacam suas competências e áreas de desenvolvimento.`;
