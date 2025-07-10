@@ -940,30 +940,30 @@ async function main() {
         userId: 'user1',
         type: 'PDI',
         title: 'Ser referência em React.js',
-        // description:
-        //   'Tornar-me um especialista em React.js e suas melhores práticas.',
+        description:
+          'Tornar-me um especialista em React.js e suas melhores práticas.',
       },
       {
         id: 'goal2',
         userId: 'user2',
         type: 'PDI',
         title: 'Aprimorar conhecimentos técnicos',
-        // description:
-        //   'Me especializar em tecnologias emergentes e novos avanços.',
+        description:
+          'Me especializar em tecnologias emergentes e novos avanços.',
       },
       {
         id: 'goal3',
         userId: 'user3',
         type: 'OKR',
         title: 'Aumentar a colaboração no time',
-        // description: 'Tornar o ambiente do time mais colaborativo.',
+        description: 'Tornar o ambiente do time mais colaborativo.',
       },
       {
         id: 'goal4',
         userId: 'user4',
         type: 'PDI',
         title: 'Desenvolver habilidades de comunicação',
-        // description: 'Tornar minha comunicação mais eficaz e assertiva.',
+        description: 'Tornar minha comunicação mais eficaz e assertiva.',
       },
     ],
   });
