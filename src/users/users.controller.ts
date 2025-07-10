@@ -95,4 +95,13 @@ export class UsersController {
   findAutoavaliation(@Param('id') id: string) {
     return this.usersService.findAutoavaliationByUserId(id);
   }
+
+  @Get(':id/findUserTracking')
+  @Roles('COLABORADOR', 'LIDER', 'RH', 'COMITE')
+  @ApiOperation({
+    summary: 'Busca a trilha do usuário',
+  })
+  findUserTrack(@Param('id') id: string) {
+    return this.usersService.findUserTrack(id);
+  }
 }

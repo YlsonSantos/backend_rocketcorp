@@ -222,12 +222,13 @@ model MentorshipEvaluation {
 }
 
 model Goal {
-  id         String   @id @default(uuid())
-  userId     String
-  title      String
-  type       GoalType
-  actions    GoalAction[]
-  createdAt  DateTime @default(now())
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  type        GoalType
+  actions     GoalAction[]
+  createdAt   DateTime @default(now())
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

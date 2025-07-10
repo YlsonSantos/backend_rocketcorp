@@ -77,7 +77,6 @@ export class SurveyService {
       include: { questions: true },
     });
 
-    // Descriptografar o campo text de cada pergunta
     return surveys.map((survey) => {
       survey.questions = survey.questions.map((q) =>
         this.crypto.deepDecrypt(q, 'SurveyQuestion'),

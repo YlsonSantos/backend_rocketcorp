@@ -570,4 +570,19 @@ export class UsersService {
       usuarios: decryptedSubordinates,
     };
   }
+
+  async findUserTrack(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        position: { select: { track: true } },
+      },
+    });
+
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    return user;
+  }
 }
