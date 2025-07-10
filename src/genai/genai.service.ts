@@ -1079,9 +1079,9 @@ REGRAS CRÍTICAS:
 `;
   }
 
-  async gerarBrutalFactsGestor(cycleId: string) {
+  async gerarBrutalFactsGestor(cycleId: string, managerId: string) {
     try {
-      console.log(`🔍 Gerando resumo executivo para ciclo: ${cycleId}`);
+      console.log(`🔍 Gerando brutal facts para gestor ${managerId} no ciclo: ${cycleId}`);
 
       // Buscar informações do ciclo
       const ciclo = await this.prisma.evaluationCycle.findUnique({
@@ -1098,9 +1098,14 @@ REGRAS CRÍTICAS:
         throw new NotFoundException(`Ciclo ${cycleId} não encontrado`);
       }
 
-      // Buscar todos os scores do ciclo
+      // Buscar todos os scores do ciclo apenas dos colaboradores liderados pelo gestor
       const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
-        where: { cycleId: cycleId },
+        where: { 
+          cycleId: cycleId,
+          user: {
+            managerId: managerId, // Filtrar apenas colaboradores do gestor logado
+          },
+        },
         include: {
           user: {
             select: {
@@ -1121,9 +1126,14 @@ REGRAS CRÍTICAS:
         },
       });
 
-      // Buscar insights gerados para o ciclo
+      // Buscar insights gerados para o ciclo apenas dos colaboradores do gestor
       const insights = await this.prisma.genaiInsight.findMany({
-        where: { cycleId: cycleId },
+        where: { 
+          cycleId: cycleId,
+          evaluated: {
+            managerId: managerId, // Filtrar apenas colaboradores do gestor logado
+          },
+        },
         include: {
           evaluated: {
             select: {
@@ -1138,9 +1148,14 @@ REGRAS CRÍTICAS:
         },
       });
 
-      // Buscar avaliações do ciclo para análise de cobertura
+      // Buscar avaliações do ciclo para análise de cobertura apenas dos colaboradores do gestor
       const evaluations = await this.prisma.evaluation.findMany({
-        where: { cycleId: cycleId },
+        where: { 
+          cycleId: cycleId,
+          evaluated: {
+            managerId: managerId, // Filtrar apenas colaboradores do gestor logado
+          },
+        },
         select: {
           evaluatedId: true,
           type: true,
@@ -1150,6 +1165,8 @@ REGRAS CRÍTICAS:
 
       // Calcular estatísticas
       const totalColaboradores = scoresPerCycle.length;
+      console.log(`📊 Encontrados ${totalColaboradores} colaboradores liderados pelo gestor ${managerId} no ciclo ${cycleId}`);
+      
       const scoresValidos = scoresPerCycle.filter(
         (s) => s.finalScore && s.finalScore > 0,
       );
@@ -1197,6 +1214,7 @@ REGRAS CRÍTICAS:
         totalColaboradores,
         ciclo.name,
         principaisInsights,
+        true, // Indicar que é para gestor específico
       );
 
       return {
@@ -1345,8 +1363,13 @@ REGRAS CRÍTICAS:
     total: number,
     cycleName: string,
     insights: string[],
+    isGestorEspecifico: boolean = false,
   ): string {
-    let resumo = `Análise executiva do ciclo ${cycleName} com ${total} colaboradores avaliados. `;
+    const prefixo = isGestorEspecifico 
+      ? `Análise executiva do ciclo ${cycleName} com ${total} colaboradores da sua equipe avaliados. `
+      : `Análise executiva do ciclo ${cycleName} com ${total} colaboradores avaliados. `;
+    
+    let resumo = prefixo;
 
     resumo += `A performance geral da equipe apresenta média de ${mediaGeral.toFixed(1)}/5.0, `;
 

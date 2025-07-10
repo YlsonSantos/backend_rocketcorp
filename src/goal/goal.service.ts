@@ -35,12 +35,12 @@ export class GoalService {
       select: {
         id: true,
         title: true,
-        description: true,
+        // description: true,
         type: true,
         actions: {
           select: {
             id: true,
-            description: true,
+            // description: true,
             deadline: true,
             completed: true,
           },
