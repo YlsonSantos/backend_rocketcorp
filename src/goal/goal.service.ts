@@ -5,12 +5,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateGoalActionDto } from './dto/create-goal-action.dto';
 import { UpdateGoalActionDto } from './dto/update-goal-action.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AutomaticNotificationsService } from '../notifications/automatic-notifications.service';
 
 @Injectable()
 export class GoalService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly automaticNotificationsService: AutomaticNotificationsService,
   ) {}
 
   async createGoal(createGoalDto: CreateGoalDto, userId: string) {
@@ -132,6 +134,9 @@ export class GoalService {
   async updateGoalAction(updateGoalActionDto: UpdateGoalActionDto, id: string) {
     const goalActionExists = await this.prisma.goalAction.findUnique({
       where: { id },
+      include: {
+        goal: true,
+      },
     });
 
     if (!goalActionExists) {
@@ -146,6 +151,24 @@ export class GoalService {
         completed: updateGoalActionDto.completed,
       },
     });
+
+    // Verificar se a ação foi marcada como completada
+    if (updateGoalActionDto.completed && !goalActionExists.completed) {
+      // Verificar se todas as ações da meta estão completadas
+      const allActions = await this.prisma.goalAction.findMany({
+        where: { goalId: goalActionExists.goalId },
+      });
+
+      const allCompleted = allActions.every(action => action.completed || action.id === id);
+
+      if (allCompleted) {
+        try {
+          await this.automaticNotificationsService.notifyGoalCompleted(goalActionExists.goalId);
+        } catch (error) {
+          console.error('Erro ao enviar notificação de meta completada:', error);
+        }
+      }
+    }
 
     return goalAction;
   }
