@@ -7,6 +7,7 @@ import {
   UseGuards,
   UsePipes,
   ValidationPipe,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -253,8 +254,12 @@ export class GenaiController {
       },
     },
   })
-  async buscarResumoExecutivoBrutalFacts(@Param('cycleId') cycleId: string) {
-    return await this.genaiService.gerarBrutalFactsGestor(cycleId);
+  async buscarResumoExecutivoBrutalFacts(
+    @Param('cycleId') cycleId: string,
+    @Req() req: any,
+  ) {
+    const managerId = req.user.userId; // ID do gestor logado
+    return await this.genaiService.gerarBrutalFactsGestor(cycleId, managerId);
   }
 
   // ========== PERFIL INDIVIDUAL (Colaborador específico) ==========
