@@ -43,6 +43,13 @@ export class Goal {
   title: string;
 
   @ApiProperty({
+    description: 'Descrição do objetivo',
+    example: 'Estudar e praticar NestJS para desenvolvimento de APIs',
+    required: false,
+  })
+  description?: string;
+
+  @ApiProperty({
     description: 'Tipo do objetivo',
     enum: ['OKR', 'PDI'],
     example: 'OKR',

@@ -103,7 +103,6 @@ export class GenaiService {
         }
       }
 
-
       // Validar se há dados suficientes para gerar insights
       if (avaliacoes.length === 0) {
         throw new NotFoundException(
@@ -1106,75 +1105,6 @@ REGRAS CRÍTICAS:
 ✅ SEMPRE seja específico e acionável
 ✅ SEMPRE mantenha tom profissional e construtivo
 `;
-  }
-
-  async gerarResumoSurvey(surveyId: string) {
-    const survey = await this.prisma.survey.findUnique({
-      where: { id: surveyId },
-      include: {
-        questions: true,
-        responses: {
-          include: {
-            answers: true,
-          },
-        },
-      },
-    });
-
-    if (!survey) {
-      throw new NotFoundException('Survey não encontrada.');
-    }
-
-    // 🔓 Descriptografar apenas SurveyQuestion e SurveyAnswer
-    const decryptedQuestions = survey.questions.map((q) =>
-      this.crypto.deepDecrypt(q, 'SurveyQuestion'),
-    );
-
-    const decryptedResponses = survey.responses.map((response) => ({
-      ...response,
-      answers: response.answers.map((a) =>
-        this.crypto.deepDecrypt(a, 'SurveyAnswer'),
-      ),
-    }));
-
-    // 🔧 Construção do prompt com dados descriptografados
-    const prompt = `
-Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
-
-Título: ${survey.title}
-Descrição: ${survey.description || 'Sem descrição'}
-Número de respostas: ${decryptedResponses.length}
-
-Perguntas e Respostas:
-${decryptedQuestions
-  .map((q, i) => {
-    const respostas = decryptedResponses
-      .flatMap((r) => r.answers)
-      .filter((a) => a.questionId === q.id);
-
-    const respostasFormatadas = respostas
-      .map((a, idx) => {
-        if (q.type === 'NUMBER')
-          return `  - Resposta ${idx + 1}: ${a.answerScore}`;
-        return `  - Resposta ${idx + 1}: ${a.answerText}`;
-      })
-      .join('\n');
-
-    return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
-  })
-  .join('\n')}
-`;
-
-    console.log('Prompt gerado para o Gemini:', prompt);
-
-    const result = await this.model.generateContent([prompt]);
-    const response = await result.response;
-    const resumo = await response.text();
-
-    return {
-      surveyTitle: survey.title,
-      resumo,
-    };
   }
 
   async gerarBrutalFactsGestor(cycleId: string) {
@@ -2301,31 +2231,31 @@ ${decryptedQuestions
 
     // 🔧 Construção do prompt com dados descriptografados
     const prompt = `
-Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
+  Você é um analista de dados. Gere um resumo claro e direto com insights da seguinte pesquisa:
 
-Título: ${survey.title}
-Descrição: ${survey.description || 'Sem descrição'}
-Número de respostas: ${decryptedResponses.length}
+  Título: ${survey.title}
+  Descrição: ${survey.description || 'Sem descrição'}
+  Número de respostas: ${decryptedResponses.length}
 
-Perguntas e Respostas:
-${decryptedQuestions
-  .map((q, i) => {
-    const respostas = decryptedResponses
-      .flatMap((r) => r.answers)
-      .filter((a) => a.questionId === q.id);
+  Perguntas e Respostas:
+  ${decryptedQuestions
+    .map((q, i) => {
+      const respostas = decryptedResponses
+        .flatMap((r) => r.answers)
+        .filter((a) => a.questionId === q.id);
 
-    const respostasFormatadas = respostas
-      .map((a, idx) => {
-        if (q.type === 'NUMBER')
-          return `  - Resposta ${idx + 1}: ${a.answerScore}`;
-        return `  - Resposta ${idx + 1}: ${a.answerText}`;
-      })
-      .join('\n');
+      const respostasFormatadas = respostas
+        .map((a, idx) => {
+          if (q.type === 'NUMBER')
+            return `  - Resposta ${idx + 1}: ${a.answerScore}`;
+          return `  - Resposta ${idx + 1}: ${a.answerText}`;
+        })
+        .join('\n');
 
-    return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
-  })
-  .join('\n')}
-`;
+      return `Pergunta ${i + 1}: ${q.text}\n${respostasFormatadas}\n`;
+    })
+    .join('\n')}
+  `;
 
     console.log('Prompt gerado para o Gemini:', prompt);
 

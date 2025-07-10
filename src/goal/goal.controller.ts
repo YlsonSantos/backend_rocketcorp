@@ -35,7 +35,7 @@ export class GoalController {
   constructor(private readonly goalService: GoalService) {}
 
   @Post()
-  @Roles('COLABORADOR')
+  @Roles('COLABORADOR', 'LIDER')
   @ApiOperation({
     summary: 'Cria um novo objetivo para o usuário autenticado.',
   })
@@ -90,7 +90,7 @@ export class GoalController {
   }
 
   @Post(':id')
-  @Roles('COLABORADOR')
+  @Roles('COLABORADOR', 'LIDER')
   @ApiOperation({ summary: 'Cria uma ação para um objetivo.' })
   @ApiParam({ name: 'id', description: 'ID do goal' })
   @ApiBody({ type: CreateGoalActionDto })
@@ -107,7 +107,7 @@ export class GoalController {
   }
 
   @Patch(':id/actions')
-  @Roles('COLABORADOR')
+  @Roles('COLABORADOR', 'LIDER')
   @ApiOperation({ summary: 'Atualiza uma ação de um objetivo.' })
   @ApiParam({ name: 'id', description: 'ID do goal' })
   @ApiBody({ type: UpdateGoalActionDto })
@@ -126,7 +126,7 @@ export class GoalController {
   }
 
   @Delete(':id/actions')
-  @Roles('COLABORADOR')
+  @Roles('COLABORADOR', 'LIDER')
   @ApiOperation({ summary: 'Remove uma ação de um objetivo.' })
   @ApiParam({ name: 'id', description: 'ID do goal' })
   @ApiResponse({

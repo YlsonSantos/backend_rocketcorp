@@ -12,9 +12,8 @@ export class GoalService {
   async createGoal(createGoalDto: CreateGoalDto, userId: string) {
     const goal = await this.prisma.goal.create({
       data: {
-        title: createGoalDto.title,
-        type: createGoalDto.type,
-        userId: userId,
+        ...createGoalDto,
+        userId,
       },
     });
     return goal;
@@ -36,6 +35,7 @@ export class GoalService {
       select: {
         id: true,
         title: true,
+        description: true,
         type: true,
         actions: {
           select: {
@@ -61,10 +61,7 @@ export class GoalService {
 
     const goal = await this.prisma.goal.update({
       where: { id },
-      data: {
-        title: updateGoalDto.title,
-        type: updateGoalDto.type,
-      },
+      data: updateGoalDto,
     });
 
     return goal;
