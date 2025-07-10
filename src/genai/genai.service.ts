@@ -1835,22 +1835,6 @@ REGRAS CRÍTICAS:
         },
       });
 
-      for (const resumo of resumos) {
-        if (resumo.summary) {
-          resumo.summary = await this.crypto.decrypt(resumo.summary);
-        }
-        if (resumo.evaluated?.name) {
-          resumo.evaluated.name = await this.crypto.decrypt(
-            resumo.evaluated.name,
-          );
-        }
-        if (resumo.evaluated?.email) {
-          resumo.evaluated.email = await this.crypto.decrypt(
-            resumo.evaluated.email,
-          );
-        }
-      }
-
       // Buscar scores para complementar os dados do dashboard
       const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
         where: { cycleId: cycleId },
@@ -1945,7 +1929,7 @@ REGRAS CRÍTICAS:
         );
 
         // Gerar o resumo usando o método existente
-        const novoResumo = await this.gerarResumoColaborador(cycleId, userId);
+        await this.gerarResumoColaborador(cycleId, userId);
 
         // Buscar novamente após a geração
         resumo = await this.prisma.genaiInsight.findFirst({
@@ -1980,21 +1964,6 @@ REGRAS CRÍTICAS:
             'Não foi possível gerar insights para este colaborador e ciclo - dados insuficientes',
           );
         }
-      }
-
-      // Descriptografar campos sensíveis
-      if (resumo.brutalFacts) {
-        resumo.brutalFacts = await this.crypto.decrypt(resumo.brutalFacts);
-      }
-      if (resumo.evaluated?.name) {
-        resumo.evaluated.name = await this.crypto.decrypt(
-          resumo.evaluated.name,
-        );
-      }
-      if (resumo.evaluated?.email) {
-        resumo.evaluated.email = await this.crypto.decrypt(
-          resumo.evaluated.email,
-        );
       }
 
       // Retornar apenas os brutal facts com contexto
@@ -2061,12 +2030,6 @@ REGRAS CRÍTICAS:
 
       // Descriptografar campos dos insights e do usuário
       for (const insight of insights) {
-        if (insight.summary) {
-          insight.summary = await this.crypto.decrypt(insight.summary);
-        }
-        if (insight.brutalFacts) {
-          insight.brutalFacts = await this.crypto.decrypt(insight.brutalFacts);
-        }
         if (insight.evaluated?.name) {
           insight.evaluated.name = await this.crypto.decrypt(
             insight.evaluated.name,
