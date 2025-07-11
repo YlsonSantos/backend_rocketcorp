@@ -1010,20 +1010,75 @@ async function main() {
     },
   });
 
- const criteriosNewData = [
-  { id: 'ncriterio1',  title: 'Sentimento de Dono',            type: 'COMPORTAMENTO', positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio2',  title: 'Resiliência nas adversidades',  type: 'COMPORTAMENTO', positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio3',  title: 'Organização no Trabalho',       type: 'COMPORTAMENTO', positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio4',  title: 'Capacidade de aprender',         type: 'COMPORTAMENTO', positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio5',  title: 'Ser "team player"',              type: 'COMPORTAMENTO', positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio6',  title: 'Entregar com qualidade',         type: 'EXECUCAO',      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio7',  title: 'Atender aos prazos',             type: 'EXECUCAO',      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio8',  title: 'Fazer mais com menos',           type: 'EXECUCAO',      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio9',  title: 'Pensar fora da caixa',           type: 'EXECUCAO',      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'] },
-  { id: 'ncriterio10', title: 'Gente',                          type: 'GESTAO',        positions: ['pos3'] },
-  { id: 'ncriterio11', title: 'Resultados',                     type: 'GESTAO',        positions: ['pos3'] },
-  { id: 'ncriterio12', title: 'Evolução da Rocket Corp',        type: 'GESTAO',        positions: ['pos3'] },
-];
+  const criteriosNewData = [
+    {
+      id: 'ncriterio1',
+      title: 'Sentimento de Dono',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio2',
+      title: 'Resiliência nas adversidades',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio3',
+      title: 'Organização no Trabalho',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio4',
+      title: 'Capacidade de aprender',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio5',
+      title: 'Ser "team player"',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio6',
+      title: 'Entregar com qualidade',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio7',
+      title: 'Atender aos prazos',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio8',
+      title: 'Fazer mais com menos',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio9',
+      title: 'Pensar fora da caixa',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    { id: 'ncriterio10', title: 'Gente', type: 'GESTAO', positions: ['pos3'] },
+    {
+      id: 'ncriterio11',
+      title: 'Resultados',
+      type: 'GESTAO',
+      positions: ['pos3'],
+    },
+    {
+      id: 'ncriterio12',
+      title: 'Evolução da Rocket Corp',
+      type: 'GESTAO',
+      positions: ['pos3'],
+    },
+  ];
 
   for (const item of criteriosNewData) {
     const criterion = await prisma.nextCycleCriterion.create({
@@ -1045,7 +1100,6 @@ async function main() {
       });
     }
   }
-
 }
 
 main()
