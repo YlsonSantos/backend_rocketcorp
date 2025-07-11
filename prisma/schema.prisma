@@ -67,6 +67,7 @@ model Position {
 
   users        User[]
   criteriaAssignments CriteriaAssignment[]
+  nextCycleCriterions NextCycleCriterionPosition[]
 }
 
 model Evaluation {
@@ -134,6 +135,7 @@ model User {
   menteeEvaluations   MentorshipEvaluation[] @relation("MenteeEvaluation")
 
   surveyResponses SurveyResponse[]
+  notifications     Notification[]
 }
 
 model AuditLog {
@@ -172,6 +174,8 @@ model EvaluationCycle {
 
   mentorshipEvaluations MentorshipEvaluation[]
   surveys Survey[]
+  
+  notificationSettings CycleNotificationSetting[]
 }
 
 model ScorePerCycle {
@@ -300,6 +304,80 @@ model SurveyAnswer {
   @@index([questionId])
 }
 
+model NextCycleCriterion {
+  id           String    @id @default(uuid())
+  title        String
+  description  String
+  type         CriterionType
+
+  positions   NextCycleCriterionPosition[]
+}
+
+model NextCycleCriterionPosition {
+  id                   String   @id @default(uuid())
+  nextCycleCriterionId String
+  positionId           String
+
+  nextCycleCriterion   NextCycleCriterion @relation(fields: [nextCycleCriterionId], references: [id])
+  position             Position           @relation(fields: [positionId], references: [id])
+
+  @@unique([nextCycleCriterionId, positionId])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+  metadata    Json?            // Dados adicionais específicos do tipo
+  priority    NotificationPriority @default(MEDIUM)
+  
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+model NotificationTemplate {
+  id          String           @id @default(uuid())
+  type        NotificationType @unique
+  title       String
+  message     String
+  variables   String           // JSON string com campos que podem ser substituídos
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model CycleNotificationSetting {
+  id                    String   @id @default(uuid())
+  cycleId               String
+  notificationType      NotificationType
+  enabled               Boolean  @default(true)
+  reminderDays          Int      @default(3) // Dias antes do prazo para enviar lembretes
+  customMessage         String?  // Mensagem personalizada
+  
+  // Novos campos
+  scheduledTime         String?  // HH:mm
+  frequency             String?  // DAILY, WEEKLY, MONTHLY
+  weekDay               String?  // MONDAY, TUESDAY, etc.
+  userFilters           Json?    // Filtros de usuários
+  priority              NotificationPriority @default(MEDIUM)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  cycle                 EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  
+  @@unique([cycleId, notificationType])
+  @@index([cycleId])
+}
+
 enum GoalType {
   OKR
   PDI
@@ -338,6 +416,30 @@ enum TrackType {
   FINANCEIRO
   COMITE
   RH
+}
+
+enum NotificationType {
+  EVALUATION_DUE
+  EVALUATION_COMPLETED
+  EVALUATION_RECEIVED
+  GOAL_DEADLINE_APPROACHING
+  GOAL_COMPLETED
+  MENTORSHIP_EVALUATION_DUE
+  SURVEY_AVAILABLE
+  SURVEY_REMINDER
+  CYCLE_STARTED
+  CYCLE_ENDING
+  SCORE_AVAILABLE
+  PEER_EVALUATION_REQUESTED
+  MANAGER_APPROVAL_REQUIRED
+  SYSTEM_ANNOUNCEMENT
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 // add this block only if using Prisma 4.0+ and seeding in TypeScript

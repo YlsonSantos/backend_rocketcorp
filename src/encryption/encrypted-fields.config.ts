@@ -8,4 +8,6 @@ export const encryptedFieldsMap = {
   SurveyAnswer: ['answerText'],
   SurveyQuestion: ['text'],
   Survey: ['title', 'description'],
+  Goal: ['title', 'description'],
+  GoalAction: ['description'],
 };

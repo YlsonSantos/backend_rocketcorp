@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { CriterionType, Role } from '@prisma/client';
 import { QuestionType } from '@prisma/client';
 
 const prisma = new PrismaService();
@@ -933,69 +933,173 @@ async function main() {
     }),
   );
 
-  await prisma.goal.createMany({
-    data: [
-      {
-        id: 'goal1',
-        userId: 'user1',
-        type: 'PDI',
-        title: 'Ser referência em React.js',
-        description:
-          'Tornar-me um especialista em React.js e suas melhores práticas.',
-      },
-      {
-        id: 'goal2',
-        userId: 'user2',
-        type: 'PDI',
-        title: 'Aprimorar conhecimentos técnicos',
-        description:
-          'Me especializar em tecnologias emergentes e novos avanços.',
-      },
-      {
-        id: 'goal3',
-        userId: 'user3',
-        type: 'OKR',
-        title: 'Aumentar a colaboração no time',
-        description: 'Tornar o ambiente do time mais colaborativo.',
-      },
-      {
-        id: 'goal4',
-        userId: 'user4',
-        type: 'PDI',
-        title: 'Desenvolver habilidades de comunicação',
-        description: 'Tornar minha comunicação mais eficaz e assertiva.',
-      },
-    ],
+  await prisma.goal.create({
+    data: {
+      id: 'goal1',
+      userId: 'user1',
+      type: 'PDI',
+      title: 'Ser referência em React.js',
+      description:
+        'Tornar-me um especialista em React.js e suas melhores práticas.',
+    },
   });
 
-  await prisma.goalAction.createMany({
-    data: [
-      {
-        id: 'action1',
-        goalId: 'goal1',
-        description: 'Participar de cursos avançados de React.js.',
-        deadline: new Date('2025-07-31'),
-      },
-      {
-        id: 'action2',
-        goalId: 'goal2',
-        description: 'Assistir a webinars sobre novas tecnologias.',
-        deadline: new Date('2025-08-15'),
-      },
-      {
-        id: 'action3',
-        goalId: 'goal3',
-        description: 'Organizar reuniões semanais de feedback.',
-        deadline: new Date('2025-06-30'),
-      },
-      {
-        id: 'action4',
-        goalId: 'goal4',
-        description: 'Ler livros sobre comunicação eficaz.',
-        deadline: new Date('2025-08-01'),
-      },
-    ],
+  await prisma.goal.create({
+    data: {
+      id: 'goal2',
+      userId: 'user2',
+      type: 'PDI',
+      title: 'Aprimorar conhecimentos técnicos',
+      description: 'Me especializar em tecnologias emergentes e novos avanços.',
+    },
   });
+
+  await prisma.goal.create({
+    data: {
+      id: 'goal3',
+      userId: 'user3',
+      type: 'OKR',
+      title: 'Aumentar a colaboração no time',
+      description: 'Tornar o ambiente do time mais colaborativo.',
+    },
+  });
+
+  await prisma.goal.create({
+    data: {
+      id: 'goal4',
+      userId: 'user4',
+      type: 'PDI',
+      title: 'Desenvolver habilidades de comunicação',
+      description: 'Tornar minha comunicação mais eficaz e assertiva.',
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action1',
+      goalId: 'goal1',
+      description: 'Participar de cursos avançados de React.js.',
+      deadline: new Date('2025-07-31'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action2',
+      goalId: 'goal2',
+      description: 'Assistir a webinars sobre novas tecnologias.',
+      deadline: new Date('2025-08-15'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action3',
+      goalId: 'goal3',
+      description: 'Organizar reuniões semanais de feedback.',
+      deadline: new Date('2025-06-30'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action4',
+      goalId: 'goal4',
+      description: 'Ler livros sobre comunicação eficaz.',
+      deadline: new Date('2025-08-01'),
+    },
+  });
+
+  const criteriosNewData = [
+    {
+      id: 'ncriterio1',
+      title: 'Sentimento de Dono',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio2',
+      title: 'Resiliência nas adversidades',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio3',
+      title: 'Organização no Trabalho',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio4',
+      title: 'Capacidade de aprender',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio5',
+      title: 'Ser "team player"',
+      type: 'COMPORTAMENTO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio6',
+      title: 'Entregar com qualidade',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio7',
+      title: 'Atender aos prazos',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio8',
+      title: 'Fazer mais com menos',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    {
+      id: 'ncriterio9',
+      title: 'Pensar fora da caixa',
+      type: 'EXECUCAO',
+      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+    },
+    { id: 'ncriterio10', title: 'Gente', type: 'GESTAO', positions: ['pos3'] },
+    {
+      id: 'ncriterio11',
+      title: 'Resultados',
+      type: 'GESTAO',
+      positions: ['pos3'],
+    },
+    {
+      id: 'ncriterio12',
+      title: 'Evolução da Rocket Corp',
+      type: 'GESTAO',
+      positions: ['pos3'],
+    },
+  ];
+
+  for (const item of criteriosNewData) {
+    const criterion = await prisma.nextCycleCriterion.create({
+      data: {
+        id: item.id,
+        title: item.title,
+        description: item.title,
+        type: item.type as CriterionType,
+      },
+    });
+
+    // cria os vínculos de cargo
+    for (const positionId of item.positions) {
+      await prisma.nextCycleCriterionPosition.create({
+        data: {
+          nextCycleCriterionId: criterion.id,
+          positionId: positionId,
+        },
+      });
+    }
+  }
 }
 
 main()

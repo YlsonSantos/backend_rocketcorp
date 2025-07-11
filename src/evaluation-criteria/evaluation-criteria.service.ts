@@ -1,51 +1,74 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  CreateEvaluationCriterionDto,
-  UpdateEvaluationCriterionBulkDto,
-} from './dto/create-evaluation-criterion.dto';
-import { UpdateEvaluationCriterionDto } from './dto/update-evaluation-criterion.dto';
+import { CreateNextCycleCriterionDto } from './dto/create-evaluation-criterion.dto';
 import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
-import { EvaluationCriterion, CriteriaAssignment } from '@prisma/client';
-import { UpsertEvaluationCriteriaDto } from './dto/upsert-evaluation-criteria.dto';
+import { CriterionType, NextCycleCriterion } from '@prisma/client';
 
 @Injectable()
 export class EvaluationCriteriaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    createDto: CreateEvaluationCriterionDto,
-  ): Promise<EvaluationCriterion> {
-    const { assignments, positionId, isRequired, ...criterionData } = createDto;
+  //helpers
+  private async linkPositions(criterionId: string, positionIds: string[]) {
+    for (const positionId of positionIds) {
+      await this.prisma.nextCycleCriterionPosition.create({
+        data: {
+          nextCycleCriterionId: criterionId,
+          positionId,
+        },
+      });
+    }
+  }
 
-    const criterion = await this.prisma.evaluationCriterion.create({
+  private async overwritePositions(
+    criterionId: string,
+    newPositionIds: string[],
+  ) {
+    if (!newPositionIds.length) return;
+
+    const firstPosition = await this.prisma.position.findUnique({
+      where: { id: newPositionIds[0] },
+      select: { track: true },
+    });
+
+    if (!firstPosition || !firstPosition.track) {
+      throw new Error('Track da posição não encontrada');
+    }
+
+    const track = firstPosition.track;
+
+    const allPositionsInTrack = await this.prisma.position.findMany({
+      where: { track },
+      select: { id: true },
+    });
+
+    const positionIdsInTrack = allPositionsInTrack.map(p => p.id);
+
+    await this.prisma.nextCycleCriterionPosition.deleteMany({
+      where: {
+        nextCycleCriterionId: criterionId,
+        positionId: { in: positionIdsInTrack },
+      },
+    });
+
+    await this.linkPositions(criterionId, newPositionIds);
+  }
+  async create(
+    createDto: CreateNextCycleCriterionDto, // ← substitui positionId e assignments
+  ): Promise<NextCycleCriterion> {
+    const { positions, ...criterionData } = createDto;
+
+    // Cria o critério rascunho
+    const criterion = await this.prisma.nextCycleCriterion.create({
       data: criterionData,
     });
 
-    // Create assignment if positionId is provided
-    if (positionId) {
-      await this.createAssignment(criterion.id, {
-        positionId,
-        isRequired: isRequired || false,
-      });
-    }
-
-    // Create assignments if provided
-    if (assignments && assignments.length > 0) {
-      await this.createAssignments(criterion.id, assignments);
-    }
+    await this.linkPositions(criterion.id, positions);
 
     return criterion;
   }
 
-  async findAll(
-    query: QueryEvaluationCriteriaDto = {},
-  ): Promise<EvaluationCriterion[]> {
+  async findAll(query: QueryEvaluationCriteriaDto = {}): Promise<any[]> {
     const { track, positionId, type } = query;
 
     const where: any = {};
@@ -54,39 +77,26 @@ export class EvaluationCriteriaService {
       where.type = type;
     }
 
-    if (track || positionId) {
-      where.assignments = {
+    if (positionId || track) {
+      where.positions = {
         some: {},
       };
 
       if (positionId) {
-        where.assignments.some.positionId = positionId;
+        where.positions.some.positionId = positionId;
       }
 
       if (track) {
-        where.assignments.some.position = {
+        where.positions.some.position = {
           track,
         };
       }
     }
 
-    return this.prisma.evaluationCriterion.findMany({
+    const criterios = await this.prisma.nextCycleCriterion.findMany({
       where,
       include: {
-        assignments: {
-          include: {
-            position: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findOne(id: string): Promise<EvaluationCriterion> {
-    const criterion = await this.prisma.evaluationCriterion.findUnique({
-      where: { id },
-      include: {
-        assignments: {
+        positions: {
           include: {
             position: true,
           },
@@ -94,362 +104,130 @@ export class EvaluationCriteriaService {
       },
     });
 
-    if (!criterion) {
-      throw new NotFoundException('Critério de avaliação não encontrado');
-    }
+    const criteriosExpandido: any[] = [];
 
-    return criterion;
-  }
+    for (const criterio of criterios) {
+      // Agrupa as posições por track
+      const posicoesPorTrack: Record<string, typeof criterio.positions> = {};
 
-  async findByPosition(positionId: string): Promise<EvaluationCriterion[]> {
-    return this.prisma.evaluationCriterion.findMany({
-      where: {
-        assignments: {
-          some: {
-            positionId,
-          },
-        },
-      },
-      include: {
-        assignments: {
-          where: {
-            positionId,
-          },
-          include: {
-            position: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findByTrack(track: string): Promise<EvaluationCriterion[]> {
-    return this.prisma.evaluationCriterion.findMany({
-      where: {
-        assignments: {
-          some: {
-            position: {
-              track: track as any,
-            },
-          },
-        },
-      },
-      include: {
-        assignments: {
-          include: {
-            position: true,
-          },
-        },
-      },
-    });
-  }
-
-  async update(
-    id: string,
-    updateDto: UpdateEvaluationCriterionDto,
-  ): Promise<EvaluationCriterion> {
-    const { assignments, ...criterionData } = updateDto;
-
-    // Check if criterion exists
-    const existingCriterion = await this.prisma.evaluationCriterion.findUnique({
-      where: { id },
-    });
-
-    if (!existingCriterion) {
-      throw new NotFoundException('Critério de avaliação não encontrado');
-    }
-
-    // Update criterion
-    await this.prisma.evaluationCriterion.update({
-      where: { id },
-      data: criterionData,
-    });
-
-    // Update assignments if provided
-    if (assignments !== undefined) {
-      // Delete existing assignments
-      await this.prisma.criteriaAssignment.deleteMany({
-        where: { criterionId: id },
-      });
-
-      // Create new assignments
-      if (assignments.length > 0) {
-        await this.createAssignments(id, assignments);
-      }
-    }
-
-    return this.findOne(id);
-  }
-
-  async remove(id: string): Promise<void> {
-    try {
-      // Check if criterion exists
-      const criterion = await this.prisma.evaluationCriterion.findUnique({
-        where: { id },
-        include: {
-          answers: true,
-        },
-      });
-
-      if (!criterion) {
-        throw new NotFoundException('Critério de avaliação não encontrado');
+      for (const pos of criterio.positions) {
+        const track = pos.position.track.trim().toUpperCase();
+        if (!posicoesPorTrack[track]) posicoesPorTrack[track] = [];
+        posicoesPorTrack[track].push(pos);
       }
 
-      // Check if criterion has associated answers
-      if (criterion.answers.length > 0) {
-        throw new ConflictException(
-          'Não é possível deletar um critério que possui respostas de avaliação associadas',
-        );
-      }
-
-      // Use transaction to ensure data consistency
-      await this.prisma.$transaction(async (prisma) => {
-        // Delete assignments first
-        await prisma.criteriaAssignment.deleteMany({
-          where: { criterionId: id },
-        });
-
-        // Delete criterion
-        await prisma.evaluationCriterion.delete({
-          where: { id },
-        });
-      });
-    } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof ConflictException
-      ) {
-        throw error;
-      }
-      throw new BadRequestException(
-        `Erro ao deletar critério: ${error.message}`,
-      );
-    }
-  }
-
-  async createAssignment(
-    criterionId: string,
-    assignmentData: {
-      positionId: string;
-      isRequired?: boolean;
-    },
-  ): Promise<CriteriaAssignment> {
-    // Check if criterion exists
-    const criterion = await this.prisma.evaluationCriterion.findUnique({
-      where: { id: criterionId },
-    });
-
-    if (!criterion) {
-      throw new NotFoundException('Critério de avaliação não encontrado');
-    }
-
-    // Check if assignment already exists
-    const existingAssignment = await this.prisma.criteriaAssignment.findFirst({
-      where: {
-        criterionId,
-        positionId: assignmentData.positionId,
-      },
-    });
-
-    if (existingAssignment) {
-      // If assignment exists, update it if isRequired changed
-      if (existingAssignment.isRequired !== assignmentData.isRequired) {
-        return this.prisma.criteriaAssignment.update({
-          where: { id: existingAssignment.id },
-          data: {
-            isRequired: assignmentData.isRequired || false,
-          },
-          include: {
-            position: true,
-          },
+      // Para cada trilha, cria uma entrada separada com assignments filtrados
+      for (const track in posicoesPorTrack) {
+        criteriosExpandido.push({
+          id: criterio.id,
+          title: criterio.title,
+          description: criterio.description,
+          type: criterio.type,
+          assignments: posicoesPorTrack[track],
         });
       }
-      // Return existing assignment if no changes needed
-      return existingAssignment;
     }
 
-    return this.prisma.criteriaAssignment.create({
-      data: {
-        criterionId,
-        positionId: assignmentData.positionId,
-        isRequired: assignmentData.isRequired || false,
-      },
-      include: {
-        position: true,
-      },
-    });
+    return criteriosExpandido;
   }
 
-  async updateAssignment(
-    assignmentId: string,
-    updateData: {
-      isRequired?: boolean;
-    },
-  ): Promise<CriteriaAssignment> {
-    const assignment = await this.prisma.criteriaAssignment.findUnique({
-      where: { id: assignmentId },
-    });
-
-    if (!assignment) {
-      throw new NotFoundException('Atribuição não encontrada');
-    }
-
-    return this.prisma.criteriaAssignment.update({
-      where: { id: assignmentId },
-      data: updateData,
-      include: {
-        position: true,
-      },
-    });
-  }
-
-  async removeAssignment(assignmentId: string): Promise<void> {
-    const assignment = await this.prisma.criteriaAssignment.findUnique({
-      where: { id: assignmentId },
-    });
-
-    if (!assignment) {
-      throw new NotFoundException('Atribuição não encontrada');
-    }
-
-    await this.prisma.criteriaAssignment.delete({
-      where: { id: assignmentId },
-    });
-  }
-
-  async createBulk(
-    createDtos: CreateEvaluationCriterionDto[],
-  ): Promise<EvaluationCriterion[]> {
-    const results: EvaluationCriterion[] = [];
-
-    for (const createDto of createDtos) {
-      const criterion = await this.create(createDto);
-      results.push(criterion);
-    }
-
-    return results;
-  }
-
-  async updateBulk(
-    updateDtos: UpdateEvaluationCriterionBulkDto[],
-  ): Promise<EvaluationCriterion[]> {
-    const results: EvaluationCriterion[] = [];
-
-    for (const updateDto of updateDtos) {
-      const { id, ...criterionData } = updateDto;
-      const criterion = await this.update(id, criterionData as any);
-      results.push(criterion);
-    }
-
-    return results;
-  }
-
-  private async createAssignments(
-    criterionId: string,
-    assignments: Array<{
-      positionId: string;
-      isRequired?: boolean;
-    }>,
-  ): Promise<void> {
-    for (const assignment of assignments) {
-      await this.createAssignment(criterionId, assignment);
-    }
-  }
-
-  async upsertCriteria(upsertDto: UpsertEvaluationCriteriaDto) {
+  async upsertCriteria(upsertDto: {
+    create?: CreateNextCycleCriterionDto[];
+    update?: (CreateNextCycleCriterionDto & { id: string })[];
+  }) {
     const { create, update } = upsertDto;
 
-    const results: {
-      created: any[];
-      updated: any[];
-      unchanged: any[];
-      errors: Array<{
-        type: string;
-        id?: string;
-        data?: any;
-        error: string;
-      }>;
-    } = {
-      created: [],
-      updated: [],
-      unchanged: [],
-      errors: [],
+    const summary = { created: 0, updated: 0, unchanged: 0, errors: 0 };
+    const details = {
+      created: [] as any[],
+      updated: [] as Array<{
+        id: string;
+        title: string;
+        description: string;
+        type: CriterionType;
+        positions: string[];
+      }>,
+      unchanged: [] as any[],
+      errors: [] as any[],
     };
 
-    try {
-      // Process updates first
-      if (update && update.length > 0) {
-        for (const updateDto of update) {
-          try {
-            const { id, ...updateData } = updateDto;
+    if (update?.length) {
+      for (const dto of update) {
+        try {
+          const { id, positions, ...data } = dto;
 
-            // Check if criterion exists and get current data
-            const existingCriterion =
-              await this.prisma.evaluationCriterion.findUnique({
-                where: { id },
-              });
+          const existing = await this.prisma.nextCycleCriterion.findUnique({
+            where: { id },
+          });
+          if (!existing) {
+            details.errors.push({ id, error: 'Critério não encontrado' });
+            summary.errors++;
+            continue;
+          }
 
-            if (!existingCriterion) {
-              results.errors.push({
-                type: 'update',
-                id: updateDto.id,
-                error: 'Critério não encontrado',
-              });
-              continue;
-            }
+          const hasChanges =
+            existing.title !== data.title ||
+            existing.description !== data.description ||
+            existing.type !== data.type;
 
-            // Check if there are actual changes
-            const hasChanges =
-              existingCriterion.title !== updateData.title ||
-              existingCriterion.description !== updateData.description ||
-              existingCriterion.type !== updateData.type;
-
-            if (hasChanges) {
-              const updated = await this.update(id, updateData);
-              results.updated.push(updated);
-            } else {
-              results.unchanged.push(existingCriterion);
-            }
-          } catch (error) {
-            results.errors.push({
-              type: 'update',
-              id: updateDto.id,
-              error: error.message,
+          if (hasChanges) {
+            await this.prisma.nextCycleCriterion.update({
+              where: { id },
+              data,
             });
           }
+
+          // Sempre sincroniza posições
+          await this.overwritePositions(id, positions);
+
+          details.updated.push({ id, ...data, positions });
+          summary.updated++;
+        } catch (e) {
+          details.errors.push({ id: dto.id, error: e.message });
+          summary.errors++;
         }
       }
-
-      // Process creates
-      if (create && create.length > 0) {
-        for (const createDto of create) {
-          try {
-            const created = await this.create(createDto);
-            results.created.push(created);
-          } catch (error) {
-            results.errors.push({
-              type: 'create',
-              data: createDto,
-              error: error.message,
-            });
-          }
-        }
-      }
-
-      return {
-        message: 'Upsert operation completed',
-        summary: {
-          created: results.created.length,
-          updated: results.updated.length,
-          unchanged: results.unchanged.length,
-          errors: results.errors.length,
-        },
-        details: results,
-      };
-    } catch (error) {
-      throw new BadRequestException(
-        `Upsert operation failed: ${error.message}`,
-      );
     }
+
+    if (create?.length) {
+      for (const dto of create) {
+        try {
+          const criterion = await this.create(dto);
+          details.created.push(criterion);
+          summary.created++;
+        } catch (e) {
+          details.errors.push({ data: dto, error: e.message });
+          summary.errors++;
+        }
+      }
+    }
+
+    return { message: 'Upsert concluído', summary, details };
+  }
+
+  async removeAssignmentsByTrack(
+    criterionId: string,
+    positionId: string,
+  ): Promise<void> {
+    // 1️⃣ Busca o `track` da posição atual
+    const position = await this.prisma.position.findUnique({
+      where: { id: positionId },
+      select: { track: true },
+    });
+
+    if (!position || !position.track) {
+      throw new Error('Posição ou track não encontrada');
+    }
+
+    const track = position.track;
+
+    await this.prisma.nextCycleCriterionPosition.deleteMany({
+      where: {
+        nextCycleCriterionId: criterionId,
+        position: {
+          track: track,
+        },
+      },
+    });
   }
 }

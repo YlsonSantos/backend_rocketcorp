@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { GenaiController } from './genai.controller';
 import { GenaiService } from './genai.service';
 import { PrismaModule } from '../../prisma/prisma.module';
-import { CryptoModule } from 'src/crypto/crypto.module';
+import { CryptoModule } from '../crypto/crypto.module';
 
 @Module({
   imports: [PrismaModule, CryptoModule],

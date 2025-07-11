@@ -5,7 +5,6 @@ import {
   Body,
   Delete,
   Param,
-  ParseUUIDPipe,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -23,13 +22,13 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { EvaluationCriteriaService } from './evaluation-criteria.service';
-import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
 import { EvaluationCriterion } from './entities/evaluation-criterion.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { EvaluationCriterion as PrismaEvaluationCriterion } from '@prisma/client';
-import { UpsertEvaluationCriteriaDto } from './dto/upsert-evaluation-criteria.dto';
+import { CreateNextCycleCriterionDto } from './dto/create-evaluation-criterion.dto';
+import { QueryEvaluationCriteriaDto } from './dto/query-evaluation-criteria.dto';
 
 @ApiTags('critérios de avaliação')
 @Controller('criterios-avaliacao')
@@ -112,7 +111,11 @@ export class EvaluationCriteriaController {
   })
   @HttpCode(HttpStatus.CREATED)
   async upsertCriteria(
-    @Body() upsertDto: UpsertEvaluationCriteriaDto,
+    @Body()
+    upsertDto: {
+      create?: CreateNextCycleCriterionDto[];
+      update?: (CreateNextCycleCriterionDto & { id: string })[];
+    },
     @Req() req: any,
   ) {
     console.log('User object in upsert:', req.user);
@@ -150,10 +153,11 @@ export class EvaluationCriteriaController {
     return await this.evaluationCriteriaService.findAll(query);
   }
 
-  @Delete(':id')
+  @Delete(':id/pos/:posid')
   @Roles('RH')
   @ApiOperation({ summary: 'Deletar critério por ID' })
   @ApiParam({ name: 'id', description: 'ID do critério', type: 'string' })
+  @ApiParam({ name: 'posid', description: 'ID da posição', type: 'string' })
   @ApiResponse({ status: 204, description: 'Critério deletado com sucesso' })
   @ApiResponse({
     status: 400,
@@ -171,9 +175,12 @@ export class EvaluationCriteriaController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(
-    @Param('id', new ParseUUIDPipe({ version: '4', errorHttpStatusCode: 400 }))
-    id: string,
+    @Param('id') id: string,
+    @Param('posid') posId: string,
   ): Promise<void> {
-    return await this.evaluationCriteriaService.remove(id);
+    return await this.evaluationCriteriaService.removeAssignmentsByTrack(
+      id,
+      posId,
+    );
   }
 }
