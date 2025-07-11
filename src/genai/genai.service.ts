@@ -339,6 +339,23 @@ export class GenaiService {
         resumo.evaluated.email = this.crypto.decrypt(resumo.evaluated.email);
       }
 
+      // Descriptografar summary e brutalFacts para garantir que sejam retornados descriptografados
+      if (resumo.summary) {
+        try {
+          resumo.summary = this.crypto.decrypt(resumo.summary);
+        } catch (decryptError) {
+          console.log('Summary já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        }
+      }
+      
+      if (resumo.brutalFacts) {
+        try {
+          resumo.brutalFacts = this.crypto.decrypt(resumo.brutalFacts);
+        } catch (decryptError) {
+          console.log('BrutalFacts já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        }
+      }
+
       return resumo;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -2078,15 +2095,37 @@ REGRAS CRÍTICAS:
         }
       }
 
+      // 🔓 Descriptografar campos antes de retornar para o frontend
+      let decryptedEvaluatedName = resumo.evaluated.name;
+      let decryptedBrutalFacts = resumo.brutalFacts;
+      
+      // Descriptografar o nome do avaliado com tratamento de erro
+      try {
+        decryptedEvaluatedName = await this.crypto.decrypt(resumo.evaluated.name);
+      } catch (decryptError) {
+        console.log('Nome do avaliado já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        // Usar o valor original se a descriptografia falhar
+        decryptedEvaluatedName = resumo.evaluated.name;
+      }
+      
+      // Descriptografar brutal facts com tratamento de erro
+      try {
+        decryptedBrutalFacts = await this.crypto.decrypt(resumo.brutalFacts);
+      } catch (decryptError) {
+        console.log('BrutalFacts já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        // Usar o valor original se a descriptografia falhar
+        decryptedBrutalFacts = resumo.brutalFacts;
+      }
+
       // Retornar apenas os brutal facts com contexto
       return {
         id: resumo.id,
         evaluatedId: resumo.evaluatedId,
-        evaluatedName: resumo.evaluated.name,
+        evaluatedName: decryptedEvaluatedName,
         evaluatedPosition: resumo.evaluated.position.name,
         cycleId: resumo.cycleId,
         cycleName: resumo.cycle.name,
-        brutalFacts: resumo.brutalFacts,
+        brutalFacts: decryptedBrutalFacts,
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
