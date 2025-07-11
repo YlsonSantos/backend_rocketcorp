@@ -1,4 +1,4 @@
-import { IsOptional, IsEnum, IsUUID } from 'class-validator';
+import { IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CriterionType, TrackType } from '@prisma/client';
 
