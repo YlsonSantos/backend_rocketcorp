@@ -4,12 +4,16 @@ import { CreateSurveyDto } from './dto/create-survey.dto';
 import { CreateSurveyResponseDto } from './dto/create-survey-response.dto';
 import { UpdateSurveyDto } from './dto/update-survey.dto';
 import { CryptoService } from '../crypto/crypto.service';
+import { AutomaticNotificationsService } from '../notifications/automatic-notifications.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SurveyService {
   constructor(
     private prisma: PrismaService,
     private readonly crypto: CryptoService,
+    private readonly automaticNotificationsService: AutomaticNotificationsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createSurvey(data: CreateSurveyDto) {
@@ -31,8 +35,35 @@ export class SurveyService {
       },
       include: {
         questions: true,
+        cycle: true,
       },
     });
+
+    // Enviar notificações automáticas se a pesquisa estiver ativa
+    if (createdSurvey.active) {
+      try {
+        // Buscar usuários que devem responder
+        const users = await this.prisma.user.findMany({
+          where: { role: { not: 'RH' } },
+        });
+
+        for (const user of users) {
+          await this.notificationsService.createNotification({
+            userId: user.id,
+            type: 'SURVEY_AVAILABLE',
+            title: 'Nova Pesquisa Disponível',
+            message: `Uma nova pesquisa "${createdSurvey.title}" está disponível para o ciclo "${createdSurvey.cycle.name}".`,
+            priority: 'MEDIUM',
+            metadata: {
+              surveyId: createdSurvey.id,
+              cycleId: createdSurvey.cycle.id,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao enviar notificações automáticas:', error);
+      }
+    }
 
     return {
       message: `Survey '${createdSurvey.title}' criada com sucesso.`,

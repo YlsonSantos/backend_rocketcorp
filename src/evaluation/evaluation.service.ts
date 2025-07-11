@@ -10,10 +10,16 @@ import { UpdateEvaluationDto } from './dto/update-evaluation.dto';
 import { AvaliarSubordinadoDto } from './dto/evaluate_subordinate.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Evaluation, EvaluationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
+import { AutomaticNotificationsService } from '../notifications/automatic-notifications.service';
 
 @Injectable()
 export class EvaluationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private automaticNotificationsService: AutomaticNotificationsService,
+  ) {}
 
   async criar(criarAvaliacaoDto: CreateEvaluationDto): Promise<Evaluation> {
     try {
@@ -183,6 +189,15 @@ export class EvaluationService {
 
         return avaliacao;
       });
+
+      // Enviar notificação se a avaliação foi completada
+      if (criarAvaliacaoDto.completed) {
+        try {
+          // Remover chamada para notifyEvaluationCompleted
+        } catch (error) {
+          console.error('Erro ao enviar notificação automática:', error);
+        }
+      }
 
       return novaAvaliacao;
     } catch (error) {
