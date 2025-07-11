@@ -2226,4 +2226,191 @@ REGRAS CRÍTICAS:
       resumo,
     };
   }
+
+  async analisarEvolucaoMediaEquipe(cycleId: string, managerId: string) {
+    try {
+      console.log(`🔍 Analisando evolução da média da equipe para gestor ${managerId} até o ciclo: ${cycleId}`);
+
+      // Buscar informações do ciclo atual
+      const cicloAtual = await this.prisma.evaluationCycle.findUnique({
+        where: { id: cycleId },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+        },
+      });
+
+      if (!cicloAtual) {
+        throw new NotFoundException(`Ciclo ${cycleId} não encontrado`);
+      }
+
+      // Buscar todos os ciclos até o atual (ordenados por data)
+      const todosCiclos = await this.prisma.evaluationCycle.findMany({
+        where: {
+          endDate: {
+            lte: cicloAtual.endDate,
+          },
+        },
+        orderBy: {
+          startDate: 'asc',
+        },
+        select: {
+          id: true,
+          name: true,
+          startDate: true,
+          endDate: true,
+        },
+      });
+
+      console.log(`📊 Encontrados ${todosCiclos.length} ciclos para análise`);
+
+      // Calcular média da equipe para cada ciclo
+      const evolucaoMedias = [];
+
+      for (const ciclo of todosCiclos) {
+        // Buscar scores da equipe do gestor neste ciclo
+        const scoresEquipe = await this.prisma.scorePerCycle.findMany({
+          where: {
+            cycleId: ciclo.id,
+            user: {
+              managerId: managerId,
+            },
+          },
+          select: {
+            finalScore: true,
+            userId: true,
+          },
+        });
+
+        // Calcular média apenas com scores válidos
+        const scoresValidos = scoresEquipe.filter(s => s.finalScore && s.finalScore > 0);
+        const mediaEquipe = scoresValidos.length > 0 
+          ? scoresValidos.reduce((sum, s) => sum + (s.finalScore || 0), 0) / scoresValidos.length
+          : null;
+
+        evolucaoMedias.push({
+          cycleId: ciclo.id,
+          cycleName: ciclo.name,
+          startDate: ciclo.startDate,
+          endDate: ciclo.endDate,
+          totalColaboradores: scoresEquipe.length,
+          colaboradoresAvaliados: scoresValidos.length,
+          mediaEquipe: mediaEquipe ? Math.round(mediaEquipe * 100) / 100 : null,
+        });
+      }
+
+      // Filtrar apenas ciclos com dados válidos
+      const ciclosComDados = evolucaoMedias.filter(c => c.mediaEquipe !== null);
+      
+      console.log(`📈 ${ciclosComDados.length} ciclos com dados válidos encontrados`);
+
+      // Gerar análise da evolução
+      const analiseEvolucao = this.gerarAnaliseEvolucaoEquipe(ciclosComDados, cicloAtual.name);
+
+      return {
+        gestorId: managerId,
+        cicloAtualId: cycleId,
+        cicloAtualName: cicloAtual.name,
+        totalCiclosAnalisados: ciclosComDados.length,
+        evolucaoMedias: ciclosComDados,
+        analiseEvolucao,
+      };
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('❌ Erro ao analisar evolução da média da equipe:', error);
+      throw new BadRequestException('Erro ao analisar evolução da média da equipe');
+    }
+  }
+
+  private gerarAnaliseEvolucaoEquipe(ciclosComDados: any[], cicloAtualName: string): string {
+    if (ciclosComDados.length === 0) {
+      return `Não foram encontrados dados suficientes para analisar a evolução da média da sua equipe até o ciclo ${cicloAtualName}. Isso pode indicar que este é o primeiro ciclo com avaliações da equipe ou que ainda não há dados consolidados.`;
+    }
+
+    if (ciclosComDados.length === 1) {
+      const cicloUnico = ciclosComDados[0];
+      return `Este é o primeiro ciclo com dados consolidados da sua equipe (${cicloUnico.cycleName}). A média atual da equipe é ${cicloUnico.mediaEquipe}/5.0 com ${cicloUnico.colaboradoresAvaliados} colaboradores avaliados de ${cicloUnico.totalColaboradores} totais. Este será o baseline para acompanhar a evolução nos próximos ciclos.`;
+    }
+
+    // Análise de múltiplos ciclos
+    const primeirosCiclo = ciclosComDados[0];
+    const ultimoCiclo = ciclosComDados[ciclosComDados.length - 1];
+    const mediaInicial = primeirosCiclo.mediaEquipe;
+    const mediaAtual = ultimoCiclo.mediaEquipe;
+    const crescimentoTotal = mediaAtual - mediaInicial;
+    const crescimentoPercentual = Math.round((crescimentoTotal / mediaInicial) * 100 * 100) / 100;
+
+    // Analisar tendência
+    let tendencia = '';
+    let analiseDetalhada = '';
+
+    if (Math.abs(crescimentoTotal) < 0.1) {
+      tendencia = 'estável';
+      analiseDetalhada = `A média da equipe manteve-se estável ao longo dos ${ciclosComDados.length} ciclos analisados, variando apenas ${Math.abs(crescimentoTotal).toFixed(2)} pontos.`;
+    } else if (crescimentoTotal > 0) {
+      tendencia = 'crescente';
+      analiseDetalhada = `A média da equipe apresentou uma evolução positiva de ${crescimentoTotal.toFixed(2)} pontos (${crescimentoPercentual}%) ao longo dos ${ciclosComDados.length} ciclos.`;
+    } else {
+      tendencia = 'decrescente';
+      analiseDetalhada = `A média da equipe apresentou uma redução de ${Math.abs(crescimentoTotal).toFixed(2)} pontos (${Math.abs(crescimentoPercentual)}%) ao longo dos ${ciclosComDados.length} ciclos.`;
+    }
+
+    // Analisar padrão de evolução ciclo a ciclo
+    const variacoesCiclos = [];
+    for (let i = 1; i < ciclosComDados.length; i++) {
+      const anterior = ciclosComDados[i - 1];
+      const atual = ciclosComDados[i];
+      const variacao = atual.mediaEquipe - anterior.mediaEquipe;
+      variacoesCiclos.push({
+        deCiclo: anterior.cycleName,
+        paraCiclo: atual.cycleName,
+        variacao: Math.round(variacao * 100) / 100,
+      });
+    }
+
+    // Identificar maior crescimento e maior queda
+    const maiorCrescimento = variacoesCiclos.reduce((max, atual) => 
+      atual.variacao > max.variacao ? atual : max, variacoesCiclos[0]);
+    const maiorQueda = variacoesCiclos.reduce((min, atual) => 
+      atual.variacao < min.variacao ? atual : min, variacoesCiclos[0]);
+
+    let pontosMarcantes = '';
+    if (maiorCrescimento.variacao > 0.2) {
+      pontosMarcantes += ` O maior avanço ocorreu entre ${maiorCrescimento.deCiclo} e ${maiorCrescimento.paraCiclo} (+${maiorCrescimento.variacao} pontos).`;
+    }
+    if (maiorQueda.variacao < -0.2) {
+      pontosMarcantes += ` A maior queda foi observada entre ${maiorQueda.deCiclo} e ${maiorQueda.paraCiclo} (${maiorQueda.variacao} pontos).`;
+    }
+
+    // Classificar performance atual
+    let classificacaoAtual = '';
+    if (mediaAtual >= 4.5) {
+      classificacaoAtual = 'excelente (4.5+)';
+    } else if (mediaAtual >= 4.0) {
+      classificacaoAtual = 'muito boa (4.0-4.5)';
+    } else if (mediaAtual >= 3.5) {
+      classificacaoAtual = 'boa (3.5-4.0)';
+    } else if (mediaAtual >= 3.0) {
+      classificacaoAtual = 'satisfatória (3.0-3.5)';
+    } else {
+      classificacaoAtual = 'abaixo do esperado (<3.0)';
+    }
+
+    // Gerar recomendações baseadas na tendência
+    let recomendacoes = '';
+    if (tendencia === 'crescente') {
+      recomendacoes = ' Continue investindo nas práticas que têm gerado essa evolução positiva e considere compartilhar as melhores práticas com outras equipes.';
+    } else if (tendencia === 'decrescente') {
+      recomendacoes = ' É importante investigar os fatores que contribuíram para essa queda e implementar ações corretivas focadas no desenvolvimento da equipe.';
+    } else {
+      recomendacoes = ' A estabilidade indica consistência, mas avalie se há potencial para novos avanços através de iniciativas de desenvolvimento mais direcionadas.';
+    }
+
+    return `Análise da evolução da média da sua equipe ao longo de ${ciclosComDados.length} ciclos (${primeirosCiclo.cycleName} até ${ultimoCiclo.cycleName}): ${analiseDetalhada} A performance atual é classificada como ${classificacaoAtual}, evoluindo de ${mediaInicial}/5.0 para ${mediaAtual}/5.0.${pontosMarcantes}${recomendacoes} No ciclo atual (${cicloAtualName}), ${ultimoCiclo.colaboradoresAvaliados} de ${ultimoCiclo.totalColaboradores} colaboradores foram avaliados.`;
+  }
 }
