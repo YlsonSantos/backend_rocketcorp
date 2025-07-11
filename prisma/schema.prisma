@@ -67,6 +67,7 @@ model Position {
 
   users        User[]
   criteriaAssignments CriteriaAssignment[]
+  nextCycleCriterions NextCycleCriterionPosition[]
 }
 
 model Evaluation {
@@ -301,6 +302,26 @@ model SurveyAnswer {
 
   @@index([responseId])
   @@index([questionId])
+}
+
+model NextCycleCriterion {
+  id           String    @id @default(uuid())
+  title        String
+  description  String
+  type         CriterionType
+
+  positions   NextCycleCriterionPosition[]
+}
+
+model NextCycleCriterionPosition {
+  id                   String   @id @default(uuid())
+  nextCycleCriterionId String
+  positionId           String
+
+  nextCycleCriterion   NextCycleCriterion @relation(fields: [nextCycleCriterionId], references: [id])
+  position             Position           @relation(fields: [positionId], references: [id])
+
+  @@unique([nextCycleCriterionId, positionId])
 }
 
 model Notification {
