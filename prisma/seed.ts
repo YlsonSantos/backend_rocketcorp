@@ -933,68 +933,81 @@ async function main() {
     }),
   );
 
-  await prisma.goal.createMany({
-    data: [
-      {
-        id: 'goal1',
-        userId: 'user1',
-        type: 'PDI',
-        title: 'Ser referência em React.js',
-        description:
-          'Tornar-me um especialista em React.js e suas melhores práticas.',
-      },
-      {
-        id: 'goal2',
-        userId: 'user2',
-        type: 'PDI',
-        title: 'Aprimorar conhecimentos técnicos',
-        description:
-          'Me especializar em tecnologias emergentes e novos avanços.',
-      },
-      {
-        id: 'goal3',
-        userId: 'user3',
-        type: 'OKR',
-        title: 'Aumentar a colaboração no time',
-        description: 'Tornar o ambiente do time mais colaborativo.',
-      },
-      {
-        id: 'goal4',
-        userId: 'user4',
-        type: 'PDI',
-        title: 'Desenvolver habilidades de comunicação',
-        description: 'Tornar minha comunicação mais eficaz e assertiva.',
-      },
-    ],
+  await prisma.goal.create({
+    data: {
+      id: 'goal1',
+      userId: 'user1',
+      type: 'PDI',
+      title: 'Ser referência em React.js',
+      description:
+        'Tornar-me um especialista em React.js e suas melhores práticas.',
+    },
   });
 
-  await prisma.goalAction.createMany({
-    data: [
-      {
-        id: 'action1',
-        goalId: 'goal1',
-        description: 'Participar de cursos avançados de React.js.',
-        deadline: new Date('2025-07-31'),
-      },
-      {
-        id: 'action2',
-        goalId: 'goal2',
-        description: 'Assistir a webinars sobre novas tecnologias.',
-        deadline: new Date('2025-08-15'),
-      },
-      {
-        id: 'action3',
-        goalId: 'goal3',
-        description: 'Organizar reuniões semanais de feedback.',
-        deadline: new Date('2025-06-30'),
-      },
-      {
-        id: 'action4',
-        goalId: 'goal4',
-        description: 'Ler livros sobre comunicação eficaz.',
-        deadline: new Date('2025-08-01'),
-      },
-    ],
+  await prisma.goal.create({
+    data: {
+      id: 'goal2',
+      userId: 'user2',
+      type: 'PDI',
+      title: 'Aprimorar conhecimentos técnicos',
+      description: 'Me especializar em tecnologias emergentes e novos avanços.',
+    },
+  });
+
+  await prisma.goal.create({
+    data: {
+      id: 'goal3',
+      userId: 'user3',
+      type: 'OKR',
+      title: 'Aumentar a colaboração no time',
+      description: 'Tornar o ambiente do time mais colaborativo.',
+    },
+  });
+
+  await prisma.goal.create({
+    data: {
+      id: 'goal4',
+      userId: 'user4',
+      type: 'PDI',
+      title: 'Desenvolver habilidades de comunicação',
+      description: 'Tornar minha comunicação mais eficaz e assertiva.',
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action1',
+      goalId: 'goal1',
+      description: 'Participar de cursos avançados de React.js.',
+      deadline: new Date('2025-07-31'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action2',
+      goalId: 'goal2',
+      description: 'Assistir a webinars sobre novas tecnologias.',
+      deadline: new Date('2025-08-15'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action3',
+      goalId: 'goal3',
+      description: 'Organizar reuniões semanais de feedback.',
+      deadline: new Date('2025-06-30'),
+    },
+  });
+
+  await prisma.goalAction.create({
+    data: {
+      id: 'action4',
+      goalId: 'goal4',
+      description: 'Ler livros sobre comunicação eficaz.',
+      deadline: new Date('2025-08-01'),
+    },
   });
 }
 
