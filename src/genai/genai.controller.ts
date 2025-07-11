@@ -8,6 +8,7 @@ import {
   UsePipes,
   ValidationPipe,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -414,5 +415,116 @@ export class GenaiController {
   @Roles('RH', 'LIDER')
   async gerarInsight(@Param('id') surveyId: string) {
     return this.genaiService.gerarResumoSurvey(surveyId);
+  }
+
+  // ========== RECOMENDAÇÕES PARA GOALS ==========
+  @Get('goal-recommendations/:userId')
+  @Roles('RH', 'COMITE', 'LIDER', 'COLABORADOR')
+  @ApiOperation({
+    summary: '[GOALS] Gerar recomendações para alcançar goals',
+    description:
+      'Gera recomendações personalizadas, acionáveis e com prazos para ajudar o colaborador a alcançar seus goals. Baseia-se na performance atual e competências do usuário.',
+  })
+  @ApiParam({ name: 'userId', description: 'ID do usuário para gerar recomendações' })
+  @ApiResponse({
+    status: 200,
+    description: 'Recomendações de goals geradas com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        usuario: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            position: { type: 'string' },
+            track: { type: 'string' },
+          },
+        },
+        scoreAtual: { type: 'number' },
+        totalGoals: { type: 'number' },
+        recomendacoes: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              goalId: { type: 'string' },
+              goalTitle: { type: 'string' },
+              goalDescription: { type: 'string' },
+              goalType: { type: 'string' },
+              recomendacoes: { type: 'string' },
+              actionsExistentes: { type: 'number' },
+              proximoDeadline: { type: 'string', format: 'date-time', nullable: true },
+            },
+          },
+        },
+        geradoEm: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuário ou goals não encontrados',
+  })
+  async gerarRecomendacoesGoals(
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ) {
+    // Verificar se é o próprio usuário ou se tem permissão para ver
+    const userRole = req.user?.role;
+    const currentUserId = req.user?.sub;
+
+    if (
+      userRole !== 'RH' &&
+      userRole !== 'COMITE' &&
+      userRole !== 'LIDER' &&
+      currentUserId !== userId
+    ) {
+      throw new BadRequestException(
+        'Você só pode gerar recomendações para seus próprios goals',
+      );
+    }
+
+    return await this.genaiService.gerarRecomendacoesGoals(userId);
+  }
+
+  @Get('goal-recommendations/:userId/goal/:goalId')
+  @Roles('RH', 'COMITE', 'LIDER', 'COLABORADOR')
+  @ApiOperation({
+    summary: '[GOALS] Gerar recomendações para um goal específico',
+    description:
+      'Gera recomendações personalizadas para um goal específico do colaborador',
+  })
+  @ApiParam({ name: 'userId', description: 'ID do usuário' })
+  @ApiParam({ name: 'goalId', description: 'ID do goal específico' })
+  @ApiResponse({
+    status: 200,
+    description: 'Recomendações para o goal específico geradas com sucesso',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuário ou goal não encontrado',
+  })
+  async gerarRecomendacoesGoalEspecifico(
+    @Param('userId') userId: string,
+    @Param('goalId') goalId: string,
+    @Req() req: any,
+  ) {
+    // Verificar se é o próprio usuário ou se tem permissão para ver
+    const userRole = req.user?.role;
+    const currentUserId = req.user?.sub;
+
+    if (
+      userRole !== 'RH' &&
+      userRole !== 'COMITE' &&
+      userRole !== 'LIDER' &&
+      currentUserId !== userId
+    ) {
+      throw new BadRequestException(
+        'Você só pode gerar recomendações para seus próprios goals',
+      );
+    }
+
+    return await this.genaiService.gerarRecomendacoesGoals(userId, goalId);
   }
 }

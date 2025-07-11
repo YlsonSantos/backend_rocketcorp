@@ -2739,4 +2739,278 @@ Formato de resposta JSON:
 
     return facts.join(' ');
   }
+
+  /**
+   * Gera recomendações personalizadas para alcançar goals do usuário
+   */
+  async gerarRecomendacoesGoals(userId: string, goalId?: string) {
+    try {
+      // Buscar o usuário
+      const usuario = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          position: true,
+          teamMemberships: {
+            include: {
+              team: true,
+            },
+          },
+        },
+      });
+
+      if (!usuario) {
+        throw new NotFoundException('Usuário não encontrado');
+      }
+
+      // Buscar goals do usuário
+      const whereClause: any = { userId };
+      if (goalId) {
+        whereClause.id = goalId;
+      }
+
+      const goals = await this.prisma.goal.findMany({
+        where: whereClause,
+        include: {
+          actions: {
+            orderBy: { deadline: 'asc' },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!goals || goals.length === 0) {
+        throw new NotFoundException('Nenhum goal encontrado para este usuário');
+      }
+
+      // Buscar o último ciclo de avaliação e score do usuário
+      const ultimoCiclo = await this.prisma.evaluationCycle.findFirst({
+        orderBy: { startDate: 'desc' },
+      });
+
+      let scoreAtual = null;
+      let avaliacoesRecentes: any[] = [];
+
+      if (ultimoCiclo) {
+        // Buscar score do último ciclo
+        scoreAtual = await this.prisma.scorePerCycle.findUnique({
+          where: {
+            userId_cycleId: {
+              userId: userId,
+              cycleId: ultimoCiclo.id,
+            },
+          },
+          include: {
+            peerScores: true,
+          },
+        });
+
+        // Buscar avaliações recentes para entender pontos fortes e fracos
+        avaliacoesRecentes = await this.prisma.evaluation.findMany({
+          where: {
+            evaluatedId: userId,
+            cycleId: ultimoCiclo.id,
+            completed: true,
+          },
+          include: {
+            answers: {
+              include: {
+                criterion: {
+                  select: {
+                    title: true,
+                    description: true,
+                    type: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Gerar recomendações para cada goal
+      const recomendacoes = [];
+
+      for (const goal of goals) {
+        const prompt = this.construirPromptRecomendacoesGoal(
+          usuario,
+          goal,
+          scoreAtual,
+          avaliacoesRecentes,
+        );
+
+        try {
+          const result = await this.model.generateContent(prompt);
+          const response = result.response;
+          const recomendacao = response.text();
+
+          recomendacoes.push({
+            goalId: goal.id,
+            goalTitle: goal.title,
+            goalDescription: goal.description,
+            goalType: goal.type,
+            recomendacoes: recomendacao,
+            actionsExistentes: goal.actions.length,
+            proximoDeadline: goal.actions.length > 0 
+              ? goal.actions.find(action => !action.completed)?.deadline 
+              : null,
+          });
+        } catch (error) {
+          console.error(`Erro ao gerar recomendação para goal ${goal.id}:`, error);
+          recomendacoes.push({
+            goalId: goal.id,
+            goalTitle: goal.title,
+            goalDescription: goal.description,
+            goalType: goal.type,
+            recomendacoes: 'Erro ao gerar recomendações. Tente novamente mais tarde.',
+            actionsExistentes: goal.actions.length,
+            proximoDeadline: goal.actions.length > 0 
+              ? goal.actions.find(action => !action.completed)?.deadline 
+              : null,
+          });
+        }
+      }
+
+      return {
+        usuario: {
+          id: usuario.id,
+          name: usuario.name,
+          position: usuario.position?.name,
+          track: usuario.position?.track,
+        },
+        scoreAtual: scoreAtual?.finalScore,
+        totalGoals: goals.length,
+        recomendacoes,
+        geradoEm: new Date().toISOString(),
+      };
+
+    } catch (error) {
+      console.error('Erro ao gerar recomendações de goals:', error);
+      
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Erro interno ao gerar recomendações de goals'
+      );
+    }
+  }
+
+  /**
+   * Constrói o prompt para gerar recomendações específicas para um goal
+   */
+  private construirPromptRecomendacoesGoal(
+    usuario: any,
+    goal: any,
+    scoreAtual: any,
+    avaliacoesRecentes: any[]
+  ): string {
+    const contextoUsuario = `
+COLABORADOR: ${usuario.name}
+POSIÇÃO: ${usuario.position?.name || 'Não definida'}
+TRACK: ${usuario.position?.track || 'Não definido'}
+SCORE ATUAL: ${scoreAtual?.finalScore ? `${scoreAtual.finalScore}/5.0` : 'Não disponível'}
+`;
+
+    const contextoGoal = `
+GOAL TIPO: ${goal.type}
+TÍTULO: ${goal.title}
+DESCRIÇÃO: ${goal.description || 'Não especificada'}
+AÇÕES CADASTRADAS: ${goal.actions.length}
+`;
+
+    let contextoPerformance = '';
+    if (avaliacoesRecentes && avaliacoesRecentes.length > 0) {
+      const pontosFracosFortes = this.analisarPontosFortesFragos(avaliacoesRecentes);
+      contextoPerformance = `
+PONTOS FORTES IDENTIFICADOS:
+${pontosFracosFortes.pontosForts.join('\n')}
+
+ÁREAS DE DESENVOLVIMENTO:
+${pontosFracosFortes.pontosFragos.join('\n')}
+`;
+    }
+
+    const prompt = `
+Você é um consultor especialista em desenvolvimento profissional e gestão de metas. Sua tarefa é gerar recomendações PERSONALIZADAS, ACIONÁVEIS e ESPECÍFICAS para ajudar o colaborador a alcançar seu goal.
+
+${contextoUsuario}
+
+${contextoGoal}
+
+${contextoPerformance}
+
+INSTRUÇÕES PARA AS RECOMENDAÇÕES:
+
+1. **RESPONDA SEMPRE EM PORTUGUÊS BRASILEIRO**
+2. **SEJA ESPECÍFICO E ACIONÁVEL** - Não use dicas genéricas
+3. **INCLUA PRAZOS CONCRETOS** - Sugira cronogramas realistas
+4. **CONSIDERE O CONTEXTO** - Use as informações de performance e posição
+5. **ESTRUTURE AS RECOMENDAÇÕES** em seções claras
+6. **FOQUE EM RESULTADOS MENSURÁVEIS**
+
+ESTRUTURA DA RESPOSTA:
+
+## 🎯 ESTRATÉGIA PRINCIPAL
+[Uma estratégia central baseada no perfil do colaborador]
+
+## 📋 AÇÕES PRIORITÁRIAS (próximas 4 semanas)
+[3-5 ações específicas com prazos]
+
+## 🔧 DESENVOLVIMENTO DE COMPETÊNCIAS
+[Competências específicas a desenvolver baseadas na performance]
+
+## 📅 CRONOGRAMA SUGERIDO
+[Timeline realista por trimestre]
+
+## 📊 MÉTRICAS DE SUCESSO
+[Como medir o progresso]
+
+## 💡 DICAS PERSONALIZADAS
+[Dicas específicas para o perfil e posição]
+
+Seja direto, prático e personalizado. Evite conselhos genéricos.
+`;
+
+    return prompt;
+  }
+
+  /**
+   * Analisa pontos fortes e fracos baseado nas avaliações recentes
+   */
+  private analisarPontosFortesFragos(avaliacoes: any[]) {
+    const pontosForts: string[] = [];
+    const pontosFragos: string[] = [];
+    const criteriosAnalise = new Map();
+
+    // Agregar scores por critério
+    avaliacoes.forEach(avaliacao => {
+      avaliacao.answers?.forEach((answer: any) => {
+        const criterioTitulo = answer.criterion.title;
+        if (!criteriosAnalise.has(criterioTitulo)) {
+          criteriosAnalise.set(criterioTitulo, {
+            scores: [],
+            descricao: answer.criterion.description,
+          });
+        }
+        criteriosAnalise.get(criterioTitulo).scores.push(answer.score);
+      });
+    });
+
+    // Classificar como pontos fortes (>= 4.0) ou fracos (< 3.0)
+    criteriosAnalise.forEach((dados, criterio) => {
+      const mediaScore = dados.scores.reduce((sum: number, score: number) => sum + score, 0) / dados.scores.length;
+      
+      if (mediaScore >= 4.0) {
+        pontosForts.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
+      } else if (mediaScore < 3.0) {
+        pontosFragos.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
+      }
+    });
+
+    return {
+      pontosForts: pontosForts.length > 0 ? pontosForts : ['• Performance geral dentro da média'],
+      pontosFragos: pontosFragos.length > 0 ? pontosFragos : ['• Nenhuma área crítica identificada'],
+    };
+  }
 }
