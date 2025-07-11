@@ -39,4 +39,5 @@ lerna-debug.log*
 .env
 
 # Prisma
+prisma/dev.db
 prisma/bancodedados.db
