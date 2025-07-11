@@ -43,6 +43,20 @@ export class GenaiService {
       if (!usuario) {
         throw new NotFoundException('Colaborador não encontrado');
       }
+
+      // Buscar scorePerCycle primeiro
+      const scorePerCycle = await this.prisma.scorePerCycle.findUnique({
+        where: {
+          userId_cycleId: {
+            userId: evaluatedId,
+            cycleId: cycleId,
+          },
+        },
+        include: {
+          peerScores: true,
+        },
+      });
+
       const avaliacoes = await this.prisma.evaluation.findMany({
         where: {
           evaluatedId: evaluatedId,
@@ -70,10 +84,38 @@ export class GenaiService {
           },
         },
       });
+
+      // Se não há avaliações mas há scorePerCycle, gerar insights baseado apenas no score
       if (!avaliacoes || avaliacoes.length === 0) {
-        throw new NotFoundException(
-          'Não há avaliações concluídas para este colaborador no ciclo especificado',
-        );
+        if (scorePerCycle && scorePerCycle.finalScore) {
+          console.log(`📊 Nenhuma avaliação encontrada para ${usuario.name}, mas scorePerCycle existe. Gerando insights baseados apenas no score.`);
+          
+          const insights = await this.gerarInsightsApenasPorScore(
+            usuario,
+            scorePerCycle,
+            ciclo,
+          );
+
+          const novoResumo = await this.prisma.genaiInsight.create({
+            data: {
+              cycleId: cycleId,
+              evaluatedId: evaluatedId,
+              summary: insights.summary,
+              discrepancies: '',
+              brutalFacts: insights.brutalFacts,
+            },
+          });
+          
+          // Descriptografar campos antes de retornar para o frontend
+          novoResumo.summary = await this.crypto.decrypt(novoResumo.summary);
+          novoResumo.brutalFacts = await this.crypto.decrypt(novoResumo.brutalFacts);
+
+          return novoResumo;
+        } else {
+          throw new NotFoundException(
+            'Não há avaliações concluídas nem scorePerCycle para este colaborador no ciclo especificado',
+          );
+        }
       }
 
       for (const avaliacao of avaliacoes) {
@@ -101,18 +143,6 @@ export class GenaiService {
       console.log(`  - Avaliações de pares: ${avaliacoesPares.length}`);
       console.log(`  - Avaliações de líder: ${avaliacoesLider.length}`);
       console.log(`  - Total: ${avaliacoes.length}`);
-
-      const scorePerCycle = await this.prisma.scorePerCycle.findUnique({
-        where: {
-          userId_cycleId: {
-            userId: evaluatedId,
-            cycleId: cycleId,
-          },
-        },
-        include: {
-          peerScores: true,
-        },
-      });
 
       const insights = await this.gerarInsightsComIA(
         usuario,
@@ -203,6 +233,16 @@ export class GenaiService {
 
   async buscarResumoColaborador(userId: string, cycleId: string) {
     try {
+      // Buscar scorePerCycle atual para verificar mudanças
+      const scoreAtual = await this.prisma.scorePerCycle.findUnique({
+        where: {
+          userId_cycleId: {
+            userId: userId,
+            cycleId: cycleId,
+          },
+        },
+      });
+
       // Primeiro, tentar buscar um resumo já existente
       let resumo = await this.prisma.genaiInsight.findFirst({
         where: {
@@ -231,11 +271,28 @@ export class GenaiService {
         },
       });
 
-      // Se não encontrou, gerar automaticamente
-      if (!resumo) {
-        console.log(
-          `🔄 Resumo não encontrado para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
-        );
+      // Verificar se precisa regenerar devido a mudança no score
+      let precisaRegenerar = false;
+      if (resumo && scoreAtual) {
+        // Por segurança, vamos forçar regeneração periodicamente
+        console.log(`🔄 Forçando regeneração para garantir dados atualizados...`);
+        precisaRegenerar = true; // Temporariamente sempre regenerar para garantir dados atuais
+      }
+
+      // Se não encontrou ou precisa regenerar, gerar automaticamente
+      if (!resumo || precisaRegenerar) {
+        if (precisaRegenerar) {
+          console.log(`🔄 Regenerando resumo para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`);
+          // Deletar o insight antigo
+          await this.prisma.genaiInsight.deleteMany({
+            where: {
+              evaluatedId: userId,
+              cycleId: cycleId,
+            },
+          });
+        } else {
+          console.log(`🔄 Resumo não encontrado para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`);
+        }
 
         // Gerar o resumo usando o método existente
         await this.gerarResumoColaborador(cycleId, userId);
@@ -995,6 +1052,8 @@ ${av.criterios.map((c: any) => `  ${c.titulo}: ${c.score}/5 - "${c.justificativa
       .join('\n\n');
 
     return `
+IMPORTANTE: Responda SEMPRE e EXCLUSIVAMENTE em português brasileiro. Nunca use inglês.
+
 Você é um especialista sênior em análise de performance organizacional com 15+ anos de experiência em desenvolvimento de talentos. Analise os dados de avaliação 360° abaixo e gere insights profundos, acionáveis e baseados em evidências.
 
 ═══════════════════════════════════════════════════════════════════════════
@@ -1592,7 +1651,7 @@ REGRAS CRÍTICAS:
     // 1. Análise de performance baseada em dados disponíveis
     if (medias.geral.media < 2.5) {
       facts.push('Performance crítica - intervenção imediata necessária');
-    } else if (medias.geral.media < 3.2) {
+    } else if (medias.geral.media < 3.0) {
       facts.push(
         'Performance abaixo do esperado - plano de desenvolvimento urgente',
       );
@@ -1917,6 +1976,16 @@ REGRAS CRÍTICAS:
 
   async buscarBrutalFacts(userId: string, cycleId: string) {
     try {
+      // Buscar scorePerCycle atual para verificar mudanças
+      const scoreAtual = await this.prisma.scorePerCycle.findUnique({
+        where: {
+          userId_cycleId: {
+            userId: userId,
+            cycleId: cycleId,
+          },
+        },
+      });
+
       // Primeiro, tentar buscar um resumo já existente
       let resumo = await this.prisma.genaiInsight.findFirst({
         where: {
@@ -1945,11 +2014,31 @@ REGRAS CRÍTICAS:
         },
       });
 
-      // Se não encontrou, gerar automaticamente
-      if (!resumo) {
-        console.log(
-          `🔄 Brutal facts não encontrados para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
-        );
+      // Verificar se precisa regenerar devido a mudança no score
+      let precisaRegenerar = false;
+      if (resumo && scoreAtual) {
+        // Comparar baseado na data de criação (simplificado)
+        const scoreCreateDate = new Date(scoreAtual.createdAt);
+        
+        // Por segurança, vamos forçar regeneração periodicamente
+        console.log(`🔄 Forçando regeneração de brutal facts para garantir dados atualizados...`);
+        precisaRegenerar = true; // Temporariamente sempre regenerar para garantir dados atuais
+      }
+
+      // Se não encontrou ou precisa regenerar, gerar automaticamente
+      if (!resumo || precisaRegenerar) {
+        if (precisaRegenerar) {
+          console.log(`🔄 Regenerando brutal facts para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`);
+          // Deletar o insight antigo
+          await this.prisma.genaiInsight.deleteMany({
+            where: {
+              evaluatedId: userId,
+              cycleId: cycleId,
+            },
+          });
+        } else {
+          console.log(`🔄 Brutal facts não encontrados para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`);
+        }
 
         // Gerar o resumo usando o método existente
         await this.gerarResumoColaborador(cycleId, userId);
@@ -2412,5 +2501,203 @@ REGRAS CRÍTICAS:
     }
 
     return `Análise da evolução da média da sua equipe ao longo de ${ciclosComDados.length} ciclos (${primeirosCiclo.cycleName} até ${ultimoCiclo.cycleName}): ${analiseDetalhada} A performance atual é classificada como ${classificacaoAtual}, evoluindo de ${mediaInicial}/5.0 para ${mediaAtual}/5.0.${pontosMarcantes}${recomendacoes} No ciclo atual (${cicloAtualName}), ${ultimoCiclo.colaboradoresAvaliados} de ${ultimoCiclo.totalColaboradores} colaboradores foram avaliados.`;
+  }
+
+  private async gerarInsightsApenasPorScore(
+    usuario: any,
+    scorePerCycle: any,
+    ciclo: any,
+  ) {
+    console.log('🔄 Gerando insights baseados apenas no scorePerCycle...');
+
+    // Verificar se há peerScores para análise adicional
+    const temPeerScores = scorePerCycle.peerScores && scorePerCycle.peerScores.length > 0;
+    
+    // Preparar dados básicos para análise
+    const dadosScore = {
+      finalScore: scorePerCycle.finalScore || 0,
+      selfScore: scorePerCycle.selfScore || 0,
+      leaderScore: scorePerCycle.leaderScore || 0,
+      peerScores: temPeerScores ? scorePerCycle.peerScores : [],
+      mediaPeers: temPeerScores 
+        ? scorePerCycle.peerScores.reduce((sum: number, ps: any) => sum + (ps.score || 0), 0) / scorePerCycle.peerScores.length 
+        : 0,
+    };
+
+    // Tentar gerar com IA primeiro, com fallback para local
+    try {
+      return await this.gerarInsightsComIAApenasPorScore(usuario, dadosScore, ciclo);
+    } catch (error) {
+      console.log('❌ Erro na IA, usando geração local de insights por score:', error);
+      return this.gerarInsightsLocalApenasPorScore(usuario, dadosScore, ciclo);
+    }
+  }
+
+  private async gerarInsightsComIAApenasPorScore(
+    usuario: any,
+    dadosScore: any,
+    ciclo: any,
+  ) {
+    const posicao = usuario.position?.name || 'Não informado';
+    const equipe = usuario.teamMemberships?.[0]?.team?.name || 'Não informado';
+
+    const prompt = `
+IMPORTANTE: Responda SEMPRE e EXCLUSIVAMENTE em português brasileiro. Nunca use inglês.
+
+Você é um especialista em análise de performance corporativa. Analise os dados de score do colaborador ${usuario.name} do ciclo ${ciclo.name} e gere insights baseados APENAS nos scores disponíveis (sem avaliações detalhadas).
+
+DADOS DO COLABORADOR:
+- Nome: ${usuario.name}
+- Posição: ${posicao}
+- Equipe: ${equipe}
+- Ciclo: ${ciclo.name}
+
+SCORES DISPONÍVEIS:
+- Score Final: ${dadosScore.finalScore}/5.0
+- Self Score: ${dadosScore.selfScore}/5.0
+- Leader Score: ${dadosScore.leaderScore}/5.0
+- Peer Scores: ${dadosScore.peerScores.length} avaliações (média: ${dadosScore.mediaPeers.toFixed(2)}/5.0)
+
+INSTRUÇÕES:
+1. Gere um RESUMO (summary) em português brasileiro focado na performance geral
+2. Gere BRUTAL FACTS em português brasileiro com insights diretos sobre os scores
+3. Base sua análise apenas nos scores numéricos disponíveis
+4. Seja objetivo e construtivo
+5. NUNCA use inglês, apenas português brasileiro
+
+Formato de resposta JSON:
+{
+  "summary": "Resumo em português sobre a performance do colaborador baseado nos scores",
+  "brutalFacts": "Análise direta em português dos pontos críticos baseados nos scores"
+}`;
+
+    const result = await this.model.generateContent([prompt]);
+    const response = await result.response;
+    let texto = await response.text();
+
+    // Limpar e extrair JSON
+    texto = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    try {
+      const insights = JSON.parse(texto);
+      
+      // Validar se tem as chaves necessárias
+      if (!insights.summary || !insights.brutalFacts) {
+        throw new Error('Resposta da IA incompleta');
+      }
+
+      // Criptografar antes de retornar
+      const summaryCriptografado = await this.crypto.encrypt(insights.summary);
+      const brutalFactsCriptografado = await this.crypto.encrypt(insights.brutalFacts);
+
+      return {
+        summary: summaryCriptografado,
+        brutalFacts: brutalFactsCriptografado,
+      };
+    } catch (parseError) {
+      console.log('❌ Erro no parsing da resposta da IA:', parseError);
+      throw new Error('Erro no formato da resposta da IA');
+    }
+  }
+
+  private gerarInsightsLocalApenasPorScore(
+    usuario: any,
+    dadosScore: any,
+    ciclo: any,
+  ) {
+    console.log('=== FALLBACK: Usando geração local apenas por score ===');
+    
+    const posicao = usuario.position?.name || 'Não informado';
+    const finalScore = dadosScore.finalScore;
+    
+    // Classificar performance baseada no score final
+    let classificacao = '';
+    let recomendacao = '';
+    
+    if (finalScore >= 4.5) {
+      classificacao = 'excepcional';
+      recomendacao = 'Continue mantendo este nível de excelência e considere compartilhar suas práticas com a equipe.';
+    } else if (finalScore >= 4.0) {
+      classificacao = 'muito boa';
+      recomendacao = 'Performance sólida com potencial para alcançar excelência. Identifique áreas específicas para refinamento.';
+    } else if (finalScore >= 3.5) {
+      classificacao = 'boa';
+      recomendacao = 'Performance adequada com oportunidades claras de crescimento. Foque em desenvolver competências específicas.';
+    } else if (finalScore >= 3.0) {
+      classificacao = 'satisfatória';
+      recomendacao = 'Performance atende aos requisitos básicos, mas requer plano de desenvolvimento estruturado.';
+    } else {
+      classificacao = 'abaixo do esperado';
+      recomendacao = 'Performance requer atenção imediata e plano de ação detalhado para melhoria.';
+    }
+
+    // Análise de alinhamento entre diferentes scores
+    let analiseAlinhamento = '';
+    if (dadosScore.selfScore && dadosScore.leaderScore) {
+      const diferenca = Math.abs(dadosScore.selfScore - dadosScore.leaderScore);
+      if (diferenca > 1.0) {
+        analiseAlinhamento = ' Há uma diferença significativa entre a autoavaliação e a avaliação da liderança, indicando necessidade de alinhamento de expectativas.';
+      } else if (diferenca > 0.5) {
+        analiseAlinhamento = ' Existe uma pequena diferença entre a autoavaliação e a avaliação da liderança, que pode ser explorada em conversas de feedback.';
+      } else {
+        analiseAlinhamento = ' Há um bom alinhamento entre a autoavaliação e a avaliação da liderança.';
+      }
+    }
+
+    const summary = `${usuario.name}, na posição de ${posicao}, apresentou performance ${classificacao} no ciclo ${ciclo.name} com score final de ${finalScore}/5.0. ${recomendacao}${analiseAlinhamento}`;
+    
+    const brutalFacts = this.gerarBrutalFactsPorScore(dadosScore, classificacao);
+
+    return {
+      summary: this.crypto.encrypt(summary),
+      brutalFacts: this.crypto.encrypt(brutalFacts),
+    };
+  }
+
+  private gerarBrutalFactsPorScore(dadosScore: any, classificacao: string): string {
+    const facts = [];
+    const finalScore = dadosScore.finalScore;
+
+    // Análise do score final
+    if (finalScore < 2.5) {
+      facts.push(`🚨 CRÍTICO: Score ${finalScore}/5.0 indica performance substancialmente abaixo das expectativas - intervenção imediata necessária.`);
+    } else if (finalScore < 3.0) {
+      facts.push(`⚠️ ALERTA: Score ${finalScore}/5.0 está abaixo do padrão organizacional - plano de desenvolvimento urgente.`);
+    } else if (finalScore < 3.5) {
+      facts.push(`📊 DESENVOLVIMENTO: Score ${finalScore}/5.0 atende ao básico mas há gap significativo para performance esperada.`);
+    } else if (finalScore >= 4.5) {
+      facts.push(`⭐ DESTAQUE: Score ${finalScore}/5.0 representa performance de alto nível - potencial para liderança e mentoria.`);
+    }
+
+    // Análise de consistência entre avaliadores
+    if (dadosScore.selfScore && dadosScore.leaderScore) {
+      const gapSelfLeader = dadosScore.selfScore - dadosScore.leaderScore;
+      if (Math.abs(gapSelfLeader) > 1.0) {
+        if (gapSelfLeader > 0) {
+          facts.push(`🔍 GAP DE PERCEPÇÃO: Autoavaliação ${dadosScore.selfScore}/5.0 vs Liderança ${dadosScore.leaderScore}/5.0 - possível superestimação das próprias competências.`);
+        } else {
+          facts.push(`💡 AUTOCONFIANÇA: Liderança avalia ${dadosScore.leaderScore}/5.0 vs Autoavaliação ${dadosScore.selfScore}/5.0 - oportunidade para reconhecer próprias competências.`);
+        }
+      }
+    }
+
+    // Análise de peer scores se disponíveis
+    if (dadosScore.peerScores.length > 0) {
+      const mediaPeers = dadosScore.mediaPeers;
+      const gapFinalPeers = Math.abs(finalScore - mediaPeers);
+      
+      if (gapFinalPeers > 0.5) {
+        facts.push(`👥 PEERS: Diferença de ${gapFinalPeers.toFixed(1)} pontos entre score final e avaliação dos pares indica necessidade de calibração.`);
+      } else {
+        facts.push(`✅ CONSISTÊNCIA: Boa consistência entre score final (${finalScore}) e avaliação dos pares (${mediaPeers.toFixed(1)}).`);
+      }
+    }
+
+    // Fallback se nenhum insight específico foi gerado
+    if (facts.length === 0) {
+      facts.push(`📋 BASELINE: Score atual de ${finalScore}/5.0 estabelece ponto de partida para acompanhamento de evolução nos próximos ciclos.`);
+    }
+
+    return facts.join(' ');
   }
 }
