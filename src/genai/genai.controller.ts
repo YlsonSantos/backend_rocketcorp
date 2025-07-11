@@ -262,6 +262,64 @@ export class GenaiController {
     return await this.genaiService.gerarBrutalFactsGestor(cycleId, managerId);
   }
 
+  @Get('evolucao-equipe/gestor/cycle/:cycleId')
+  @Roles('RH', 'COMITE', 'LIDER')
+  @ApiOperation({
+    summary: '[EVOLUÇÃO] Análise da evolução da média da equipe ao longo dos ciclos',
+    description:
+      'Gera comentário sobre a evolução da nota final média dos colaboradores da equipe do gestor ao longo dos ciclos até o atual',
+  })
+  @ApiParam({ name: 'cycleId', description: 'ID do ciclo atual de avaliação' })
+  @ApiResponse({
+    status: 200,
+    description: 'Análise de evolução da equipe recuperada com sucesso',
+    schema: {
+      type: 'object',
+      properties: {
+        cycleAtual: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        totalCiclos: { type: 'number' },
+        evolucaoMedias: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              cycleId: { type: 'string' },
+              cycleName: { type: 'string' },
+              mediaEquipe: { type: 'number' },
+              totalColaboradores: { type: 'number' },
+              crescimento: { type: 'number' },
+              crescimentoPercentual: { type: 'string' },
+            },
+          },
+        },
+        resumoEvolucao: {
+          type: 'object',
+          properties: {
+            mediaAtual: { type: 'number' },
+            mediaInicial: { type: 'number' },
+            crescimentoTotal: { type: 'number' },
+            crescimentoPercentualTotal: { type: 'string' },
+            tendencia: { type: 'string' },
+          },
+        },
+        comentarioIA: { type: 'string' },
+      },
+    },
+  })
+  async analisarEvolucaoEquipe(
+    @Param('cycleId') cycleId: string,
+    @Req() req: any,
+  ) {
+    const managerId = req.user.userId; // ID do gestor logado
+    return await this.genaiService.analisarEvolucaoMediaEquipe(cycleId, managerId);
+  }
+
   // ========== PERFIL INDIVIDUAL (Colaborador específico) ==========
   @Get('colaborador/:userId/cycle/:cycleId')
   @Roles('RH', 'COMITE', 'LIDER', 'COLABORADOR')
