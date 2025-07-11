@@ -173,6 +173,8 @@ model EvaluationCycle {
 
   mentorshipEvaluations MentorshipEvaluation[]
   surveys Survey[]
+  
+  notificationSettings CycleNotificationSetting[]
 }
 
 model ScorePerCycle {
@@ -329,6 +331,30 @@ model NotificationTemplate {
   active      Boolean          @default(true)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+}
+
+model CycleNotificationSetting {
+  id                    String   @id @default(uuid())
+  cycleId               String
+  notificationType      NotificationType
+  enabled               Boolean  @default(true)
+  reminderDays          Int      @default(3) // Dias antes do prazo para enviar lembretes
+  customMessage         String?  // Mensagem personalizada
+  
+  // Novos campos
+  scheduledTime         String?  // HH:mm
+  frequency             String?  // DAILY, WEEKLY, MONTHLY
+  weekDay               String?  // MONDAY, TUESDAY, etc.
+  userFilters           Json?    // Filtros de usuários
+  priority              NotificationPriority @default(MEDIUM)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  cycle                 EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  
+  @@unique([cycleId, notificationType])
+  @@index([cycleId])
 }
 
 enum GoalType {

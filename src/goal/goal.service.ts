@@ -160,7 +160,7 @@ export class GoalService {
 
       if (allCompleted) {
         try {
-          await this.automaticNotificationsService.notifyGoalCompleted(goalActionExists.goalId);
+          // Remover chamada para notifyGoalCompleted
         } catch (error) {
           console.error('Erro ao enviar notificação de meta completada:', error);
         }

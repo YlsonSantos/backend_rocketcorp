@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
-import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
-import { PrismaModule } from '../../prisma/prisma.module';
+import { NotificationsService } from './notifications.service';
 import { NotificationsGateway } from './notifications.gateway';
 import { AutomaticNotificationsService } from './automatic-notifications.service';
+import { NotificationSettingsController } from './notification-settings.controller';
+import { NotificationSettingsService } from './notification-settings.service';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [PrismaModule, JwtModule, ScheduleModule.forRoot()],
-  controllers: [NotificationsController],
-  providers: [NotificationsService, NotificationsGateway, AutomaticNotificationsService],
-  exports: [NotificationsService, AutomaticNotificationsService],
+  imports: [PrismaModule, JwtModule],
+  controllers: [NotificationsController, NotificationSettingsController],
+  providers: [
+    NotificationsService,
+    NotificationsGateway,
+    AutomaticNotificationsService,
+    NotificationSettingsService,
+  ],
+  exports: [NotificationsService, NotificationSettingsService, AutomaticNotificationsService],
 })
 export class NotificationsModule {} 

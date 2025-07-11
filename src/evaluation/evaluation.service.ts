@@ -193,7 +193,7 @@ export class EvaluationService {
       // Enviar notificação se a avaliação foi completada
       if (criarAvaliacaoDto.completed) {
         try {
-          await this.automaticNotificationsService.notifyEvaluationCompleted(novaAvaliacao.id);
+          // Remover chamada para notifyEvaluationCompleted
         } catch (error) {
           console.error('Erro ao enviar notificação automática:', error);
         }

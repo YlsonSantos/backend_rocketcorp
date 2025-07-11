@@ -17,38 +17,28 @@ async function testAutomaticNotifications() {
     await automaticNotificationsService.checkEvaluationDeadlines();
     console.log('✅ Verificação de prazos concluída\n');
 
-    // 2. Testar verificação de início de ciclos
-    console.log('2. Testando verificação de início de ciclos...');
-    await automaticNotificationsService.checkCycleStart();
-    console.log('✅ Verificação de início de ciclos concluída\n');
-
-    // 3. Testar verificação de fim de ciclos
-    console.log('3. Testando verificação de fim de ciclos...');
-    await automaticNotificationsService.checkCycleEnd();
-    console.log('✅ Verificação de fim de ciclos concluída\n');
-
-    // 4. Testar verificação de prazos de metas
-    console.log('4. Testando verificação de prazos de metas...');
+    // 2. Testar verificação de prazos de metas
+    console.log('2. Testando verificação de prazos de metas...');
     await automaticNotificationsService.checkGoalDeadlines();
     console.log('✅ Verificação de prazos de metas concluída\n');
 
-    // 5. Testar verificação de novas pesquisas
-    console.log('5. Testando verificação de novas pesquisas...');
-    await automaticNotificationsService.checkNewSurveys();
-    console.log('✅ Verificação de novas pesquisas concluída\n');
-
-    // 6. Testar lembretes de pesquisas
-    console.log('6. Testando lembretes de pesquisas...');
-    await automaticNotificationsService.sendSurveyReminders();
+    // 3. Testar lembretes de pesquisas
+    console.log('3. Testando lembretes de pesquisas...');
+    await automaticNotificationsService.checkSurveyReminders();
     console.log('✅ Lembretes de pesquisas concluídos\n');
 
-    // 7. Testar verificação de avaliações de mentoria
-    console.log('7. Testando verificação de avaliações de mentoria...');
+    // 4. Testar verificação de fim de ciclos
+    console.log('4. Testando verificação de fim de ciclos...');
+    await automaticNotificationsService.checkCycleEndings();
+    console.log('✅ Verificação de fim de ciclos concluída\n');
+
+    // 5. Testar verificação de avaliações de mentoria
+    console.log('5. Testando verificação de avaliações de mentoria...');
     await automaticNotificationsService.checkMentorshipEvaluations();
     console.log('✅ Verificação de avaliações de mentoria concluída\n');
 
-    // 8. Verificar notificações criadas
-    console.log('8. Verificando notificações criadas...');
+    // 6. Verificar notificações criadas
+    console.log('6. Verificando notificações criadas...');
     const notifications = await prisma.notification.findMany({
       take: 10,
       orderBy: { createdAt: 'desc' },
