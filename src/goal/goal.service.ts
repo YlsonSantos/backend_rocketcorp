@@ -6,6 +6,7 @@ import { CreateGoalActionDto } from './dto/create-goal-action.dto';
 import { UpdateGoalActionDto } from './dto/update-goal-action.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AutomaticNotificationsService } from '../notifications/automatic-notifications.service';
+import { CryptoService } from '../crypto/crypto.service';
 
 @Injectable()
 export class GoalService {
@@ -13,6 +14,7 @@ export class GoalService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly automaticNotificationsService: AutomaticNotificationsService,
+    private readonly crypto: CryptoService,
   ) {}
 
   async createGoal(createGoalDto: CreateGoalDto, userId: string) {
@@ -22,6 +24,10 @@ export class GoalService {
         userId,
       },
     });
+    goal.title = await this.crypto.decrypt(goal.title);
+    if (goal.description) {
+      goal.description = await this.crypto.decrypt(goal.description);
+    }
     return goal;
   }
 
@@ -69,6 +75,11 @@ export class GoalService {
       where: { id },
       data: updateGoalDto,
     });
+
+    goal.title = await this.crypto.decrypt(goal.title);
+    if (goal.description) {
+      goal.description = await this.crypto.decrypt(goal.description);
+    }
 
     return goal;
   }
@@ -124,7 +135,7 @@ export class GoalService {
     } catch (error) {
       console.error('Erro ao enviar notificação:', error);
     }
-
+    goalAction.description = await this.crypto.decrypt(goalAction.description);
     return goalAction;
   }
 
@@ -156,16 +167,23 @@ export class GoalService {
         where: { goalId: goalActionExists.goalId },
       });
 
-      const allCompleted = allActions.every(action => action.completed || action.id === id);
+      const allCompleted = allActions.every(
+        (action) => action.completed || action.id === id,
+      );
 
       if (allCompleted) {
         try {
           // Remover chamada para notifyGoalCompleted
         } catch (error) {
-          console.error('Erro ao enviar notificação de meta completada:', error);
+          console.error(
+            'Erro ao enviar notificação de meta completada:',
+            error,
+          );
         }
       }
     }
+
+    goalAction.description = await this.crypto.decrypt(goalAction.description);
 
     return goalAction;
   }
