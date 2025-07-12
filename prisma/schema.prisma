@@ -20,7 +20,7 @@ model EvaluationAnswer {
   score         Float
   justification String
 
-  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id])
+  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
   criterion     EvaluationCriterion @relation(fields: [criterionId], references: [id])
 }
 

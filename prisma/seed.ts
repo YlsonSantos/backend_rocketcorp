@@ -1011,7 +1011,7 @@ async function main() {
   });
 
   const criteriosNewData = [
-// === Sentimento de Dono ===
+    // === Sentimento de Dono ===
     {
       id: 'ncriterio1_dev',
       title: 'Sentimento de Dono',
