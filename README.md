@@ -1,99 +1,225 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 RPE - Rocket Performance & Engagement
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Desafio Rocket Lab - v0**  
+Projeto desenvolvido pela squad **Codrilha de Jeh Lima**
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 📘 Visão Geral
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+A **Rocket Corp** enfrenta dificuldades significativas em seu processo atual de avaliação de desempenho. O modelo manual, fragmentado e dependente de planilhas tem tornado as avaliações ineficientes, pouco padronizadas e sujeitas a erros e vieses.
 
-## Project setup
+Para resolver esses desafios, foi criado o **RPE - Rocket Performance & Engagement**, uma plataforma digital completa que centraliza e automatiza as avaliações de desempenho dos colaboradores, promovendo decisões mais justas, eficientes e alinhadas com a estratégia da empresa.
+
+A plataforma conta também com **GenAI (Inteligência Artificial Generativa)** para auxiliar o comitê com insights automáticos, equalização de avaliações e análises comparativas.
+
+Todo o sistema é estruturado em **ciclos de avaliação**, que definem os períodos de autoavaliação, avaliações por pares, avaliação de gestores e revisão por comitê. Cada módulo se adapta dinamicamente ao status do ciclo atual — garantindo que as telas e funcionalidades exibam apenas as ações permitidas em cada etapa do processo, proporcionando mais controle, fluidez e segurança.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+**Frontend**  
+- React  
+- TypeScript  
+- TailwindCSS  
+- React Router  
+- React Hook Form  
+- React Hot Toast  
+- React Icons  
+
+**Backend**  
+- NestJS (TypeScript)  
+- SQLite  
+- JWT Authentication  
+- Class-validator  
+- Integração com GenAI  
+- Integração com ERP (Rocket Corp)  
+
+---
+
+## ✅ MVPs Implementados
+
+### MVP 1 - Digitalização Básica do Processo
+- Cadastro de usuários e critérios por cargo/trilha/unidade
+- Formulário digital para autoavaliação (1-5 com texto justificado)
+- Formulário para avaliação de pares e líderes
+- Formulário estruturado para indicação de referências técnicas e culturais
+- Importação de histórico via Excel
+- Painel básico para o RH acompanhar status de preenchimento
+- Exportação simples das avaliações para o comitê
+
+### MVP 2 - Avaliação Líder-Colaborador e Equalização Inicial
+- Integração com ERP para obter líderes e alocações
+- Painel de avaliação para líderes
+- Painel para comitê de equalização com comparativo de notas
+- Detecção de discrepâncias
+- Resumos automáticos via GenAI
+- Exportação final das avaliações pós-equalização
+- Extração de "Brutal Facts" para mentores e colaboradores
+
+### MVP 3 - Privacidade e Segurança
+- Criptografia inteligente e granular dos dados
+- Controle de acessos e permissões por perfil
+- Logs de auditoria e segurança
+- Restrição de acesso para desenvolvedores
+- Monitoramento básico de segurança
+
+---
+
+## 🔧 MVPs Adicionais Implementados
+
+### 🌡️ Pesquisa de Clima e Engajamento
+- Pesquisas customizáveis de clima organizacional
+- Formulários anônimos e seguros
+- Dashboard com análise de sentimentos usando GenAI
+
+### 🎯 Gestão de OKRs e PDIs
+- Ferramenta de definição e acompanhamento de OKRs individuais
+- Visões diferenciadas para mentor, padrinho e colaborador
+- Sugestões inteligentes via GenAI para apoiar o desenvolvimento
+
+### 🔔 Notificações e Transparência
+- Notificações automáticas sobre prazos e pendências
+- Avisos e comunicados centralizados no sistema
+
+---
+
+## 🧩 Critérios de Avaliação
+
+As avaliações são baseadas nos seguintes pilares:
+
+### **Comportamento**
+- Sentimento de Dono
+- Resiliência nas adversidades
+- Organização no trabalho
+- Capacidade de aprender
+- Ser “team player”
+
+### **Execução**
+- Entregar com qualidade
+- Atender aos prazos
+- Fazer mais com menos
+- Pensar fora da caixa
+
+### **Gestão e Liderança**
+- Gente
+- Resultados
+- Evolução da Rocket Corp
+
+---
+
+## 📦 Estrutura Modular
+
+### 👤 Módulo do Colaborador
+- Autoavaliação
+- Avaliação de pares
+- Indicação de referências
+- Acompanhamento de status
+
+### 👨‍💼 Módulo do Gestor
+- Avaliação de liderados
+- Visualização de histórico
+- Acompanhamento de progresso da equipe
+
+### 🧑‍💼 Módulo de RH
+- Configuração de critérios por cargo/trilha/unidade
+- Acompanhamento global do status das avaliações
+- Importação e validação de históricos via Excel
+- Gestão de pesquisas de clima
+
+### 🧠 Módulo do Comitê de Equalização
+- Painel com visão consolidada das avaliações
+- Resumos e insights gerados por GenAI
+- Ajuste e equalização das notas finais
+- Exportações estruturadas para análise e registros
+
+---
+
+## 👨‍👩‍👧‍👦 Equipe
+
+Projeto desenvolvido pela squad: **Codrilha de Jeh Lima**
+
+- Ylson Santos - [Linkedin](https://www.linkedin.com/in/ylson-santos/)
+- Maria Bezerra - [Linkedin](https://www.linkedin.com/in/mariabdma/)
+- Ana Laura - [Linkedin](https://www.linkedin.com/in/ana-laura-albuquerque/)
+- Luiz Schmalz - [Linkedin](https://www.linkedin.com/in/luizeduardoschmalz/)
+- Paulo Ricardo - [Linkedin](https://www.linkedin.com/in/paulo-rago-a1a090219/)
+- Vinicius Andrade - [Linkedin](https://www.linkedin.com/in/viniciusdeandradejordao/)
+
+---
+
+## ▶️ Como rodar o projeto
+
+> Pré-requisitos:
+> - Node.js 
+> - npm instalado globalmente (`npm install -g npm`)
+
+### 1. Clonar o repositório 
 
 ```bash
-$ npm install
+git clone https://github.com/luizschmalz/backend_rocketcorp.git
+cd backend_rocketcorp
 ```
 
-## Compile and run the project
+### 2. Instale as dependências
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 3. Configure as variáveis de ambiente
+
+O arquivo .env já deve estar configurado assim: 
 
 ```bash
-# unit tests
-$ npm run test
+DATABASE_URL="file:./bancodedados.db"
+SECRET_KEY="your_secret_key_here"
 
-# e2e tests
-$ npm run test:e2e
+JWT_SECRET="jwt-secret-rocketcorp-2024"
 
-# test coverage
-$ npm run test:cov
+GEMINI_API_KEY="AIzaSyBLL33iSoltYVq8y632vBniKrRXHgKx96E"
+CRYPTO_SECRET_KEY="your_crypto_secret_key_here"
+
+NODE_ENV="development"
+PORT=3000
 ```
 
-## Deployment
+### 4. Prepare o banco de dados
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Caso não tenha o banco localmente, crie e rode as migrations:
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+npx prisma migrate reset
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 5. Popule o banco (seed)
 
-## Resources
+```bash
+npm run seed
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 6. Execute o ETL para importar dados
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npx ts-node src/etl/runFullEtl.ts
+```
 
-## Support
+### 7. Rode o servidor em modo desenvolvimento
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm run start
+```
 
-## Stay in touch
+### 8. Acesse o banco de dados visualmente (Prisma Studio)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+npx prisma studio
+```
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📄 Licença
+
+Este projeto é parte de um desafio acadêmico e interno da Rocket Lab.  
+Distribuição e uso externo estão sujeitos à autorização da empresa Visagio.
