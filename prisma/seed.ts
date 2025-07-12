@@ -1011,69 +1011,205 @@ async function main() {
   });
 
   const criteriosNewData = [
+// === Sentimento de Dono ===
     {
-      id: 'ncriterio1',
+      id: 'ncriterio1_dev',
       title: 'Sentimento de Dono',
       type: 'COMPORTAMENTO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'], // DESENVOLVIMENTO
     },
     {
-      id: 'ncriterio2',
+      id: 'ncriterio1_design',
+      title: 'Sentimento de Dono',
+      type: 'COMPORTAMENTO',
+      positions: ['pos2', 'pos5'], // DESIGN
+    },
+    {
+      id: 'ncriterio1_financeiro',
+      title: 'Sentimento de Dono',
+      type: 'COMPORTAMENTO',
+      positions: ['pos3'], // FINANCEIRO
+    },
+
+    // === Resiliência nas adversidades ===
+    {
+      id: 'ncriterio2_dev',
       title: 'Resiliência nas adversidades',
       type: 'COMPORTAMENTO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio3',
+      id: 'ncriterio2_design',
+      title: 'Resiliência nas adversidades',
+      type: 'COMPORTAMENTO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio2_financeiro',
+      title: 'Resiliência nas adversidades',
+      type: 'COMPORTAMENTO',
+      positions: ['pos3'],
+    },
+
+    // === Organização no Trabalho ===
+    {
+      id: 'ncriterio3_dev',
       title: 'Organização no Trabalho',
       type: 'COMPORTAMENTO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio4',
+      id: 'ncriterio3_design',
+      title: 'Organização no Trabalho',
+      type: 'COMPORTAMENTO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio3_financeiro',
+      title: 'Organização no Trabalho',
+      type: 'COMPORTAMENTO',
+      positions: ['pos3'],
+    },
+
+    // === Capacidade de aprender ===
+    {
+      id: 'ncriterio4_dev',
       title: 'Capacidade de aprender',
       type: 'COMPORTAMENTO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio5',
+      id: 'ncriterio4_design',
+      title: 'Capacidade de aprender',
+      type: 'COMPORTAMENTO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio4_financeiro',
+      title: 'Capacidade de aprender',
+      type: 'COMPORTAMENTO',
+      positions: ['pos3'],
+    },
+
+    // === Ser "team player" ===
+    {
+      id: 'ncriterio5_dev',
       title: 'Ser "team player"',
       type: 'COMPORTAMENTO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio6',
+      id: 'ncriterio5_design',
+      title: 'Ser "team player"',
+      type: 'COMPORTAMENTO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio5_financeiro',
+      title: 'Ser "team player"',
+      type: 'COMPORTAMENTO',
+      positions: ['pos3'],
+    },
+
+    // === Entregar com qualidade ===
+    {
+      id: 'ncriterio6_dev',
       title: 'Entregar com qualidade',
       type: 'EXECUCAO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio7',
+      id: 'ncriterio6_design',
+      title: 'Entregar com qualidade',
+      type: 'EXECUCAO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio6_financeiro',
+      title: 'Entregar com qualidade',
+      type: 'EXECUCAO',
+      positions: ['pos3'],
+    },
+
+    // === Atender aos prazos ===
+    {
+      id: 'ncriterio7_dev',
       title: 'Atender aos prazos',
       type: 'EXECUCAO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio8',
+      id: 'ncriterio7_design',
+      title: 'Atender aos prazos',
+      type: 'EXECUCAO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio7_financeiro',
+      title: 'Atender aos prazos',
+      type: 'EXECUCAO',
+      positions: ['pos3'],
+    },
+
+    // === Fazer mais com menos ===
+    {
+      id: 'ncriterio8_dev',
       title: 'Fazer mais com menos',
       type: 'EXECUCAO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
     {
-      id: 'ncriterio9',
+      id: 'ncriterio8_design',
+      title: 'Fazer mais com menos',
+      type: 'EXECUCAO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio8_financeiro',
+      title: 'Fazer mais com menos',
+      type: 'EXECUCAO',
+      positions: ['pos3'],
+    },
+
+    // === Pensar fora da caixa ===
+    {
+      id: 'ncriterio9_dev',
       title: 'Pensar fora da caixa',
       type: 'EXECUCAO',
-      positions: ['pos1', 'pos2', 'pos3', 'pos4', 'pos5'],
+      positions: ['pos1', 'pos4'],
     },
-    { id: 'ncriterio10', title: 'Gente', type: 'GESTAO', positions: ['pos3'] },
     {
-      id: 'ncriterio11',
+      id: 'ncriterio9_design',
+      title: 'Pensar fora da caixa',
+      type: 'EXECUCAO',
+      positions: ['pos2', 'pos5'],
+    },
+    {
+      id: 'ncriterio9_financeiro',
+      title: 'Pensar fora da caixa',
+      type: 'EXECUCAO',
+      positions: ['pos3'],
+    },
+
+    // === Gente ===
+    {
+      id: 'ncriterio10_financeiro',
+      title: 'Gente',
+      type: 'GESTAO',
+      positions: ['pos3'],
+    },
+
+    // === Resultados ===
+    {
+      id: 'ncriterio11_financeiro',
       title: 'Resultados',
       type: 'GESTAO',
       positions: ['pos3'],
     },
+
+    // === Evolução da Rocket Corp ===
     {
-      id: 'ncriterio12',
+      id: 'ncriterio12_financeiro',
       title: 'Evolução da Rocket Corp',
       type: 'GESTAO',
       positions: ['pos3'],
