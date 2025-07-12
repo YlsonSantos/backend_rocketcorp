@@ -349,6 +349,9 @@ export class UsersService {
     }
 
     const users = await this.prisma.user.findMany({
+      where: {
+        id: { not: 'anonymous' }, // Filtra o usuário anonymous
+      },
       select: {
         id: true,
         name: true,
@@ -440,6 +443,7 @@ export class UsersService {
     const subordinates = await this.prisma.user.findMany({
       where: {
         managerId: userId,
+        id: { not: 'anonymous' }, // Filtra o usuário anonymous
         teamMemberships: {
           some: {
             teamId: { in: teams.map((team) => team.id) },
