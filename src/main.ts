@@ -4,13 +4,21 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AuditInterceptor } from './audit/audit.interceptor';
 import { CorrelationIdMiddleware } from './audit/middleware/correlation-id.middleware';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Security headers
+  app.use(helmet());
+
   // Enable CORS
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400, // 24 horas
   });
 
   // Apply correlation ID middleware globally
@@ -19,8 +27,22 @@ async function bootstrap() {
   // Apply global audit interceptor
   app.useGlobalInterceptors(app.get(AuditInterceptor));
 
-  // Enable global validation pipes
-  app.useGlobalPipes(new ValidationPipe());
+  // Enable global validation pipes with enhanced security
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true, // Rejeita campos não esperados
+      forbidUnknownValues: true,   // Rejeita valores desconhecidos
+      skipMissingProperties: false,
+      skipNullProperties: false,
+      skipUndefinedProperties: false,
+      validationError: {
+        target: false, // Não expõe o objeto original no erro
+        value: false,  // Não expõe o valor no erro
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('RocketCorp API')
