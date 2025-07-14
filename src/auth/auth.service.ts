@@ -11,8 +11,12 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUserDto: LoginUserDto) {
+    // Sanitizar input antes da consulta
+    const sanitizedEmail = this.sanitizeInput(loginUserDto.email);
+    const sanitizedPassword = this.sanitizeInput(loginUserDto.password);
+
     const user = await this.prisma.user.findUnique({
-      where: { email: loginUserDto.email },
+      where: { email: sanitizedEmail },
       include: {
         mentor: { select: { id: true } },
       },
@@ -20,7 +24,7 @@ export class AuthService {
 
     if (!user) return null;
 
-    if (user.password === loginUserDto.password) {
+    if (user.password === sanitizedPassword) {
       return user;
     }
 
@@ -40,5 +44,17 @@ export class AuthService {
       userId: user.id,
       mentor: user.mentor?.id ?? null,
     };
+  }
+
+  private sanitizeInput(input: string): string {
+    if (!input) return input;
+    
+    // Remover caracteres perigosos para SQL injection
+    return input
+      .replace(/['";\\]/g, '') // Remove aspas e ponto e vírgula
+      .replace(/--/g, '')      // Remove comentários SQL
+      .replace(/\/\*/g, '')    // Remove comentários SQL
+      .replace(/\*\//g, '')    // Remove comentários SQL
+      .trim();
   }
 }
