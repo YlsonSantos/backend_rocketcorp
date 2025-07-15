@@ -18,7 +18,9 @@ export class GenaiService {
   ) {
     const apiKey = process.env.GEMINI_API_KEY || 'sua-api-key-aqui';
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-lite-preview-06-17',
+    });
   }
 
   async gerarResumoColaborador(cycleId: string, evaluatedId: string) {
