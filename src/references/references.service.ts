@@ -8,17 +8,12 @@ export class ReferencesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createReferenceDto: CreateReferenceDto, evaluatorId: string) {
-    try {
-      return this.prisma.reference.create({
-        data: {
-          ...createReferenceDto,
-          evaluatorId,
-        },
-      });
-    } catch (error) {
-      console.error('Error creating reference:', error);
-      throw new Error('Failed to create reference');
-    }
+    return this.prisma.reference.create({
+      data: {
+        ...createReferenceDto,
+        evaluatorId,
+      },
+    });
   }
 
   async findAll() {
