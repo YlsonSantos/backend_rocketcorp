@@ -42,9 +42,6 @@ export class AutomaticNotificationsService {
       return;
     }
 
-    const reminderDate = new Date();
-    reminderDate.setDate(reminderDate.getDate() + setting.reminderDays);
-
     const users = await this.prisma.user.findMany({
       where: {
         role: { not: 'RH' },
@@ -52,31 +49,65 @@ export class AutomaticNotificationsService {
     });
 
     for (const user of users) {
-      const pendingEvaluations = await this.prisma.evaluation.findMany({
-        where: {
-          evaluatorId: user.id,
-          cycleId: cycle.id,
-          completed: false,
-        },
-      });
+      // Lógica diferenciada por role
+      let shouldNotify = false;
+      let message = '';
+      let dueDate = null;
+      let referenceDate = null;
 
-      if (pendingEvaluations.length > 0) {
-        const message = setting.customMessage || 
-          `Você tem ${pendingEvaluations.length} avaliação(ões) pendente(s) que vence(m) em ${setting.reminderDays} dias`;
+      if (user.role === 'LIDER') {
+        // Gestores: reminderDays antes do endDate
+        referenceDate = new Date(cycle.endDate);
+        const reminderDate = new Date(cycle.endDate);
+        reminderDate.setDate(reminderDate.getDate() - setting.reminderDays);
+        
+        if (new Date() >= reminderDate && new Date() <= cycle.endDate) {
+          shouldNotify = true;
+          dueDate = cycle.endDate;
+          message = setting.customMessage || 
+            `Você tem avaliações pendentes que vencem em ${setting.reminderDays} dias (${new Date(cycle.endDate).toLocaleDateString()})`;
+        }
+      } else {
+        // Colaboradores: reminderDays antes do reviewDate
+        referenceDate = new Date(cycle.reviewDate);
+        const reminderDate = new Date(cycle.reviewDate);
+        reminderDate.setDate(reminderDate.getDate() - setting.reminderDays);
+        
+        if (new Date() >= reminderDate && new Date() <= cycle.reviewDate) {
+          shouldNotify = true;
+          dueDate = cycle.reviewDate;
+          message = setting.customMessage || 
+            `Você tem avaliações pendentes que vencem em ${setting.reminderDays} dias (${new Date(cycle.reviewDate).toLocaleDateString()})`;
+        }
+      }
 
-        await this.notificationsService.createNotification({
-          userId: user.id,
-          type: NotificationType.EVALUATION_DUE,
-          title: 'Avaliações Pendentes',
-          message,
-          priority: 'HIGH',
-          metadata: {
+      if (shouldNotify) {
+        const pendingEvaluations = await this.prisma.evaluation.findMany({
+          where: {
+            evaluatorId: user.id,
             cycleId: cycle.id,
-            pendingCount: pendingEvaluations.length,
-            dueDate: reminderDate,
-            settingId: setting.id,
+            completed: false,
           },
         });
+
+        if (pendingEvaluations.length > 0) {
+          await this.notificationsService.createNotification({
+            userId: user.id,
+            type: NotificationType.EVALUATION_DUE,
+            title: 'Avaliações Pendentes',
+            message,
+            priority: 'HIGH',
+            metadata: {
+              cycleId: cycle.id,
+              pendingCount: pendingEvaluations.length,
+              dueDate: dueDate,
+              referenceDate: referenceDate,
+              reminderDays: setting.reminderDays,
+              settingId: setting.id,
+              userRole: user.role,
+            },
+          });
+        }
       }
     }
   }
