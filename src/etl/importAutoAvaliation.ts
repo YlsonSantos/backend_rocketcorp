@@ -14,6 +14,27 @@ export function parseNota(notaTexto: string): number | null {
   return parseFloat(notaLimpa[0].replace(',', '.'));
 }
 
+export function mapearPeriodo(valor: any): string {
+  let data: Date;
+
+  if (typeof valor === 'number') {
+    const baseDate = new Date(1899, 11, 30);
+    data = new Date(baseDate.getTime() + valor * 86400000);
+  } else if (typeof valor === 'string') {
+    return valor; // Assume que já é uma string no formato correto
+  } else if (valor instanceof Date) {
+    data = valor;
+  } else {
+    throw new Error(`Formato de data inválido: ${JSON.stringify(valor)}`);
+  }
+
+  const ano = data.getFullYear();
+  const semestre = data.getMonth() < 8 ? 1 : 2;
+
+  const ciclo = `${ano}.${semestre}`;
+  return ciclo.trim();
+}
+
 interface LinhaAuto {
   CRITÉRIO: string;
   'AUTO-AVALIAÇÃO': string;
@@ -34,7 +55,7 @@ export async function runAutoAvaliation(filePath: string) {
 
   const nome = perfil[1][0];
   const email = perfil[1][1] as unknown as string;
-  const cicloNome = perfil[1][2];
+  const cicloNome = mapearPeriodo(perfil[1][2] as unknown as string);
 
   // === 2. Lê a aba "Avaliação 360" para pegar o nome do projeto ===
   const avaliacao360Sheet = workbook.Sheets['Avaliação 360'];
@@ -112,6 +133,7 @@ export async function runAutoAvaliation(filePath: string) {
       },
     });
   }
+  console.log(`👤 Usuário encontrado/criado: ${user.id}`);
 
   if (!user) {
     throw new Error('Erro inesperado: usuário não foi criado');
