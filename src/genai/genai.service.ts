@@ -18,7 +18,7 @@ export class GenaiService {
   ) {
     const apiKey = process.env.GEMINI_API_KEY || 'sua-api-key-aqui';
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   }
 
   async gerarResumoColaborador(cycleId: string, evaluatedId: string) {
@@ -88,8 +88,10 @@ export class GenaiService {
       // Se não há avaliações mas há scorePerCycle, gerar insights baseado apenas no score
       if (!avaliacoes || avaliacoes.length === 0) {
         if (scorePerCycle && scorePerCycle.finalScore) {
-          console.log(`📊 Nenhuma avaliação encontrada para ${usuario.name}, mas scorePerCycle existe. Gerando insights baseados apenas no score.`);
-          
+          console.log(
+            `📊 Nenhuma avaliação encontrada para ${usuario.name}, mas scorePerCycle existe. Gerando insights baseados apenas no score.`,
+          );
+
           const insights = await this.gerarInsightsApenasPorScore(
             usuario,
             scorePerCycle,
@@ -105,10 +107,12 @@ export class GenaiService {
               brutalFacts: insights.brutalFacts,
             },
           });
-          
+
           // Descriptografar campos antes de retornar para o frontend
           novoResumo.summary = await this.crypto.decrypt(novoResumo.summary);
-          novoResumo.brutalFacts = await this.crypto.decrypt(novoResumo.brutalFacts);
+          novoResumo.brutalFacts = await this.crypto.decrypt(
+            novoResumo.brutalFacts,
+          );
 
           return novoResumo;
         } else {
@@ -275,14 +279,18 @@ export class GenaiService {
       let precisaRegenerar = false;
       if (resumo && scoreAtual) {
         // Por segurança, vamos forçar regeneração periodicamente
-        console.log(`🔄 Forçando regeneração para garantir dados atualizados...`);
+        console.log(
+          `🔄 Forçando regeneração para garantir dados atualizados...`,
+        );
         precisaRegenerar = true; // Temporariamente sempre regenerar para garantir dados atuais
       }
 
       // Se não encontrou ou precisa regenerar, gerar automaticamente
       if (!resumo || precisaRegenerar) {
         if (precisaRegenerar) {
-          console.log(`🔄 Regenerando resumo para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`);
+          console.log(
+            `🔄 Regenerando resumo para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`,
+          );
           // Deletar o insight antigo
           await this.prisma.genaiInsight.deleteMany({
             where: {
@@ -291,7 +299,9 @@ export class GenaiService {
             },
           });
         } else {
-          console.log(`🔄 Resumo não encontrado para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`);
+          console.log(
+            `🔄 Resumo não encontrado para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
+          );
         }
 
         // Gerar o resumo usando o método existente
@@ -344,15 +354,21 @@ export class GenaiService {
         try {
           resumo.summary = this.crypto.decrypt(resumo.summary);
         } catch (decryptError) {
-          console.log('Summary já estava descriptografado ou erro na descriptografia:', decryptError.message);
+          console.log(
+            'Summary já estava descriptografado ou erro na descriptografia:',
+            decryptError.message,
+          );
         }
       }
-      
+
       if (resumo.brutalFacts) {
         try {
           resumo.brutalFacts = this.crypto.decrypt(resumo.brutalFacts);
         } catch (decryptError) {
-          console.log('BrutalFacts já estava descriptografado ou erro na descriptografia:', decryptError.message);
+          console.log(
+            'BrutalFacts já estava descriptografado ou erro na descriptografia:',
+            decryptError.message,
+          );
         }
       }
 
@@ -1157,7 +1173,9 @@ REGRAS CRÍTICAS:
 
   async gerarBrutalFactsGestor(cycleId: string, managerId: string) {
     try {
-      console.log(`🔍 Gerando brutal facts para gestor ${managerId} no ciclo: ${cycleId}`);
+      console.log(
+        `🔍 Gerando brutal facts para gestor ${managerId} no ciclo: ${cycleId}`,
+      );
 
       // Buscar informações do ciclo
       const ciclo = await this.prisma.evaluationCycle.findUnique({
@@ -1176,7 +1194,7 @@ REGRAS CRÍTICAS:
 
       // Buscar todos os scores do ciclo apenas dos colaboradores liderados pelo gestor
       const scoresPerCycle = await this.prisma.scorePerCycle.findMany({
-        where: { 
+        where: {
           cycleId: cycleId,
           user: {
             managerId: managerId, // Filtrar apenas colaboradores do gestor logado
@@ -1204,7 +1222,7 @@ REGRAS CRÍTICAS:
 
       // Buscar insights gerados para o ciclo apenas dos colaboradores do gestor
       const insights = await this.prisma.genaiInsight.findMany({
-        where: { 
+        where: {
           cycleId: cycleId,
           evaluated: {
             managerId: managerId, // Filtrar apenas colaboradores do gestor logado
@@ -1226,7 +1244,7 @@ REGRAS CRÍTICAS:
 
       // Buscar avaliações do ciclo para análise de cobertura apenas dos colaboradores do gestor
       const evaluations = await this.prisma.evaluation.findMany({
-        where: { 
+        where: {
           cycleId: cycleId,
           evaluated: {
             managerId: managerId, // Filtrar apenas colaboradores do gestor logado
@@ -1241,8 +1259,10 @@ REGRAS CRÍTICAS:
 
       // Calcular estatísticas
       const totalColaboradores = scoresPerCycle.length;
-      console.log(`📊 Encontrados ${totalColaboradores} colaboradores liderados pelo gestor ${managerId} no ciclo ${cycleId}`);
-      
+      console.log(
+        `📊 Encontrados ${totalColaboradores} colaboradores liderados pelo gestor ${managerId} no ciclo ${cycleId}`,
+      );
+
       const scoresValidos = scoresPerCycle.filter(
         (s) => s.finalScore && s.finalScore > 0,
       );
@@ -1441,10 +1461,10 @@ REGRAS CRÍTICAS:
     insights: string[],
     isGestorEspecifico: boolean = false,
   ): string {
-    const prefixo = isGestorEspecifico 
+    const prefixo = isGestorEspecifico
       ? `Análise executiva do ciclo ${cycleName} com ${total} colaboradores da sua equipe avaliados. `
       : `Análise executiva do ciclo ${cycleName} com ${total} colaboradores avaliados. `;
-    
+
     let resumo = prefixo;
 
     resumo += `A performance geral da equipe apresenta média de ${mediaGeral.toFixed(1)}/5.0, `;
@@ -2036,16 +2056,20 @@ REGRAS CRÍTICAS:
       if (resumo && scoreAtual) {
         // Comparar baseado na data de criação (simplificado)
         const scoreCreateDate = new Date(scoreAtual.createdAt);
-        
+
         // Por segurança, vamos forçar regeneração periodicamente
-        console.log(`🔄 Forçando regeneração de brutal facts para garantir dados atualizados...`);
+        console.log(
+          `🔄 Forçando regeneração de brutal facts para garantir dados atualizados...`,
+        );
         precisaRegenerar = true; // Temporariamente sempre regenerar para garantir dados atuais
       }
 
       // Se não encontrou ou precisa regenerar, gerar automaticamente
       if (!resumo || precisaRegenerar) {
         if (precisaRegenerar) {
-          console.log(`🔄 Regenerando brutal facts para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`);
+          console.log(
+            `🔄 Regenerando brutal facts para userId:${userId}, cycleId:${cycleId} devido a mudança no score...`,
+          );
           // Deletar o insight antigo
           await this.prisma.genaiInsight.deleteMany({
             where: {
@@ -2054,7 +2078,9 @@ REGRAS CRÍTICAS:
             },
           });
         } else {
-          console.log(`🔄 Brutal facts não encontrados para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`);
+          console.log(
+            `🔄 Brutal facts não encontrados para userId:${userId}, cycleId:${cycleId}. Gerando automaticamente...`,
+          );
         }
 
         // Gerar o resumo usando o método existente
@@ -2098,21 +2124,29 @@ REGRAS CRÍTICAS:
       // 🔓 Descriptografar campos antes de retornar para o frontend
       let decryptedEvaluatedName = resumo.evaluated.name;
       let decryptedBrutalFacts = resumo.brutalFacts;
-      
+
       // Descriptografar o nome do avaliado com tratamento de erro
       try {
-        decryptedEvaluatedName = await this.crypto.decrypt(resumo.evaluated.name);
+        decryptedEvaluatedName = await this.crypto.decrypt(
+          resumo.evaluated.name,
+        );
       } catch (decryptError) {
-        console.log('Nome do avaliado já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        console.log(
+          'Nome do avaliado já estava descriptografado ou erro na descriptografia:',
+          decryptError.message,
+        );
         // Usar o valor original se a descriptografia falhar
         decryptedEvaluatedName = resumo.evaluated.name;
       }
-      
+
       // Descriptografar brutal facts com tratamento de erro
       try {
         decryptedBrutalFacts = await this.crypto.decrypt(resumo.brutalFacts);
       } catch (decryptError) {
-        console.log('BrutalFacts já estava descriptografado ou erro na descriptografia:', decryptError.message);
+        console.log(
+          'BrutalFacts já estava descriptografado ou erro na descriptografia:',
+          decryptError.message,
+        );
         // Usar o valor original se a descriptografia falhar
         decryptedBrutalFacts = resumo.brutalFacts;
       }
@@ -2357,7 +2391,9 @@ REGRAS CRÍTICAS:
 
   async analisarEvolucaoMediaEquipe(cycleId: string, managerId: string) {
     try {
-      console.log(`🔍 Analisando evolução da média da equipe para gestor ${managerId} até o ciclo: ${cycleId}`);
+      console.log(
+        `🔍 Analisando evolução da média da equipe para gestor ${managerId} até o ciclo: ${cycleId}`,
+      );
 
       // Buscar informações do ciclo atual
       const cicloAtual = await this.prisma.evaluationCycle.findUnique({
@@ -2413,10 +2449,14 @@ REGRAS CRÍTICAS:
         });
 
         // Calcular média apenas com scores válidos
-        const scoresValidos = scoresEquipe.filter(s => s.finalScore && s.finalScore > 0);
-        const mediaEquipe = scoresValidos.length > 0 
-          ? scoresValidos.reduce((sum, s) => sum + (s.finalScore || 0), 0) / scoresValidos.length
-          : null;
+        const scoresValidos = scoresEquipe.filter(
+          (s) => s.finalScore && s.finalScore > 0,
+        );
+        const mediaEquipe =
+          scoresValidos.length > 0
+            ? scoresValidos.reduce((sum, s) => sum + (s.finalScore || 0), 0) /
+              scoresValidos.length
+            : null;
 
         evolucaoMedias.push({
           cycleId: ciclo.id,
@@ -2430,12 +2470,19 @@ REGRAS CRÍTICAS:
       }
 
       // Filtrar apenas ciclos com dados válidos
-      const ciclosComDados = evolucaoMedias.filter(c => c.mediaEquipe !== null);
-      
-      console.log(`📈 ${ciclosComDados.length} ciclos com dados válidos encontrados`);
+      const ciclosComDados = evolucaoMedias.filter(
+        (c) => c.mediaEquipe !== null,
+      );
+
+      console.log(
+        `📈 ${ciclosComDados.length} ciclos com dados válidos encontrados`,
+      );
 
       // Gerar análise da evolução
-      const analiseEvolucao = this.gerarAnaliseEvolucaoEquipe(ciclosComDados, cicloAtual.name);
+      const analiseEvolucao = this.gerarAnaliseEvolucaoEquipe(
+        ciclosComDados,
+        cicloAtual.name,
+      );
 
       return {
         gestorId: managerId,
@@ -2445,17 +2492,21 @@ REGRAS CRÍTICAS:
         evolucaoMedias: ciclosComDados,
         analiseEvolucao,
       };
-
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       console.error('❌ Erro ao analisar evolução da média da equipe:', error);
-      throw new BadRequestException('Erro ao analisar evolução da média da equipe');
+      throw new BadRequestException(
+        'Erro ao analisar evolução da média da equipe',
+      );
     }
   }
 
-  private gerarAnaliseEvolucaoEquipe(ciclosComDados: any[], cicloAtualName: string): string {
+  private gerarAnaliseEvolucaoEquipe(
+    ciclosComDados: any[],
+    cicloAtualName: string,
+  ): string {
     if (ciclosComDados.length === 0) {
       return `Não foram encontrados dados suficientes para analisar a evolução da média da sua equipe até o ciclo ${cicloAtualName}. Isso pode indicar que este é o primeiro ciclo com avaliações da equipe ou que ainda não há dados consolidados.`;
     }
@@ -2471,7 +2522,8 @@ REGRAS CRÍTICAS:
     const mediaInicial = primeirosCiclo.mediaEquipe;
     const mediaAtual = ultimoCiclo.mediaEquipe;
     const crescimentoTotal = mediaAtual - mediaInicial;
-    const crescimentoPercentual = Math.round((crescimentoTotal / mediaInicial) * 100 * 100) / 100;
+    const crescimentoPercentual =
+      Math.round((crescimentoTotal / mediaInicial) * 100 * 100) / 100;
 
     // Analisar tendência
     let tendencia = '';
@@ -2502,10 +2554,14 @@ REGRAS CRÍTICAS:
     }
 
     // Identificar maior crescimento e maior queda
-    const maiorCrescimento = variacoesCiclos.reduce((max, atual) => 
-      atual.variacao > max.variacao ? atual : max, variacoesCiclos[0]);
-    const maiorQueda = variacoesCiclos.reduce((min, atual) => 
-      atual.variacao < min.variacao ? atual : min, variacoesCiclos[0]);
+    const maiorCrescimento = variacoesCiclos.reduce(
+      (max, atual) => (atual.variacao > max.variacao ? atual : max),
+      variacoesCiclos[0],
+    );
+    const maiorQueda = variacoesCiclos.reduce(
+      (min, atual) => (atual.variacao < min.variacao ? atual : min),
+      variacoesCiclos[0],
+    );
 
     let pontosMarcantes = '';
     if (maiorCrescimento.variacao > 0.2) {
@@ -2532,11 +2588,14 @@ REGRAS CRÍTICAS:
     // Gerar recomendações baseadas na tendência
     let recomendacoes = '';
     if (tendencia === 'crescente') {
-      recomendacoes = ' Continue investindo nas práticas que têm gerado essa evolução positiva e considere compartilhar as melhores práticas com outras equipes.';
+      recomendacoes =
+        ' Continue investindo nas práticas que têm gerado essa evolução positiva e considere compartilhar as melhores práticas com outras equipes.';
     } else if (tendencia === 'decrescente') {
-      recomendacoes = ' É importante investigar os fatores que contribuíram para essa queda e implementar ações corretivas focadas no desenvolvimento da equipe.';
+      recomendacoes =
+        ' É importante investigar os fatores que contribuíram para essa queda e implementar ações corretivas focadas no desenvolvimento da equipe.';
     } else {
-      recomendacoes = ' A estabilidade indica consistência, mas avalie se há potencial para novos avanços através de iniciativas de desenvolvimento mais direcionadas.';
+      recomendacoes =
+        ' A estabilidade indica consistência, mas avalie se há potencial para novos avanços através de iniciativas de desenvolvimento mais direcionadas.';
     }
 
     return `Análise da evolução da média da sua equipe ao longo de ${ciclosComDados.length} ciclos (${primeirosCiclo.cycleName} até ${ultimoCiclo.cycleName}): ${analiseDetalhada} A performance atual é classificada como ${classificacaoAtual}, evoluindo de ${mediaInicial}/5.0 para ${mediaAtual}/5.0.${pontosMarcantes}${recomendacoes} No ciclo atual (${cicloAtualName}), ${ultimoCiclo.colaboradoresAvaliados} de ${ultimoCiclo.totalColaboradores} colaboradores foram avaliados.`;
@@ -2550,24 +2609,35 @@ REGRAS CRÍTICAS:
     console.log('🔄 Gerando insights baseados apenas no scorePerCycle...');
 
     // Verificar se há peerScores para análise adicional
-    const temPeerScores = scorePerCycle.peerScores && scorePerCycle.peerScores.length > 0;
-    
+    const temPeerScores =
+      scorePerCycle.peerScores && scorePerCycle.peerScores.length > 0;
+
     // Preparar dados básicos para análise
     const dadosScore = {
       finalScore: scorePerCycle.finalScore || 0,
       selfScore: scorePerCycle.selfScore || 0,
       leaderScore: scorePerCycle.leaderScore || 0,
       peerScores: temPeerScores ? scorePerCycle.peerScores : [],
-      mediaPeers: temPeerScores 
-        ? scorePerCycle.peerScores.reduce((sum: number, ps: any) => sum + (ps.score || 0), 0) / scorePerCycle.peerScores.length 
+      mediaPeers: temPeerScores
+        ? scorePerCycle.peerScores.reduce(
+            (sum: number, ps: any) => sum + (ps.score || 0),
+            0,
+          ) / scorePerCycle.peerScores.length
         : 0,
     };
 
     // Tentar gerar com IA primeiro, com fallback para local
     try {
-      return await this.gerarInsightsComIAApenasPorScore(usuario, dadosScore, ciclo);
+      return await this.gerarInsightsComIAApenasPorScore(
+        usuario,
+        dadosScore,
+        ciclo,
+      );
     } catch (error) {
-      console.log('❌ Erro na IA, usando geração local de insights por score:', error);
+      console.log(
+        '❌ Erro na IA, usando geração local de insights por score:',
+        error,
+      );
       return this.gerarInsightsLocalApenasPorScore(usuario, dadosScore, ciclo);
     }
   }
@@ -2615,11 +2685,14 @@ Formato de resposta JSON:
     let texto = await response.text();
 
     // Limpar e extrair JSON
-    texto = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
+    texto = texto
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
     try {
       const insights = JSON.parse(texto);
-      
+
       // Validar se tem as chaves necessárias
       if (!insights.summary || !insights.brutalFacts) {
         throw new Error('Resposta da IA incompleta');
@@ -2627,7 +2700,9 @@ Formato de resposta JSON:
 
       // Criptografar antes de retornar
       const summaryCriptografado = await this.crypto.encrypt(insights.summary);
-      const brutalFactsCriptografado = await this.crypto.encrypt(insights.brutalFacts);
+      const brutalFactsCriptografado = await this.crypto.encrypt(
+        insights.brutalFacts,
+      );
 
       return {
         summary: summaryCriptografado,
@@ -2645,29 +2720,34 @@ Formato de resposta JSON:
     ciclo: any,
   ) {
     console.log('=== FALLBACK: Usando geração local apenas por score ===');
-    
+
     const posicao = usuario.position?.name || 'Não informado';
     const finalScore = dadosScore.finalScore;
-    
+
     // Classificar performance baseada no score final
     let classificacao = '';
     let recomendacao = '';
-    
+
     if (finalScore >= 4.5) {
       classificacao = 'excepcional';
-      recomendacao = 'Continue mantendo este nível de excelência e considere compartilhar suas práticas com a equipe.';
+      recomendacao =
+        'Continue mantendo este nível de excelência e considere compartilhar suas práticas com a equipe.';
     } else if (finalScore >= 4.0) {
       classificacao = 'muito boa';
-      recomendacao = 'Performance sólida com potencial para alcançar excelência. Identifique áreas específicas para refinamento.';
+      recomendacao =
+        'Performance sólida com potencial para alcançar excelência. Identifique áreas específicas para refinamento.';
     } else if (finalScore >= 3.5) {
       classificacao = 'boa';
-      recomendacao = 'Performance adequada com oportunidades claras de crescimento. Foque em desenvolver competências específicas.';
+      recomendacao =
+        'Performance adequada com oportunidades claras de crescimento. Foque em desenvolver competências específicas.';
     } else if (finalScore >= 3.0) {
       classificacao = 'satisfatória';
-      recomendacao = 'Performance atende aos requisitos básicos, mas requer plano de desenvolvimento estruturado.';
+      recomendacao =
+        'Performance atende aos requisitos básicos, mas requer plano de desenvolvimento estruturado.';
     } else {
       classificacao = 'abaixo do esperado';
-      recomendacao = 'Performance requer atenção imediata e plano de ação detalhado para melhoria.';
+      recomendacao =
+        'Performance requer atenção imediata e plano de ação detalhado para melhoria.';
     }
 
     // Análise de alinhamento entre diferentes scores
@@ -2675,17 +2755,23 @@ Formato de resposta JSON:
     if (dadosScore.selfScore && dadosScore.leaderScore) {
       const diferenca = Math.abs(dadosScore.selfScore - dadosScore.leaderScore);
       if (diferenca > 1.0) {
-        analiseAlinhamento = ' Há uma diferença significativa entre a autoavaliação e a avaliação da liderança, indicando necessidade de alinhamento de expectativas.';
+        analiseAlinhamento =
+          ' Há uma diferença significativa entre a autoavaliação e a avaliação da liderança, indicando necessidade de alinhamento de expectativas.';
       } else if (diferenca > 0.5) {
-        analiseAlinhamento = ' Existe uma pequena diferença entre a autoavaliação e a avaliação da liderança, que pode ser explorada em conversas de feedback.';
+        analiseAlinhamento =
+          ' Existe uma pequena diferença entre a autoavaliação e a avaliação da liderança, que pode ser explorada em conversas de feedback.';
       } else {
-        analiseAlinhamento = ' Há um bom alinhamento entre a autoavaliação e a avaliação da liderança.';
+        analiseAlinhamento =
+          ' Há um bom alinhamento entre a autoavaliação e a avaliação da liderança.';
       }
     }
 
     const summary = `${usuario.name}, na posição de ${posicao}, apresentou performance ${classificacao} no ciclo ${ciclo.name} com score final de ${finalScore}/5.0. ${recomendacao}${analiseAlinhamento}`;
-    
-    const brutalFacts = this.gerarBrutalFactsPorScore(dadosScore, classificacao);
+
+    const brutalFacts = this.gerarBrutalFactsPorScore(
+      dadosScore,
+      classificacao,
+    );
 
     return {
       summary: this.crypto.encrypt(summary),
@@ -2693,19 +2779,30 @@ Formato de resposta JSON:
     };
   }
 
-  private gerarBrutalFactsPorScore(dadosScore: any, classificacao: string): string {
+  private gerarBrutalFactsPorScore(
+    dadosScore: any,
+    classificacao: string,
+  ): string {
     const facts = [];
     const finalScore = dadosScore.finalScore;
 
     // Análise do score final
     if (finalScore < 2.5) {
-      facts.push(`🚨 CRÍTICO: Score ${finalScore}/5.0 indica performance substancialmente abaixo das expectativas - intervenção imediata necessária.`);
+      facts.push(
+        `🚨 CRÍTICO: Score ${finalScore}/5.0 indica performance substancialmente abaixo das expectativas - intervenção imediata necessária.`,
+      );
     } else if (finalScore < 3.0) {
-      facts.push(`⚠️ ALERTA: Score ${finalScore}/5.0 está abaixo do padrão organizacional - plano de desenvolvimento urgente.`);
+      facts.push(
+        `⚠️ ALERTA: Score ${finalScore}/5.0 está abaixo do padrão organizacional - plano de desenvolvimento urgente.`,
+      );
     } else if (finalScore < 3.5) {
-      facts.push(`📊 DESENVOLVIMENTO: Score ${finalScore}/5.0 atende ao básico mas há gap significativo para performance esperada.`);
+      facts.push(
+        `📊 DESENVOLVIMENTO: Score ${finalScore}/5.0 atende ao básico mas há gap significativo para performance esperada.`,
+      );
     } else if (finalScore >= 4.5) {
-      facts.push(`⭐ DESTAQUE: Score ${finalScore}/5.0 representa performance de alto nível - potencial para liderança e mentoria.`);
+      facts.push(
+        `⭐ DESTAQUE: Score ${finalScore}/5.0 representa performance de alto nível - potencial para liderança e mentoria.`,
+      );
     }
 
     // Análise de consistência entre avaliadores
@@ -2713,9 +2810,13 @@ Formato de resposta JSON:
       const gapSelfLeader = dadosScore.selfScore - dadosScore.leaderScore;
       if (Math.abs(gapSelfLeader) > 1.0) {
         if (gapSelfLeader > 0) {
-          facts.push(`🔍 GAP DE PERCEPÇÃO: Autoavaliação ${dadosScore.selfScore}/5.0 vs Liderança ${dadosScore.leaderScore}/5.0 - possível superestimação das próprias competências.`);
+          facts.push(
+            `🔍 GAP DE PERCEPÇÃO: Autoavaliação ${dadosScore.selfScore}/5.0 vs Liderança ${dadosScore.leaderScore}/5.0 - possível superestimação das próprias competências.`,
+          );
         } else {
-          facts.push(`💡 AUTOCONFIANÇA: Liderança avalia ${dadosScore.leaderScore}/5.0 vs Autoavaliação ${dadosScore.selfScore}/5.0 - oportunidade para reconhecer próprias competências.`);
+          facts.push(
+            `💡 AUTOCONFIANÇA: Liderança avalia ${dadosScore.leaderScore}/5.0 vs Autoavaliação ${dadosScore.selfScore}/5.0 - oportunidade para reconhecer próprias competências.`,
+          );
         }
       }
     }
@@ -2724,17 +2825,23 @@ Formato de resposta JSON:
     if (dadosScore.peerScores.length > 0) {
       const mediaPeers = dadosScore.mediaPeers;
       const gapFinalPeers = Math.abs(finalScore - mediaPeers);
-      
+
       if (gapFinalPeers > 0.5) {
-        facts.push(`👥 PEERS: Diferença de ${gapFinalPeers.toFixed(1)} pontos entre score final e avaliação dos pares indica necessidade de calibração.`);
+        facts.push(
+          `👥 PEERS: Diferença de ${gapFinalPeers.toFixed(1)} pontos entre score final e avaliação dos pares indica necessidade de calibração.`,
+        );
       } else {
-        facts.push(`✅ CONSISTÊNCIA: Boa consistência entre score final (${finalScore}) e avaliação dos pares (${mediaPeers.toFixed(1)}).`);
+        facts.push(
+          `✅ CONSISTÊNCIA: Boa consistência entre score final (${finalScore}) e avaliação dos pares (${mediaPeers.toFixed(1)}).`,
+        );
       }
     }
 
     // Fallback se nenhum insight específico foi gerado
     if (facts.length === 0) {
-      facts.push(`📋 BASELINE: Score atual de ${finalScore}/5.0 estabelece ponto de partida para acompanhamento de evolução nos próximos ciclos.`);
+      facts.push(
+        `📋 BASELINE: Score atual de ${finalScore}/5.0 estabelece ponto de partida para acompanhamento de evolução nos próximos ciclos.`,
+      );
     }
 
     return facts.join(' ');
@@ -2850,22 +2957,28 @@ Formato de resposta JSON:
             goalType: goal.type,
             recomendacoes: recomendacao,
             actionsExistentes: goal.actions.length,
-            proximoDeadline: goal.actions.length > 0 
-              ? goal.actions.find(action => !action.completed)?.deadline 
-              : null,
+            proximoDeadline:
+              goal.actions.length > 0
+                ? goal.actions.find((action) => !action.completed)?.deadline
+                : null,
           });
         } catch (error) {
-          console.error(`Erro ao gerar recomendação para goal ${goal.id}:`, error);
+          console.error(
+            `Erro ao gerar recomendação para goal ${goal.id}:`,
+            error,
+          );
           recomendacoes.push({
             goalId: goal.id,
             goalTitle: goal.title,
             goalDescription: goal.description,
             goalType: goal.type,
-            recomendacoes: 'Erro ao gerar recomendações. Tente novamente mais tarde.',
+            recomendacoes:
+              'Erro ao gerar recomendações. Tente novamente mais tarde.',
             actionsExistentes: goal.actions.length,
-            proximoDeadline: goal.actions.length > 0 
-              ? goal.actions.find(action => !action.completed)?.deadline 
-              : null,
+            proximoDeadline:
+              goal.actions.length > 0
+                ? goal.actions.find((action) => !action.completed)?.deadline
+                : null,
           });
         }
       }
@@ -2882,16 +2995,15 @@ Formato de resposta JSON:
         recomendacoes,
         geradoEm: new Date().toISOString(),
       };
-
     } catch (error) {
       console.error('Erro ao gerar recomendações de goals:', error);
-      
+
       if (error instanceof NotFoundException) {
         throw error;
       }
 
       throw new InternalServerErrorException(
-        'Erro interno ao gerar recomendações de goals'
+        'Erro interno ao gerar recomendações de goals',
       );
     }
   }
@@ -2903,7 +3015,7 @@ Formato de resposta JSON:
     usuario: any,
     goal: any,
     scoreAtual: any,
-    avaliacoesRecentes: any[]
+    avaliacoesRecentes: any[],
   ): string {
     const contextoUsuario = `
 COLABORADOR: ${usuario.name}
@@ -2921,7 +3033,8 @@ AÇÕES CADASTRADAS: ${goal.actions.length}
 
     let contextoPerformance = '';
     if (avaliacoesRecentes && avaliacoesRecentes.length > 0) {
-      const pontosFracosFortes = this.analisarPontosFortesFragos(avaliacoesRecentes);
+      const pontosFracosFortes =
+        this.analisarPontosFortesFragos(avaliacoesRecentes);
       contextoPerformance = `
 PONTOS FORTES IDENTIFICADOS:
 ${pontosFracosFortes.pontosForts.join('\n')}
@@ -2946,30 +3059,21 @@ INSTRUÇÕES PARA AS RECOMENDAÇÕES:
 2. **SEJA ESPECÍFICO E ACIONÁVEL** - Não use dicas genéricas
 3. **INCLUA PRAZOS CONCRETOS** - Sugira cronogramas realistas
 4. **CONSIDERE O CONTEXTO** - Use as informações de performance e posição
-5. **ESTRUTURE AS RECOMENDAÇÕES** em seções claras
+5. **ESCREVA EM TEXTO CORRIDO** - Máximo 3-4 parágrafos
 6. **FOQUE EM RESULTADOS MENSURÁVEIS**
 
-ESTRUTURA DA RESPOSTA:
+FORMATO DA RESPOSTA:
+Escreva suas recomendações em formato de texto corrido, dividido em 3-4 parágrafos concisos. 
 
-## 🎯 ESTRATÉGIA PRINCIPAL
-[Uma estratégia central baseada no perfil do colaborador]
+O primeiro parágrafo deve apresentar uma estratégia principal personalizada para alcançar o goal. 
 
-## 📋 AÇÕES PRIORITÁRIAS (próximas 4 semanas)
-[3-5 ações específicas com prazos]
+O segundo parágrafo deve listar 3-4 ações específicas e práticas para as próximas 4 semanas, com prazos concretos.
 
-## 🔧 DESENVOLVIMENTO DE COMPETÊNCIAS
-[Competências específicas a desenvolver baseadas na performance]
+O terceiro parágrafo deve focar em como medir o progresso e quais competências específicas desenvolver.
 
-## 📅 CRONOGRAMA SUGERIDO
-[Timeline realista por trimestre]
+O quarto parágrafo (opcional) deve conter dicas personalizadas baseadas no perfil e posição do colaborador.
 
-## 📊 MÉTRICAS DE SUCESSO
-[Como medir o progresso]
-
-## 💡 DICAS PERSONALIZADAS
-[Dicas específicas para o perfil e posição]
-
-Seja direto, prático e personalizado. Evite conselhos genéricos.
+Seja direto, prático e personalizado. Mantenha o texto conciso - máximo 250 palavras no total.
 `;
 
     return prompt;
@@ -2984,7 +3088,7 @@ Seja direto, prático e personalizado. Evite conselhos genéricos.
     const criteriosAnalise = new Map();
 
     // Agregar scores por critério
-    avaliacoes.forEach(avaliacao => {
+    avaliacoes.forEach((avaliacao) => {
       avaliacao.answers?.forEach((answer: any) => {
         const criterioTitulo = answer.criterion.title;
         if (!criteriosAnalise.has(criterioTitulo)) {
@@ -2999,8 +3103,10 @@ Seja direto, prático e personalizado. Evite conselhos genéricos.
 
     // Classificar como pontos fortes (>= 4.0) ou fracos (< 3.0)
     criteriosAnalise.forEach((dados, criterio) => {
-      const mediaScore = dados.scores.reduce((sum: number, score: number) => sum + score, 0) / dados.scores.length;
-      
+      const mediaScore =
+        dados.scores.reduce((sum: number, score: number) => sum + score, 0) /
+        dados.scores.length;
+
       if (mediaScore >= 4.0) {
         pontosForts.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
       } else if (mediaScore < 3.0) {
@@ -3009,8 +3115,14 @@ Seja direto, prático e personalizado. Evite conselhos genéricos.
     });
 
     return {
-      pontosForts: pontosForts.length > 0 ? pontosForts : ['• Performance geral dentro da média'],
-      pontosFragos: pontosFragos.length > 0 ? pontosFragos : ['• Nenhuma área crítica identificada'],
+      pontosForts:
+        pontosForts.length > 0
+          ? pontosForts
+          : ['• Performance geral dentro da média'],
+      pontosFragos:
+        pontosFragos.length > 0
+          ? pontosFragos
+          : ['• Nenhuma área crítica identificada'],
     };
   }
 }
