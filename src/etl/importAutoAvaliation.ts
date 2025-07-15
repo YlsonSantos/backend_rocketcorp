@@ -127,7 +127,7 @@ export async function runAutoAvaliation(filePath: string) {
       data: {
         name: String(nome),
         email: String(email),
-        password: '123',
+        password: '123456',
         role: role as any as import('@prisma/client').Role,
         positionId: position.id,
       },
