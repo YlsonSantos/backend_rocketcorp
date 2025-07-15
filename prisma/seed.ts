@@ -32,7 +32,7 @@ async function main() {
     {
       id: 'user3',
       name: 'Carlos Dias',
-      email: 'carlos@example.com',
+      email: 'carlos@visagio.com',
       password: '123456',
       role: Role.LIDER,
       positionId: 'pos3',
@@ -41,7 +41,7 @@ async function main() {
     {
       id: 'user2',
       name: 'Bruno Costa',
-      email: 'bruno@example.com',
+      email: 'bruno@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos2',
@@ -50,7 +50,7 @@ async function main() {
     {
       id: 'user1',
       name: 'Alice Silva',
-      email: 'alice@example.com',
+      email: 'alice@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos1',
@@ -60,7 +60,7 @@ async function main() {
     {
       id: 'user4',
       name: 'Daniela Martins',
-      email: 'daniela@example.com',
+      email: 'daniela@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos4',
@@ -69,7 +69,7 @@ async function main() {
     {
       id: 'user5',
       name: 'Eduardo Silva',
-      email: 'eduardo@example.com',
+      email: 'eduardo@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos1',
@@ -81,7 +81,7 @@ async function main() {
     {
       id: 'user8',
       name: 'Helena Pereira',
-      email: 'helena@example.com',
+      email: 'helena@visagio.com',
       password: '123456',
       role: Role.LIDER,
       positionId: 'pos3',
@@ -90,7 +90,7 @@ async function main() {
     {
       id: 'user6',
       name: 'Fabiana Souza',
-      email: 'fabiana@example.com',
+      email: 'fabiana@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos1',
@@ -99,7 +99,7 @@ async function main() {
     {
       id: 'user7',
       name: 'Gabriel Rocha',
-      email: 'gabriel@example.com',
+      email: 'gabriel@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos5',
@@ -109,7 +109,7 @@ async function main() {
     {
       id: 'user9',
       name: 'Igor Lima',
-      email: 'igor@example.com',
+      email: 'igor@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos4',
@@ -118,7 +118,7 @@ async function main() {
     {
       id: 'user10',
       name: 'Julia Castro',
-      email: 'julia@example.com',
+      email: 'julia@visagio.com',
       password: '123456',
       role: Role.COLABORADOR,
       positionId: 'pos2',
@@ -128,7 +128,7 @@ async function main() {
     {
       id: 'user11',
       name: 'Ylson Santos',
-      email: 'ylson@example.com',
+      email: 'ylson@visagio.com',
       password: '123456',
       role: Role.COMITE,
       positionId: 'pos6',
@@ -138,7 +138,7 @@ async function main() {
     {
       id: 'user12',
       name: 'Ana Laura',
-      email: 'analaura@example.com',
+      email: 'analaura@visagio.com',
       password: '123456',
       role: Role.RH,
       positionId: 'pos7',
@@ -215,8 +215,8 @@ async function main() {
         id: 'cycle2025_1',
         name: '2025.1',
         startDate: new Date('2025-06-01'),
-        reviewDate: new Date('2025-06-20'),
-        endDate: new Date('2025-07-30'),
+        reviewDate: new Date('2025-08-20'),
+        endDate: new Date('2025-08-30'),
       },
       {
         id: 'cycle2025_2',
@@ -418,7 +418,7 @@ async function main() {
       {
         id: 'eval22',
         type: 'AUTO',
-        cycleId: 'cycle2025_1',
+        cycleId: 'cycle2024_1',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -428,7 +428,7 @@ async function main() {
       {
         id: 'eval223',
         type: 'AUTO',
-        cycleId: 'cycle2024_1',
+        cycleId: 'cycle2024_2',
         evaluatorId: 'user1',
         evaluatedId: 'user1',
         teamId: 'team1',
@@ -531,33 +531,133 @@ async function main() {
     },
     // Avaliação ciclo2 (Alice autoavaliação)
     {
-      id: 'ans33',
+      id: 'a1ns1',
       evaluationId: 'eval22',
       criterionId: 'criterio1',
-      score: 3,
-      justification: 'Acredito que posso melhorar a colaboração.',
+      score: 4,
+      justification:
+        'Procuro sempre agir com responsabilidade e tomar decisões como se a empresa fosse minha.',
     },
     {
-      id: 'ans44',
+      id: 'a1ns2',
       evaluationId: 'eval22',
       criterionId: 'criterio2',
+      score: 3,
+      justification:
+        'Consigo manter a calma em momentos de pressão, mas ainda posso evoluir em situações de grande estresse.',
+    },
+    {
+      id: 'a1ns3',
+      evaluationId: 'eval22',
+      criterionId: 'criterio3',
+      score: 5,
+      justification:
+        'Tenho um bom controle sobre prazos, tarefas e priorização, o que me ajuda a manter a organização.',
+    },
+    {
+      id: 'a1ns4',
+      evaluationId: 'eval22',
+      criterionId: 'criterio4',
       score: 4,
-      justification: 'Costumo tomar iniciativa em projetos.',
+      justification:
+        'Aprendo rápido com feedbacks e estou constantemente buscando novos conhecimentos.',
+    },
+    {
+      id: 'a1ns5',
+      evaluationId: 'eval22',
+      criterionId: 'criterio5',
+      score: 5,
+      justification:
+        'Gosto de trabalhar em equipe, colaborar e apoiar os colegas sempre que possível.',
+    },
+    {
+      id: 'a1ns6',
+      evaluationId: 'eval22',
+      criterionId: 'criterio6',
+      score: 4,
+      justification:
+        'Busco garantir a qualidade nas entregas, revisando e testando sempre antes de finalizar.',
+    },
+    {
+      id: 'a1ns7',
+      evaluationId: 'eval22',
+      criterionId: 'criterio7',
+      score: 3,
+      justification:
+        'Na maioria das vezes entrego no prazo, mas há situações em que ainda posso melhorar minha estimativa de tempo.',
+    },
+    {
+      id: 'a1ns8',
+      evaluationId: 'eval22',
+      criterionId: 'criterio8',
+      score: 2,
+      justification:
+        'Ainda estou desenvolvendo minha habilidade de otimizar recursos e processos para ganhar eficiência.',
+    },
+    {
+      id: 'a1ns9',
+      evaluationId: 'eval22',
+      criterionId: 'criterio9',
+      score: 4,
+      justification:
+        'Tenho facilidade em propor soluções diferentes quando necessário e gosto de pensar de forma criativa.',
     },
     // Avaliação ciclo3 (Alice autoavaliação)
     {
-      id: 'ans35',
+      id: 'anX3',
       evaluationId: 'eval223',
-      criterionId: 'criterio1',
-      score: 3,
-      justification: 'Acredito que posso melhorar a colaboração.',
+      criterionId: 'criterio3',
+      score: 5,
+      justification:
+        'Tenho um bom controle sobre prazos, tarefas e priorização, o que me ajuda a manter a organização.',
     },
     {
-      id: 'ans45',
+      id: 'anX4',
       evaluationId: 'eval223',
-      criterionId: 'criterio2',
+      criterionId: 'criterio4',
       score: 4,
-      justification: 'Costumo tomar iniciativa em projetos.',
+      justification:
+        'Aprendo rápido com feedbacks e estou constantemente buscando novos conhecimentos.',
+    },
+    {
+      id: 'anX5',
+      evaluationId: 'eval223',
+      criterionId: 'criterio5',
+      score: 5,
+      justification:
+        'Gosto de trabalhar em equipe, colaborar e apoiar os colegas sempre que possível.',
+    },
+    {
+      id: 'anX6',
+      evaluationId: 'eval223',
+      criterionId: 'criterio6',
+      score: 4,
+      justification:
+        'Busco garantir a qualidade nas entregas, revisando e testando sempre antes de finalizar.',
+    },
+    {
+      id: 'anX7',
+      evaluationId: 'eval223',
+      criterionId: 'criterio7',
+      score: 3,
+      justification:
+        'Na maioria das vezes entrego no prazo, mas ainda posso melhorar minha estimativa de tempo.',
+    },
+    {
+      id: 'anX8',
+      evaluationId: 'eval223',
+      criterionId: 'criterio8',
+      score: 2,
+      justification:
+        'Ainda estou desenvolvendo minha habilidade de otimizar recursos e processos para ganhar eficiência.',
+    },
+    {
+      id: 'anX9',
+      evaluationId: 'eval223',
+      criterionId: 'criterio9',
+      score: 4,
+      justification:
+        'Tenho facilidade em propor soluções diferentes quando necessário e gosto de pensar de forma criativa.',
     },
 
     // Avaliação eval3 (Bruno -> Daniela)
@@ -633,16 +733,8 @@ async function main() {
 
   const references = [
     {
-      id: 'ref1',
-      cycleId: 'cycle2025_1',
-      evaluatorId: 'user1',
-      referencedId: 'user2',
-      theme: 'Ajuda constante',
-      justification: 'Bruno ajudou em um bug crítico',
-    },
-    {
       id: 'ref2',
-      cycleId: 'cycle2025_1',
+      cycleId: 'cycle2024_1',
       evaluatorId: 'user6',
       referencedId: 'user7',
       theme: 'Design inovador',
@@ -650,7 +742,7 @@ async function main() {
     },
     {
       id: 'ref3',
-      cycleId: 'cycle2025_1',
+      cycleId: 'cycle2024_1',
       evaluatorId: 'user3',
       referencedId: 'user5',
       theme: 'Entregas pontuais',
