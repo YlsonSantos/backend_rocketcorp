@@ -342,9 +342,6 @@ export class AutomaticNotificationsService {
       return;
     }
 
-    const reminderDate = new Date();
-    reminderDate.setDate(reminderDate.getDate() + setting.reminderDays);
-
     const mentors = await this.prisma.user.findMany({
       where: {
         mentorado: { isNot: null },
@@ -352,31 +349,65 @@ export class AutomaticNotificationsService {
     });
 
     for (const mentor of mentors) {
-      // Verificar se já existe avaliação de mentoria
-      const existingEvaluation = await this.prisma.mentorshipEvaluation.findFirst({
-        where: {
-          mentorId: mentor.id,
-          cycleId: cycle.id,
-        },
-      });
+      // Lógica diferenciada por role
+      let shouldNotify = false;
+      let message = '';
+      let dueDate = null;
+      let referenceDate = null;
 
-      if (!existingEvaluation) {
-        const message = setting.customMessage || 
-          `Sua avaliação de mentoria para o ciclo "${cycle.name}" vence em ${setting.reminderDays} dias`;
+      if (mentor.role === 'LIDER') {
+        // Gestores: reminderDays antes do endDate
+        referenceDate = new Date(cycle.endDate);
+        const reminderDate = new Date(cycle.endDate);
+        reminderDate.setDate(reminderDate.getDate() - setting.reminderDays);
 
-        await this.notificationsService.createNotification({
-          userId: mentor.id,
-          type: NotificationType.MENTORSHIP_EVALUATION_DUE,
-          title: 'Avaliação de Mentoria Pendente',
-          message,
-          priority: 'MEDIUM',
-          metadata: {
+        if (new Date() >= reminderDate && new Date() <= cycle.endDate) {
+          shouldNotify = true;
+          dueDate = cycle.endDate;
+          message = setting.customMessage ||
+            `Sua avaliação de mentoria para o ciclo "${cycle.name}" vence em ${setting.reminderDays} dias (${new Date(cycle.endDate).toLocaleDateString()})`;
+        }
+      } else {
+        // Colaboradores: reminderDays antes do reviewDate
+        referenceDate = new Date(cycle.reviewDate);
+        const reminderDate = new Date(cycle.reviewDate);
+        reminderDate.setDate(reminderDate.getDate() - setting.reminderDays);
+
+        if (new Date() >= reminderDate && new Date() <= cycle.reviewDate) {
+          shouldNotify = true;
+          dueDate = cycle.reviewDate;
+          message = setting.customMessage ||
+            `Sua avaliação de mentoria para o ciclo "${cycle.name}" vence em ${setting.reminderDays} dias (${new Date(cycle.reviewDate).toLocaleDateString()})`;
+        }
+      }
+
+      if (shouldNotify) {
+        // Verificar se já existe avaliação de mentoria
+        const existingEvaluation = await this.prisma.mentorshipEvaluation.findFirst({
+          where: {
+            mentorId: mentor.id,
             cycleId: cycle.id,
-            cycleName: cycle.name,
-            dueDate: reminderDate,
-            settingId: setting.id,
           },
         });
+
+        if (!existingEvaluation) {
+          await this.notificationsService.createNotification({
+            userId: mentor.id,
+            type: NotificationType.MENTORSHIP_EVALUATION_DUE,
+            title: 'Avaliação de Mentoria Pendente',
+            message,
+            priority: 'MEDIUM',
+            metadata: {
+              cycleId: cycle.id,
+              cycleName: cycle.name,
+              dueDate: dueDate,
+              referenceDate: referenceDate,
+              reminderDays: setting.reminderDays,
+              settingId: setting.id,
+              userRole: mentor.role,
+            },
+          });
+        }
       }
     }
   }
