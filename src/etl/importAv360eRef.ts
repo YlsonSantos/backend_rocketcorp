@@ -1,6 +1,6 @@
 import * as xlsx from 'xlsx';
 import { EvaluationType } from '@prisma/client';
-import { parseNota } from './importAutoAvaliation';
+import { mapearPeriodo, parseNota } from './importAutoAvaliation';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const prisma = new PrismaService();
@@ -15,7 +15,7 @@ export async function runAv360eRef(filePath: string) {
   });
 
   const emailAvaliador = perfil?.[1]?.[1];
-  const cicloNome = perfil?.[1]?.[2];
+  const cicloNome = mapearPeriodo(perfil[1][2] as unknown as string);
 
   const avaliador = await prisma.user.findUnique({
     where: { email: String(emailAvaliador) },
