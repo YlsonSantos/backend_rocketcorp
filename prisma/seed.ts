@@ -477,14 +477,14 @@ async function main() {
     // Avaliação eval1 (Carlos -> Alice)
     {
       id: 'ans111',
-      evaluationId: 'eval11',
+      evaluationId: 'eval1',
       criterionId: 'criterio1',
       score: 4,
       justification: 'Colaborou muito bem com o time.',
     },
     {
       id: 'ans21',
-      evaluationId: 'eval11',
+      evaluationId: 'eval1',
       criterionId: 'criterio2',
       score: 5,
       justification: 'Sempre proativa e com iniciativa.',
