@@ -510,21 +510,6 @@ export class GenaiController {
     @Param('goalId') goalId: string,
     @Req() req: any,
   ) {
-    // Verificar se é o próprio usuário ou se tem permissão para ver
-    const userRole = req.user?.role;
-    const currentUserId = req.user?.sub;
-
-    if (
-      userRole !== 'RH' &&
-      userRole !== 'COMITE' &&
-      userRole !== 'LIDER' &&
-      currentUserId !== userId
-    ) {
-      throw new BadRequestException(
-        'Você só pode gerar recomendações para seus próprios goals',
-      );
-    }
-
     return await this.genaiService.gerarRecomendacoesGoals(userId, goalId);
   }
 }
