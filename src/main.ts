@@ -14,7 +14,10 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:5173',
+      'https://frontend-rocketcorp.vercel.app',
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -33,13 +36,13 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true, // Rejeita campos não esperados
-      forbidUnknownValues: true,   // Rejeita valores desconhecidos
+      forbidUnknownValues: true, // Rejeita valores desconhecidos
       skipMissingProperties: false,
       skipNullProperties: false,
       skipUndefinedProperties: false,
       validationError: {
         target: false, // Não expõe o objeto original no erro
-        value: false,  // Não expõe o valor no erro
+        value: false, // Não expõe o valor no erro
       },
     }),
   );

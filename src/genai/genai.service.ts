@@ -188,6 +188,27 @@ export class GenaiService {
 
   async buscarResumosPorCiclo(cycleId: string) {
     try {
+      console.log(`🔍 Buscando resumos para ciclo: ${cycleId}`);
+      
+      // Primeiro, buscar todos os colaboradores que têm avaliações no ciclo
+      const colaboradoresComDados = await this.prisma.user.findMany({
+        where: {
+          evaluationsReceived: {
+            some: {
+              cycleId: cycleId,
+              completed: true,
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      console.log(`👥 Encontrados ${colaboradoresComDados.length} colaboradores com dados no ciclo`);
+
+      // Buscar resumos existentes
       const resumos = await this.prisma.genaiInsight.findMany({
         where: { cycleId: cycleId },
         include: {
@@ -220,21 +241,147 @@ export class GenaiService {
         },
       });
 
-      return resumos.map((resumo) => ({
-        id: resumo.id,
-        evaluatedId: resumo.evaluatedId,
-        evaluatedName: resumo.evaluated.name,
-        evaluatedEmail: resumo.evaluated.email,
-        evaluatedRole: resumo.evaluated.role,
-        evaluatedPosition: resumo.evaluated.position.name,
-        evaluatedTrack: resumo.evaluated.position.track,
-        summary: resumo.summary,
-        brutalFacts: resumo.brutalFacts,
-        cycle: resumo.cycle,
-      }));
+      console.log(`📊 Encontrados ${resumos.length} resumos existentes`);
+
+      // Identificar colaboradores sem resumo
+      const colaboradoresComResumo = new Set(resumos.map(r => r.evaluatedId));
+      const colaboradoresSemResumo = colaboradoresComDados.filter(
+        colaborador => !colaboradoresComResumo.has(colaborador.id)
+      );
+
+      console.log(`🔄 ${colaboradoresSemResumo.length} colaboradores precisam de resumo`);
+
+      // Gerar resumos em lote para colaboradores sem resumo
+      if (colaboradoresSemResumo.length > 0) {
+        console.log(`🚀 Gerando ${colaboradoresSemResumo.length} resumos automaticamente...`);
+        
+        for (const colaborador of colaboradoresSemResumo) {
+          try {
+            console.log(`📝 Gerando resumo para ${colaborador.name}...`);
+            
+            // Verificar novamente se já existe um resumo (evitar condições de corrida)
+            const resumoExistente = await this.prisma.genaiInsight.findFirst({
+              where: {
+                evaluatedId: colaborador.id,
+                cycleId: cycleId,
+              },
+            });
+
+            if (resumoExistente) {
+              console.log(`⚠️ Resumo já existe para ${colaborador.name}, pulando...`);
+              continue;
+            }
+
+            await this.gerarResumoColaborador(cycleId, colaborador.id);
+            console.log(`✅ Resumo gerado para ${colaborador.name}`);
+          } catch (error) {
+            console.error(`❌ Erro ao gerar resumo para ${colaborador.name}:`, error.message);
+            // Continua o processo mesmo se falhar para um colaborador
+          }
+        }
+
+        // Buscar novamente todos os resumos após a geração
+        console.log(`🔄 Recarregando resumos após geração automática...`);
+        const resumosAtualizados = await this.prisma.genaiInsight.findMany({
+          where: { cycleId: cycleId },
+          include: {
+            evaluated: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                position: {
+                  select: {
+                    name: true,
+                    track: true,
+                  },
+                },
+              },
+            },
+            cycle: {
+              select: {
+                name: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
+          },
+          orderBy: {
+            evaluated: {
+              name: 'asc',
+            },
+          },
+        });
+
+        console.log(`📊 Total de resumos após geração: ${resumosAtualizados.length}`);
+        
+        // Usar os resumos atualizados para o processamento
+        return await this.processarResumos(resumosAtualizados);
+      }
+
+      // Se não há colaboradores sem resumo, processar os existentes
+      return await this.processarResumos(resumos);
     } catch (error) {
+      console.error('❌ Erro em buscarResumosPorCiclo:', error.message);
       throw new BadRequestException('Erro ao buscar resumos do ciclo');
     }
+  }
+
+  private async processarResumos(resumos: any[]) {
+    console.log(`🔓 Processando ${resumos.length} resumos para descriptografia...`);
+
+    const resumosDecrypted = await Promise.all(
+      resumos.map(async (resumo, index) => {
+        try {
+          console.log(`🔓 Descriptografando resumo ${index + 1}/${resumos.length}...`);
+          
+          // Função helper para descriptografar com verificação
+          const safeDecrypt = (value: string): string => {
+            if (!value) return value;
+            try {
+              // Verificar se é um hex válido (criptografado)
+              if (typeof value === 'string' && /^[a-fA-F0-9]+$/.test(value) && value.length % 2 === 0) {
+                return this.crypto.decrypt(value);
+              } else {
+                // Já está descriptografado
+                console.log(`ℹ️ Campo já parece estar descriptografado, mantendo original`);
+                return value;
+              }
+            } catch (error) {
+              console.log(`⚠️ Erro na descriptografia, mantendo valor original:`, error.message);
+              return value;
+            }
+          };
+          
+          // Descriptografar campos antes de retornar
+          const summaryDecrypted = safeDecrypt(resumo.summary);
+          const brutalFactsDecrypted = safeDecrypt(resumo.brutalFacts);
+          const evaluatedNameDecrypted = safeDecrypt(resumo.evaluated.name);
+          
+          console.log(`✅ Resumo ${index + 1} processado com sucesso`);
+          
+          return {
+            id: resumo.id,
+            evaluatedId: resumo.evaluatedId,
+            evaluatedName: evaluatedNameDecrypted,
+            evaluatedEmail: resumo.evaluated.email,
+            evaluatedRole: resumo.evaluated.role,
+            evaluatedPosition: resumo.evaluated.position.name,
+            evaluatedTrack: resumo.evaluated.position.track,
+            summary: summaryDecrypted,
+            brutalFacts: brutalFactsDecrypted,
+            cycle: resumo.cycle,
+          };
+        } catch (decryptError) {
+          console.error(`❌ Erro ao processar resumo ${index + 1}:`, decryptError.message);
+          throw decryptError;
+        }
+      })
+    );
+    
+    console.log(`✅ Descriptografia concluída com sucesso`);
+    return resumosDecrypted;
   }
 
   async buscarResumoColaborador(userId: string, cycleId: string) {
@@ -3036,13 +3183,13 @@ AÇÕES CADASTRADAS: ${goal.actions.length}
     let contextoPerformance = '';
     if (avaliacoesRecentes && avaliacoesRecentes.length > 0) {
       const pontosFracosFortes =
-        this.analisarPontosFortesFragos(avaliacoesRecentes);
+        this.analisarPontosFortesFracos(avaliacoesRecentes);
       contextoPerformance = `
 PONTOS FORTES IDENTIFICADOS:
-${pontosFracosFortes.pontosForts.join('\n')}
+${pontosFracosFortes.pontosFortes.join('\n')}
 
 ÁREAS DE DESENVOLVIMENTO:
-${pontosFracosFortes.pontosFragos.join('\n')}
+${pontosFracosFortes.pontosFracos.join('\n')}
 `;
     }
 
@@ -3084,9 +3231,9 @@ Seja direto, prático e personalizado. Mantenha o texto conciso - máximo 250 pa
   /**
    * Analisa pontos fortes e fracos baseado nas avaliações recentes
    */
-  private analisarPontosFortesFragos(avaliacoes: any[]) {
-    const pontosForts: string[] = [];
-    const pontosFragos: string[] = [];
+  private analisarPontosFortesFracos(avaliacoes: any[]) {
+    const pontosFortes: string[] = [];
+    const pontosFracos: string[] = [];
     const criteriosAnalise = new Map();
 
     // Agregar scores por critério
@@ -3110,20 +3257,20 @@ Seja direto, prático e personalizado. Mantenha o texto conciso - máximo 250 pa
         dados.scores.length;
 
       if (mediaScore >= 4.0) {
-        pontosForts.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
+        pontosFortes.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
       } else if (mediaScore < 3.0) {
-        pontosFragos.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
+        pontosFracos.push(`• ${criterio}: ${mediaScore.toFixed(1)}/5.0`);
       }
     });
 
     return {
-      pontosForts:
-        pontosForts.length > 0
-          ? pontosForts
+      pontosFortes:
+        pontosFortes.length > 0
+          ? pontosFortes
           : ['• Performance geral dentro da média'],
-      pontosFragos:
-        pontosFragos.length > 0
-          ? pontosFragos
+      pontosFracos:
+        pontosFracos.length > 0
+          ? pontosFracos
           : ['• Nenhuma área crítica identificada'],
     };
   }
