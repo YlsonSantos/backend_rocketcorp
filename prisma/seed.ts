@@ -394,16 +394,6 @@ async function main() {
         createdAt: new Date(),
         completed: true,
       },
-      {
-        id: 'eval11',
-        type: 'LIDER',
-        cycleId: 'cycle2025_1',
-        evaluatorId: 'user3',
-        evaluatedId: 'user1',
-        teamId: 'team1',
-        createdAt: new Date(),
-        completed: true,
-      },
       // Autoavaliação Alice
       {
         id: 'eval2',
@@ -485,20 +475,6 @@ async function main() {
 
   const dataEvaluationAnswer = [
     // Avaliação eval1 (Carlos -> Alice)
-    {
-      id: 'ans1',
-      evaluationId: 'eval1',
-      criterionId: 'criterio1',
-      score: 4,
-      justification: 'Colaborou muito bem com o time.',
-    },
-    {
-      id: 'ans2',
-      evaluationId: 'eval1',
-      criterionId: 'criterio2',
-      score: 5,
-      justification: 'Sempre proativa e com iniciativa.',
-    },
     {
       id: 'ans111',
       evaluationId: 'eval11',
@@ -970,11 +946,11 @@ async function main() {
   await prisma.survey.create({
     data: {
       id: 'survey2025_1',
-      cycleId: 'cycle2025_1',
+      cycleId: 'cycle2024_1',
       title: 'Pesquisa de Clima Semestral',
       description:
         'Pesquisa rápida para avaliação do clima organizacional no 2º semestre de 2025',
-      endDate: new Date('2025-07-30'),
+      endDate: new Date('2024-07-30'),
       active: true,
     },
   });
@@ -1006,6 +982,30 @@ async function main() {
     },
   });
 
+  await prisma.surveyResponse.create({
+    data: {
+      id: 'response2',
+      surveyId: 'survey2025_1',
+      userId: null,
+    },
+  });
+
+  await prisma.surveyResponse.create({
+    data: {
+      id: 'response3',
+      surveyId: 'survey2025_1',
+      userId: null,
+    },
+  });
+
+  await prisma.surveyResponse.create({
+    data: {
+      id: 'response4',
+      surveyId: 'survey2025_1',
+      userId: null,
+    },
+  });
+
   const answers = [
     {
       responseId: 'response1',
@@ -1016,6 +1016,38 @@ async function main() {
       responseId: 'response1',
       questionId: 'q2',
       answerText: 'Gostaria de mais comunicação interna.',
+    },
+    {
+      responseId: 'response2',
+      questionId: 'q1',
+      answerScore: 4,
+    },
+    {
+      responseId: 'response2',
+      questionId: 'q2',
+      answerText:
+        'Gostaria de mais comunicação interna e uma melhor comunicação entre os membros.',
+    },
+    {
+      responseId: 'response3',
+      questionId: 'q1',
+      answerScore: 3,
+    },
+    {
+      responseId: 'response3',
+      questionId: 'q2',
+      answerText:
+        'Não tenho sugestões específicas, mas acho que a comunicação pode melhorar.',
+    },
+    {
+      responseId: 'response4',
+      questionId: 'q1',
+      answerScore: 4,
+    },
+    {
+      responseId: 'response4',
+      questionId: 'q2',
+      answerText: 'Tudo ótimo',
     },
   ];
 
