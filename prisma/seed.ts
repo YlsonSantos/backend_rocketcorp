@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { CriterionType, Role } from '@prisma/client';
+import { CriterionType, Role, NotificationType, NotificationPriority } from '@prisma/client';
 import { QuestionType } from '@prisma/client';
 
 const prisma = new PrismaService();
@@ -1461,6 +1461,258 @@ async function main() {
         },
       });
     }
+  }
+
+  // Criar templates de notificação
+  await prisma.notificationTemplate.createMany({
+    data: [
+      {
+        id: 'template1',
+        type: NotificationType.EVALUATION_DUE,
+        title: 'Avaliação Pendente',
+        message: 'Você tem uma avaliação pendente para {evaluatedName} no ciclo {cycleName}. Prazo: {deadline}',
+        variables: '["evaluatedName", "cycleName", "deadline"]',
+        active: true,
+      },
+      {
+        id: 'template2',
+        type: NotificationType.EVALUATION_COMPLETED,
+        title: 'Avaliação Concluída',
+        message: 'Avaliação de {evaluatedName} foi concluída com sucesso no ciclo {cycleName}',
+        variables: '["evaluatedName", "cycleName"]',
+        active: true,
+      },
+      {
+        id: 'template3',
+        type: NotificationType.GOAL_DEADLINE_APPROACHING,
+        title: 'Prazo de Meta Aproximando',
+        message: 'A meta "{goalTitle}" vence em {daysLeft} dias. Não esqueça de finalizar!',
+        variables: '["goalTitle", "daysLeft"]',
+        active: true,
+      },
+      {
+        id: 'template4',
+        type: NotificationType.CYCLE_STARTED,
+        title: 'Novo Ciclo de Avaliação',
+        message: 'O ciclo {cycleName} foi iniciado. Acesse o sistema para realizar suas avaliações.',
+        variables: '["cycleName"]',
+        active: true,
+      },
+      {
+        id: 'template5',
+        type: NotificationType.SURVEY_AVAILABLE,
+        title: 'Nova Pesquisa Disponível',
+        message: 'Uma nova pesquisa "{surveyTitle}" está disponível. Participe e ajude-nos a melhorar!',
+        variables: '["surveyTitle"]',
+        active: true,
+      },
+    ],
+  });
+
+  // Criar configurações de notificação para ciclos
+  await prisma.cycleNotificationSetting.createMany({
+    data: [
+      {
+        id: 'setting1',
+        cycleId: 'cycle2025_1',
+        notificationType: NotificationType.EVALUATION_DUE,
+        enabled: true,
+        reminderDays: 3,
+        customMessage: 'Lembre-se de finalizar suas avaliações antes do prazo!',
+        scheduledTime: '09:00',
+        frequency: 'DAILY',
+        priority: NotificationPriority.HIGH,
+      },
+      {
+        id: 'setting2',
+        cycleId: 'cycle2025_1',
+        notificationType: NotificationType.CYCLE_ENDING,
+        enabled: true,
+        reminderDays: 7,
+        customMessage: 'O ciclo está terminando. Finalize suas pendências!',
+        scheduledTime: '14:00',
+        frequency: 'DAILY',
+        priority: NotificationPriority.URGENT,
+      },
+      {
+        id: 'setting3',
+        cycleId: 'cycle2025_1',
+        notificationType: NotificationType.SURVEY_AVAILABLE,
+        enabled: true,
+        reminderDays: 1,
+        customMessage: 'Participe da pesquisa de clima organizacional!',
+        scheduledTime: '10:00',
+        frequency: 'WEEKLY',
+        weekDay: 'MONDAY',
+        priority: NotificationPriority.MEDIUM,
+      },
+    ],
+  });
+
+  // Criar notificações de exemplo
+  const notifications = [
+    // Notificação de avaliação pendente para Alice
+    {
+      id: 'notif1',
+      userId: 'user3',
+      type: NotificationType.EVALUATION_DUE,
+      title: 'Avaliação Pendente',
+      message: 'Você tem uma avaliação pendente para Alice Silva no ciclo 2025.1. Prazo: 30/08/2025',
+      read: false,
+      priority: NotificationPriority.HIGH,
+      metadata: {
+        evaluatedId: 'user1',
+        evaluatedName: 'Alice Silva',
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+        deadline: '2025-08-30',
+      },
+    },
+    // Notificação de avaliação concluída para Alice
+    {
+      id: 'notif2',
+      userId: 'user1',
+      type: NotificationType.EVALUATION_COMPLETED,
+      title: 'Avaliação Concluída',
+      message: 'Avaliação de Alice Silva foi concluída com sucesso no ciclo 2025.1',
+      read: true,
+      readAt: new Date('2025-08-15T10:30:00Z'),
+      priority: NotificationPriority.MEDIUM,
+      metadata: {
+        evaluatorId: 'user3',
+        evaluatorName: 'Carlos Dias',
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+      },
+    },
+    // Notificação de prazo de meta para Bruno
+    {
+      id: 'notif3',
+      userId: 'user2',
+      type: NotificationType.GOAL_DEADLINE_APPROACHING,
+      title: 'Prazo de Meta Aproximando',
+      message: 'A meta "Aprimorar conhecimentos técnicos" vence em 2 dias. Não esqueça de finalizar!',
+      read: false,
+      priority: NotificationPriority.HIGH,
+      metadata: {
+        goalId: 'goal2',
+        goalTitle: 'Aprimorar conhecimentos técnicos',
+        daysLeft: 2,
+        deadline: '2025-08-15',
+      },
+    },
+    // Notificação de ciclo iniciado para todos os usuários
+    {
+      id: 'notif4',
+      userId: 'user1',
+      type: NotificationType.CYCLE_STARTED,
+      title: 'Novo Ciclo de Avaliação',
+      message: 'O ciclo 2025.1 foi iniciado. Acesse o sistema para realizar suas avaliações.',
+      read: false,
+      priority: NotificationPriority.MEDIUM,
+      metadata: {
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+        startDate: '2025-06-01',
+      },
+    },
+    {
+      id: 'notif5',
+      userId: 'user2',
+      type: NotificationType.CYCLE_STARTED,
+      title: 'Novo Ciclo de Avaliação',
+      message: 'O ciclo 2025.1 foi iniciado. Acesse o sistema para realizar suas avaliações.',
+      read: false,
+      priority: NotificationPriority.MEDIUM,
+      metadata: {
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+        startDate: '2025-06-01',
+      },
+    },
+    // Notificação de pesquisa disponível
+    {
+      id: 'notif6',
+      userId: 'user1',
+      type: NotificationType.SURVEY_AVAILABLE,
+      title: 'Nova Pesquisa Disponível',
+      message: 'Uma nova pesquisa "Pesquisa de Clima Semestral" está disponível. Participe e ajude-nos a melhorar!',
+      read: false,
+      priority: NotificationPriority.MEDIUM,
+      metadata: {
+        surveyId: 'survey2025_1',
+        surveyTitle: 'Pesquisa de Clima Semestral',
+        endDate: '2025-07-30',
+      },
+    },
+    // Notificação de avaliação recebida
+    {
+      id: 'notif7',
+      userId: 'user4',
+      type: NotificationType.EVALUATION_RECEIVED,
+      title: 'Nova Avaliação Recebida',
+      message: 'Você recebeu uma nova avaliação de Bruno Costa no ciclo 2025.1',
+      read: false,
+      priority: NotificationPriority.MEDIUM,
+      metadata: {
+        evaluatorId: 'user2',
+        evaluatorName: 'Bruno Costa',
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+      },
+    },
+    // Notificação de score disponível
+    {
+      id: 'notif8',
+      userId: 'user1',
+      type: NotificationType.SCORE_AVAILABLE,
+      title: 'Score Disponível',
+      message: 'Seu score do ciclo 2025.1 está disponível. Acesse para visualizar seu desempenho.',
+      read: false,
+      priority: NotificationPriority.HIGH,
+      metadata: {
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+        finalScore: 4.0,
+      },
+    },
+    // Notificação de anúncio do sistema
+    {
+      id: 'notif9',
+      userId: 'user1',
+      type: NotificationType.SYSTEM_ANNOUNCEMENT,
+      title: 'Manutenção Programada',
+      message: 'O sistema estará em manutenção no próximo domingo das 02:00 às 06:00. Pedimos desculpas pelo inconveniente.',
+      read: false,
+      priority: NotificationPriority.LOW,
+      metadata: {
+        maintenanceDate: '2025-08-17',
+        maintenanceTime: '02:00-06:00',
+      },
+    },
+    // Notificação de mentoria
+    {
+      id: 'notif10',
+      userId: 'user5',
+      type: NotificationType.MENTORSHIP_EVALUATION_DUE,
+      title: 'Avaliação de Mentoria Pendente',
+      message: 'Você tem uma avaliação de mentoria pendente com Daniela Martins. Prazo: 25/08/2025',
+      read: false,
+      priority: NotificationPriority.HIGH,
+      metadata: {
+        mentorId: 'user4',
+        mentorName: 'Daniela Martins',
+        cycleId: 'cycle2025_1',
+        cycleName: '2025.1',
+        deadline: '2025-08-25',
+      },
+    },
+  ];
+
+  for (const notification of notifications) {
+    await prisma.notification.create({
+      data: notification,
+    });
   }
 }
 
